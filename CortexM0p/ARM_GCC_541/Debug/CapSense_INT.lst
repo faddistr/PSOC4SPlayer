@@ -1,0 +1,3412 @@
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0plus
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"CapSense_INT.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.CapSense_SsCSDPostScan,"ax",%progbits
+  20              		.align	2
+  21              		.code	16
+  22              		.thumb_func
+  23              		.type	CapSense_SsCSDPostScan, %function
+  24              	CapSense_SsCSDPostScan:
+  25              	.LFB3:
+  26              		.file 1 "Generated_Source\\PSoC4\\CapSense_INT.c"
+   1:Generated_Source\PSoC4/CapSense_INT.c **** /***************************************************************************//**
+   2:Generated_Source\PSoC4/CapSense_INT.c **** * \file CapSense_INT.c
+   3:Generated_Source\PSoC4/CapSense_INT.c **** * \version 5.10
+   4:Generated_Source\PSoC4/CapSense_INT.c **** *
+   5:Generated_Source\PSoC4/CapSense_INT.c **** * \brief
+   6:Generated_Source\PSoC4/CapSense_INT.c **** *   This file contains the source code for implementation of the Component's
+   7:Generated_Source\PSoC4/CapSense_INT.c **** *   Interrupt Service Routine (ISR).
+   8:Generated_Source\PSoC4/CapSense_INT.c **** *
+   9:Generated_Source\PSoC4/CapSense_INT.c **** * \see CapSense v5.10 Datasheet
+  10:Generated_Source\PSoC4/CapSense_INT.c **** *
+  11:Generated_Source\PSoC4/CapSense_INT.c **** *//*****************************************************************************
+  12:Generated_Source\PSoC4/CapSense_INT.c **** * Copyright (2016-2018), Cypress Semiconductor Corporation.
+  13:Generated_Source\PSoC4/CapSense_INT.c **** ********************************************************************************
+  14:Generated_Source\PSoC4/CapSense_INT.c **** * This software is owned by Cypress Semiconductor Corporation (Cypress) and is
+  15:Generated_Source\PSoC4/CapSense_INT.c **** * protected by and subject to worldwide patent protection (United States and
+  16:Generated_Source\PSoC4/CapSense_INT.c **** * foreign), United States copyright laws and international treaty provisions.
+  17:Generated_Source\PSoC4/CapSense_INT.c **** * Cypress hereby grants to licensee a personal, non-exclusive, non-transferable
+  18:Generated_Source\PSoC4/CapSense_INT.c **** * license to copy, use, modify, create derivative works of, and compile the
+  19:Generated_Source\PSoC4/CapSense_INT.c **** * Cypress Source Code and derivative works for the sole purpose of creating
+  20:Generated_Source\PSoC4/CapSense_INT.c **** * custom software in support of licensee product to be used only in conjunction
+  21:Generated_Source\PSoC4/CapSense_INT.c **** * with a Cypress integrated circuit as specified in the applicable agreement.
+  22:Generated_Source\PSoC4/CapSense_INT.c **** * Any reproduction, modification, translation, compilation, or representation of
+  23:Generated_Source\PSoC4/CapSense_INT.c **** * this software except as specified above is prohibited without the express
+  24:Generated_Source\PSoC4/CapSense_INT.c **** * written permission of Cypress.
+  25:Generated_Source\PSoC4/CapSense_INT.c **** *
+  26:Generated_Source\PSoC4/CapSense_INT.c **** * Disclaimer: CYPRESS MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH
+  27:Generated_Source\PSoC4/CapSense_INT.c **** * REGARD TO THIS MATERIAL, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  28:Generated_Source\PSoC4/CapSense_INT.c **** * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+  29:Generated_Source\PSoC4/CapSense_INT.c **** * Cypress reserves the right to make changes without further notice to the
+  30:Generated_Source\PSoC4/CapSense_INT.c **** * materials described herein. Cypress does not assume any liability arising out
+  31:Generated_Source\PSoC4/CapSense_INT.c **** * of the application or use of any product or circuit described herein. Cypress
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 2
+
+
+  32:Generated_Source\PSoC4/CapSense_INT.c **** * does not authorize its products for use as critical components in life-support
+  33:Generated_Source\PSoC4/CapSense_INT.c **** * systems where a malfunction or failure may reasonably be expected to result in
+  34:Generated_Source\PSoC4/CapSense_INT.c **** * significant injury to the user. The inclusion of Cypress' product in a life-
+  35:Generated_Source\PSoC4/CapSense_INT.c **** * support systems application implies that the manufacturer assumes all risk of
+  36:Generated_Source\PSoC4/CapSense_INT.c **** * such use and in doing so indemnifies Cypress against all charges. Use may be
+  37:Generated_Source\PSoC4/CapSense_INT.c **** * limited by and subject to the applicable Cypress software license agreement.
+  38:Generated_Source\PSoC4/CapSense_INT.c **** *******************************************************************************/
+  39:Generated_Source\PSoC4/CapSense_INT.c **** #include "cytypes.h"
+  40:Generated_Source\PSoC4/CapSense_INT.c **** #include "cyfitter.h"
+  41:Generated_Source\PSoC4/CapSense_INT.c **** #include "CapSense_Configuration.h"
+  42:Generated_Source\PSoC4/CapSense_INT.c **** #include "CapSense_Structure.h"
+  43:Generated_Source\PSoC4/CapSense_INT.c **** #include "CapSense_Sensing.h"
+  44:Generated_Source\PSoC4/CapSense_INT.c **** #if (CapSense_ENABLE == CapSense_CSD_EN)
+  45:Generated_Source\PSoC4/CapSense_INT.c ****     #include "CapSense_SensingCSD_LL.h"
+  46:Generated_Source\PSoC4/CapSense_INT.c **** #endif /* (CapSense_ENABLE == CapSense_CSD_EN) */
+  47:Generated_Source\PSoC4/CapSense_INT.c **** #include "cyapicallbacks.h"
+  48:Generated_Source\PSoC4/CapSense_INT.c **** 
+  49:Generated_Source\PSoC4/CapSense_INT.c **** /*******************************************************************************
+  50:Generated_Source\PSoC4/CapSense_INT.c **** * Static Function Prototypes
+  51:Generated_Source\PSoC4/CapSense_INT.c **** *******************************************************************************/
+  52:Generated_Source\PSoC4/CapSense_INT.c **** /**
+  53:Generated_Source\PSoC4/CapSense_INT.c **** * \cond SECTION_C_INTERNAL
+  54:Generated_Source\PSoC4/CapSense_INT.c **** * \addtogroup group_c_internal
+  55:Generated_Source\PSoC4/CapSense_INT.c **** * \{
+  56:Generated_Source\PSoC4/CapSense_INT.c **** */
+  57:Generated_Source\PSoC4/CapSense_INT.c **** 
+  58:Generated_Source\PSoC4/CapSense_INT.c **** #if (((CapSense_ENABLE == CapSense_CSD_EN) || (CapSense_ENABLE == CapSense_CSD_CSX_EN)) && \
+  59:Generated_Source\PSoC4/CapSense_INT.c ****      (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN))
+  60:Generated_Source\PSoC4/CapSense_INT.c ****     static void CapSense_SsNextFrequencyScan(void);
+  61:Generated_Source\PSoC4/CapSense_INT.c **** #endif /* (((CapSense_ENABLE == CapSense_CSD_EN) || (CapSense_ENABLE == CapSense_CSD_CSX_EN)) && \
+  62:Generated_Source\PSoC4/CapSense_INT.c ****             (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)) */
+  63:Generated_Source\PSoC4/CapSense_INT.c **** 
+  64:Generated_Source\PSoC4/CapSense_INT.c **** #if ((CapSense_ENABLE == CapSense_CSD_EN) || (CapSense_ENABLE == CapSense_CSD_CSX_EN))
+  65:Generated_Source\PSoC4/CapSense_INT.c ****     static void CapSense_SsCSDPostScan(void);
+  66:Generated_Source\PSoC4/CapSense_INT.c ****     static void CapSense_SsCSDInitNextScan(void);
+  67:Generated_Source\PSoC4/CapSense_INT.c **** #endif /* ((CapSense_ENABLE == CapSense_CSD_EN) || (CapSense_ENABLE == CapSense_CSD_CSX_EN)) */
+  68:Generated_Source\PSoC4/CapSense_INT.c **** /** \}
+  69:Generated_Source\PSoC4/CapSense_INT.c **** * \endcond */
+  70:Generated_Source\PSoC4/CapSense_INT.c **** 
+  71:Generated_Source\PSoC4/CapSense_INT.c **** 
+  72:Generated_Source\PSoC4/CapSense_INT.c **** /**
+  73:Generated_Source\PSoC4/CapSense_INT.c **** * \cond SECTION_C_INTERRUPT
+  74:Generated_Source\PSoC4/CapSense_INT.c **** * \addtogroup group_c_interrupt
+  75:Generated_Source\PSoC4/CapSense_INT.c **** * \{
+  76:Generated_Source\PSoC4/CapSense_INT.c **** */
+  77:Generated_Source\PSoC4/CapSense_INT.c **** 
+  78:Generated_Source\PSoC4/CapSense_INT.c **** 
+  79:Generated_Source\PSoC4/CapSense_INT.c **** #if ((CapSense_ENABLE == CapSense_CSD_EN) || (CapSense_ENABLE == CapSense_CSD_CSX_EN))
+  80:Generated_Source\PSoC4/CapSense_INT.c **** 
+  81:Generated_Source\PSoC4/CapSense_INT.c **** #if (CapSense_ENABLE == CapSense_CSDV2)
+  82:Generated_Source\PSoC4/CapSense_INT.c ****     /* Fourth-generation HW block part */
+  83:Generated_Source\PSoC4/CapSense_INT.c **** 
+  84:Generated_Source\PSoC4/CapSense_INT.c ****     /*******************************************************************************
+  85:Generated_Source\PSoC4/CapSense_INT.c ****     * Function Name: CapSense_CSDPostSingleScan
+  86:Generated_Source\PSoC4/CapSense_INT.c ****     ****************************************************************************//**
+  87:Generated_Source\PSoC4/CapSense_INT.c ****     *
+  88:Generated_Source\PSoC4/CapSense_INT.c ****     * \brief
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 3
+
+
+  89:Generated_Source\PSoC4/CapSense_INT.c ****     *  This is an internal ISR function for the single-sensor scanning implementation.
+  90:Generated_Source\PSoC4/CapSense_INT.c ****     *
+  91:Generated_Source\PSoC4/CapSense_INT.c ****     * \details
+  92:Generated_Source\PSoC4/CapSense_INT.c ****     *  This ISR handler is triggered when the user calls the
+  93:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_CSDScanExt() function.
+  94:Generated_Source\PSoC4/CapSense_INT.c ****     *
+  95:Generated_Source\PSoC4/CapSense_INT.c ****     *  The following tasks are performed for Third-generation HW block:
+  96:Generated_Source\PSoC4/CapSense_INT.c ****     *    1. Disable the CSD interrupt.
+  97:Generated_Source\PSoC4/CapSense_INT.c ****     *    2. Read the Counter register and update the data structure with raw data.
+  98:Generated_Source\PSoC4/CapSense_INT.c ****     *    3. Connect the Vref buffer to the AMUX bus.
+  99:Generated_Source\PSoC4/CapSense_INT.c ****     *    4. Update the Scan Counter.
+ 100:Generated_Source\PSoC4/CapSense_INT.c ****     *    5. Reset the BUSY flag.
+ 101:Generated_Source\PSoC4/CapSense_INT.c ****     *    6. Enable the CSD interrupt.
+ 102:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 103:Generated_Source\PSoC4/CapSense_INT.c ****     *  The following tasks are performed for Fourth-generation HW block:
+ 104:Generated_Source\PSoC4/CapSense_INT.c ****     *    1. Check if the raw data is not noisy.
+ 105:Generated_Source\PSoC4/CapSense_INT.c ****     *    2. Read the Counter register and update the data structure with raw data.
+ 106:Generated_Source\PSoC4/CapSense_INT.c ****     *    3. Configure and start the scan for the next frequency if the
+ 107:Generated_Source\PSoC4/CapSense_INT.c ****     *      multi-frequency is enabled.
+ 108:Generated_Source\PSoC4/CapSense_INT.c ****     *    4. Update the Scan Counter.
+ 109:Generated_Source\PSoC4/CapSense_INT.c ****     *    5. Reset the BUSY flag.
+ 110:Generated_Source\PSoC4/CapSense_INT.c ****     *    6. Enable the CSD interrupt.
+ 111:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 112:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler changes the IMO and initializes scanning for the next frequency
+ 113:Generated_Source\PSoC4/CapSense_INT.c ****     *  channels when multi-frequency scanning is enabled.
+ 114:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 115:Generated_Source\PSoC4/CapSense_INT.c ****     *  This function has two Macro Callbacks that allow calling the user code
+ 116:Generated_Source\PSoC4/CapSense_INT.c ****     *  from macros specified in Component's generated code. Refer to the
+ 117:Generated_Source\PSoC4/CapSense_INT.c ****     *  \ref group_c_macrocallbacks section of the PSoC Creator User Guide
+ 118:Generated_Source\PSoC4/CapSense_INT.c ****     *  for details.
+ 119:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 120:Generated_Source\PSoC4/CapSense_INT.c ****     *******************************************************************************/
+ 121:Generated_Source\PSoC4/CapSense_INT.c ****     CY_ISR(CapSense_CSDPostSingleScan)
+ 122:Generated_Source\PSoC4/CapSense_INT.c ****     {
+ 123:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_ENTRY_CALLBACK
+ 124:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_EntryCallback();
+ 125:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_ENTRY_CALLBACK */
+ 126:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 127:Generated_Source\PSoC4/CapSense_INT.c ****         /* Clear pending interrupt */
+ 128:Generated_Source\PSoC4/CapSense_INT.c ****         CY_SET_REG32(CapSense_INTR_PTR, CapSense_INTR_SET_MASK);
+ 129:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 130:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN)
+ 131:Generated_Source\PSoC4/CapSense_INT.c ****             if ((CapSense_CSD_NOISE_METRIC_TH < ((CY_GET_REG32(CapSense_RESULT_VAL1_PTR) &
+ 132:Generated_Source\PSoC4/CapSense_INT.c ****                                                         CapSense_RESULT_VAL1_BAD_CONVS_MASK) >>
+ 133:Generated_Source\PSoC4/CapSense_INT.c ****                                                         CapSense_RESULT_VAL1_BAD_CONVS_SHIFT)) &&
+ 134:Generated_Source\PSoC4/CapSense_INT.c ****                                                         (0u < CapSense_badConversionsNum))
+ 135:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 136:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Decrement bad conversions number */
+ 137:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_badConversionsNum--;
+ 138:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 139:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Start the re-scan */
+ 140:Generated_Source\PSoC4/CapSense_INT.c ****                 CY_SET_REG32(CapSense_SEQ_START_PTR, CapSense_SEQ_START_AZ0_SKIP_MASK |
+ 141:Generated_Source\PSoC4/CapSense_INT.c ****                                                              CapSense_SEQ_START_AZ1_SKIP_MASK |
+ 142:Generated_Source\PSoC4/CapSense_INT.c ****                                                              CapSense_SEQ_START_START_MASK);
+ 143:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 144:Generated_Source\PSoC4/CapSense_INT.c ****             else
+ 145:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 4
+
+
+ 146:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN) */
+ 147:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 148:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_SsCSDPostScan();
+ 149:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 150:Generated_Source\PSoC4/CapSense_INT.c ****             #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 151:Generated_Source\PSoC4/CapSense_INT.c ****                 if (CapSense_FREQ_CHANNEL_2 > CapSense_scanFreqIndex)
+ 152:Generated_Source\PSoC4/CapSense_INT.c ****                 {
+ 153:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Scan the next channel */
+ 154:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsNextFrequencyScan();
+ 155:Generated_Source\PSoC4/CapSense_INT.c ****                 }
+ 156:Generated_Source\PSoC4/CapSense_INT.c ****                 else
+ 157:Generated_Source\PSoC4/CapSense_INT.c ****                 {
+ 158:Generated_Source\PSoC4/CapSense_INT.c ****                     /* All channels are scanned. Set IMO to zero channel */
+ 159:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_scanFreqIndex = CapSense_FREQ_CHANNEL_0;
+ 160:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 161:Generated_Source\PSoC4/CapSense_INT.c ****                     #if (CapSense_MFS_IMO == CapSense_MFS_METHOD)
+ 162:Generated_Source\PSoC4/CapSense_INT.c ****                         CapSense_SsChangeImoFreq(CapSense_FREQ_CHANNEL_0);
+ 163:Generated_Source\PSoC4/CapSense_INT.c ****                     #else
+ 164:Generated_Source\PSoC4/CapSense_INT.c ****                         CapSense_SsChangeClkFreq(CapSense_FREQ_CHANNEL_0);
+ 165:Generated_Source\PSoC4/CapSense_INT.c ****                     #endif /* (CapSense_MFS_IMO == CapSense_MFS_METHOD) */
+ 166:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 167:Generated_Source\PSoC4/CapSense_INT.c ****                     #if (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN)
+ 168:Generated_Source\PSoC4/CapSense_INT.c ****                         /* Disable Fourth-generation HW block */
+ 169:Generated_Source\PSoC4/CapSense_INT.c ****                         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd);
+ 170:Generated_Source\PSoC4/CapSense_INT.c ****                     #endif /* (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN) */
+ 171:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 172:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Update Scan Counter */
+ 173:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_dsRam.scanCounter++;
+ 174:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 175:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Sensor is totally scanned. Reset BUSY flag */
+ 176:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_dsRam.status &= ~(CapSense_SW_STS_BUSY | CapSense_WDGT_SW_STS_BUSY);
+ 177:Generated_Source\PSoC4/CapSense_INT.c ****                 }
+ 178:Generated_Source\PSoC4/CapSense_INT.c ****             #else
+ 179:Generated_Source\PSoC4/CapSense_INT.c ****                 {
+ 180:Generated_Source\PSoC4/CapSense_INT.c ****                     #if (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN)
+ 181:Generated_Source\PSoC4/CapSense_INT.c ****                         /* Disable Fourth-generation HW block */
+ 182:Generated_Source\PSoC4/CapSense_INT.c ****                         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd);
+ 183:Generated_Source\PSoC4/CapSense_INT.c ****                     #endif /* (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN) */
+ 184:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 185:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Update Scan Counter */
+ 186:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_dsRam.scanCounter++;
+ 187:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 188:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Sensor is totally scanned. Reset BUSY flag */
+ 189:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_dsRam.status &= ~(CapSense_SW_STS_BUSY | CapSense_WDGT_SW_STS_BUSY);
+ 190:Generated_Source\PSoC4/CapSense_INT.c ****                 }
+ 191:Generated_Source\PSoC4/CapSense_INT.c ****             #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 192:Generated_Source\PSoC4/CapSense_INT.c ****     #if (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN)
+ 193:Generated_Source\PSoC4/CapSense_INT.c ****         }
+ 194:Generated_Source\PSoC4/CapSense_INT.c ****     #endif /* (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN) */
+ 195:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 196:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_EXIT_CALLBACK
+ 197:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_ExitCallback();
+ 198:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_EXIT_CALLBACK */
+ 199:Generated_Source\PSoC4/CapSense_INT.c ****     }
+ 200:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 201:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 202:Generated_Source\PSoC4/CapSense_INT.c ****     /*******************************************************************************
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 5
+
+
+ 203:Generated_Source\PSoC4/CapSense_INT.c ****     * Function Name: CapSense_CSDPostMultiScan
+ 204:Generated_Source\PSoC4/CapSense_INT.c ****     ****************************************************************************//**
+ 205:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 206:Generated_Source\PSoC4/CapSense_INT.c ****     * \brief
+ 207:Generated_Source\PSoC4/CapSense_INT.c ****     *  This is an internal ISR function for the multiple-sensor scanning
+ 208:Generated_Source\PSoC4/CapSense_INT.c ****     *  implementation.
+ 209:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 210:Generated_Source\PSoC4/CapSense_INT.c ****     * \details
+ 211:Generated_Source\PSoC4/CapSense_INT.c ****     *  This ISR handler is triggered when the user calls the
+ 212:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_Scan() or CapSense_ScanAllWidgets() APIs.
+ 213:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 214:Generated_Source\PSoC4/CapSense_INT.c ****     *  The following tasks are performed:
+ 215:Generated_Source\PSoC4/CapSense_INT.c ****     *    1. Disable the CSD interrupt.
+ 216:Generated_Source\PSoC4/CapSense_INT.c ****     *    2. Read the Counter register and update the data structure with raw data.
+ 217:Generated_Source\PSoC4/CapSense_INT.c ****     *    3. Connect the Vref buffer to the AMUX bus.
+ 218:Generated_Source\PSoC4/CapSense_INT.c ****     *    4. Disable the CSD block (after the widget has been scanned).
+ 219:Generated_Source\PSoC4/CapSense_INT.c ****     *    5. Update the Scan Counter.
+ 220:Generated_Source\PSoC4/CapSense_INT.c ****     *    6. Reset the BUSY flag.
+ 221:Generated_Source\PSoC4/CapSense_INT.c ****     *    7. Enable the CSD interrupt.
+ 222:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 223:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler initializes scanning for the previous sensor when the
+ 224:Generated_Source\PSoC4/CapSense_INT.c ****     *  widget has more than one sensor.
+ 225:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler initializes scanning for the next widget when the
+ 226:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_ScanAllWidgets() APIs are called and the project has
+ 227:Generated_Source\PSoC4/CapSense_INT.c ****     *  more than one widget.
+ 228:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler changes the IMO and initializes scanning for the next
+ 229:Generated_Source\PSoC4/CapSense_INT.c ****     *  frequency channels when multi-frequency scanning is enabled.
+ 230:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 231:Generated_Source\PSoC4/CapSense_INT.c ****     *  This function has two Macro Callbacks that allow calling the user
+ 232:Generated_Source\PSoC4/CapSense_INT.c ****     *  code from macros specified in Component's generated code. Refer to the
+ 233:Generated_Source\PSoC4/CapSense_INT.c ****     *  \ref group_c_macrocallbacks section of the PSoC Creator User Guide
+ 234:Generated_Source\PSoC4/CapSense_INT.c ****     *  for details.
+ 235:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 236:Generated_Source\PSoC4/CapSense_INT.c ****     *******************************************************************************/
+ 237:Generated_Source\PSoC4/CapSense_INT.c ****     CY_ISR(CapSense_CSDPostMultiScan)
+ 238:Generated_Source\PSoC4/CapSense_INT.c ****     {
+ 239:Generated_Source\PSoC4/CapSense_INT.c ****         /* Declare and initialize ptr to sensor IO structure to appropriate address */
+ 240:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_FLASH_IO_STRUCT const *curSnsIOPtr = (CapSense_FLASH_IO_STRUCT const *)
+ 241:Generated_Source\PSoC4/CapSense_INT.c ****                                                           CapSense_dsFlash.wdgtArray[CapSense_widge
+ 242:Generated_Source\PSoC4/CapSense_INT.c ****                                                           + CapSense_sensorIndex;
+ 243:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 244:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_ENTRY_CALLBACK
+ 245:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_EntryCallback();
+ 246:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_ENTRY_CALLBACK */
+ 247:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 248:Generated_Source\PSoC4/CapSense_INT.c ****         /* Clear pending interrupt */
+ 249:Generated_Source\PSoC4/CapSense_INT.c ****         CY_SET_REG32(CapSense_INTR_PTR, CapSense_INTR_SET_MASK);
+ 250:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 251:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN)
+ 252:Generated_Source\PSoC4/CapSense_INT.c ****             if ((CapSense_CSD_NOISE_METRIC_TH < ((CY_GET_REG32(CapSense_RESULT_VAL1_PTR) &
+ 253:Generated_Source\PSoC4/CapSense_INT.c ****                                                       CapSense_RESULT_VAL1_BAD_CONVS_MASK) >>
+ 254:Generated_Source\PSoC4/CapSense_INT.c ****                                                       CapSense_RESULT_VAL1_BAD_CONVS_SHIFT)) &&
+ 255:Generated_Source\PSoC4/CapSense_INT.c ****                                                       (0u < CapSense_badConversionsNum))
+ 256:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 257:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Decrement bad conversions number */
+ 258:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_badConversionsNum--;
+ 259:Generated_Source\PSoC4/CapSense_INT.c **** 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 6
+
+
+ 260:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Start the re-scan */
+ 261:Generated_Source\PSoC4/CapSense_INT.c ****                 CY_SET_REG32(CapSense_SEQ_START_PTR, CapSense_SEQ_START_AZ0_SKIP_MASK |
+ 262:Generated_Source\PSoC4/CapSense_INT.c ****                                                              CapSense_SEQ_START_AZ1_SKIP_MASK |
+ 263:Generated_Source\PSoC4/CapSense_INT.c ****                                                              CapSense_SEQ_START_START_MASK);
+ 264:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 265:Generated_Source\PSoC4/CapSense_INT.c ****             else
+ 266:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 267:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN) */
+ 268:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 269:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_SsCSDPostScan();
+ 270:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 271:Generated_Source\PSoC4/CapSense_INT.c ****             /* Disable sensor when all frequency channels are scanned */
+ 272:Generated_Source\PSoC4/CapSense_INT.c ****             #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 273:Generated_Source\PSoC4/CapSense_INT.c ****                 if (CapSense_FREQ_CHANNEL_2 == CapSense_scanFreqIndex)
+ 274:Generated_Source\PSoC4/CapSense_INT.c ****             #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 275:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 276:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Disable sensor */
+ 277:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_CSDDisconnectSns(curSnsIOPtr);
+ 278:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 279:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 280:Generated_Source\PSoC4/CapSense_INT.c ****             #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 281:Generated_Source\PSoC4/CapSense_INT.c ****                 if (CapSense_FREQ_CHANNEL_2 > CapSense_scanFreqIndex)
+ 282:Generated_Source\PSoC4/CapSense_INT.c ****                 {
+ 283:Generated_Source\PSoC4/CapSense_INT.c ****                      /* Scan the next channel */
+ 284:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsNextFrequencyScan();
+ 285:Generated_Source\PSoC4/CapSense_INT.c ****                 }
+ 286:Generated_Source\PSoC4/CapSense_INT.c ****                 else
+ 287:Generated_Source\PSoC4/CapSense_INT.c ****                 {
+ 288:Generated_Source\PSoC4/CapSense_INT.c ****                      /* All channels are scanned. Set IMO to zero channel */
+ 289:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_scanFreqIndex = CapSense_FREQ_CHANNEL_0;
+ 290:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 291:Generated_Source\PSoC4/CapSense_INT.c ****                     #if (CapSense_MFS_IMO == CapSense_MFS_METHOD)
+ 292:Generated_Source\PSoC4/CapSense_INT.c ****                         CapSense_SsChangeImoFreq(CapSense_FREQ_CHANNEL_0);
+ 293:Generated_Source\PSoC4/CapSense_INT.c ****                     #else
+ 294:Generated_Source\PSoC4/CapSense_INT.c ****                         CapSense_SsChangeClkFreq(CapSense_FREQ_CHANNEL_0);
+ 295:Generated_Source\PSoC4/CapSense_INT.c ****                     #endif /* (CapSense_MFS_IMO == CapSense_MFS_METHOD) */
+ 296:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 297:Generated_Source\PSoC4/CapSense_INT.c ****                      /* Scan the next sensor */
+ 298:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsCSDInitNextScan();
+ 299:Generated_Source\PSoC4/CapSense_INT.c ****                 }
+ 300:Generated_Source\PSoC4/CapSense_INT.c ****             #else
+ 301:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Scan the next sensor */
+ 302:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsCSDInitNextScan();
+ 303:Generated_Source\PSoC4/CapSense_INT.c ****             #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 304:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN)
+ 305:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 306:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN) */
+ 307:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 308:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_EXIT_CALLBACK
+ 309:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_ExitCallback();
+ 310:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_EXIT_CALLBACK */
+ 311:Generated_Source\PSoC4/CapSense_INT.c ****     }
+ 312:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 313:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 314:Generated_Source\PSoC4/CapSense_INT.c ****     #if (CapSense_ENABLE == CapSense_CSD_GANGED_SNS_EN)
+ 315:Generated_Source\PSoC4/CapSense_INT.c ****     /*******************************************************************************
+ 316:Generated_Source\PSoC4/CapSense_INT.c ****     * Function Name: CapSense_CSDPostMultiScanGanged
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 7
+
+
+ 317:Generated_Source\PSoC4/CapSense_INT.c ****     ****************************************************************************//**
+ 318:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 319:Generated_Source\PSoC4/CapSense_INT.c ****     * \brief
+ 320:Generated_Source\PSoC4/CapSense_INT.c ****     *  This is an internal ISR function for the multiple-sensor scanning
+ 321:Generated_Source\PSoC4/CapSense_INT.c ****     *  implementation for ganged sensors.
+ 322:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 323:Generated_Source\PSoC4/CapSense_INT.c ****     * \details
+ 324:Generated_Source\PSoC4/CapSense_INT.c ****     *  This ISR handler is triggered when the user calls the
+ 325:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_Scan() API for a ganged sensor or the
+ 326:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_ScanAllWidgets() API in the project with ganged sensors.
+ 327:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 328:Generated_Source\PSoC4/CapSense_INT.c ****     *  The following tasks are performed:
+ 329:Generated_Source\PSoC4/CapSense_INT.c ****     *    1. Disable the CSD interrupt.
+ 330:Generated_Source\PSoC4/CapSense_INT.c ****     *    2. Read the Counter register and update the data structure with raw data.
+ 331:Generated_Source\PSoC4/CapSense_INT.c ****     *    3. Connect the Vref buffer to the AMUX bus.
+ 332:Generated_Source\PSoC4/CapSense_INT.c ****     *    4. Disable the CSD block (after the widget has been scanned).
+ 333:Generated_Source\PSoC4/CapSense_INT.c ****     *    5. Update the Scan Counter.
+ 334:Generated_Source\PSoC4/CapSense_INT.c ****     *    6. Reset the BUSY flag.
+ 335:Generated_Source\PSoC4/CapSense_INT.c ****     *    7. Enable the CSD interrupt.
+ 336:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 337:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler initializes scanning for the previous sensor when the
+ 338:Generated_Source\PSoC4/CapSense_INT.c ****     *  widget has more than one sensor.
+ 339:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler initializes scanning for the next widget when the
+ 340:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_ScanAllWidgets() APIs are called and the project has
+ 341:Generated_Source\PSoC4/CapSense_INT.c ****     *  more than one widget.
+ 342:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler changes the IMO and initializes scanning for the next
+ 343:Generated_Source\PSoC4/CapSense_INT.c ****     *  frequency channels when multi-frequency scanning is enabled.
+ 344:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 345:Generated_Source\PSoC4/CapSense_INT.c ****     *  This function has two Macro Callbacks that allow calling the user
+ 346:Generated_Source\PSoC4/CapSense_INT.c ****     *  code from macros specified in Component's generated code. Refer to the
+ 347:Generated_Source\PSoC4/CapSense_INT.c ****     *  \ref group_c_macrocallbacks section of the PSoC Creator User Guide
+ 348:Generated_Source\PSoC4/CapSense_INT.c ****     *  for details.
+ 349:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 350:Generated_Source\PSoC4/CapSense_INT.c ****     *******************************************************************************/
+ 351:Generated_Source\PSoC4/CapSense_INT.c ****     CY_ISR(CapSense_CSDPostMultiScanGanged)
+ 352:Generated_Source\PSoC4/CapSense_INT.c ****     {
+ 353:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_ENTRY_CALLBACK
+ 354:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_EntryCallback();
+ 355:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_ENTRY_CALLBACK */
+ 356:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 357:Generated_Source\PSoC4/CapSense_INT.c ****         /* Clear pending interrupt */
+ 358:Generated_Source\PSoC4/CapSense_INT.c ****         CY_SET_REG32(CapSense_INTR_PTR, CapSense_INTR_SET_MASK);
+ 359:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 360:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN)
+ 361:Generated_Source\PSoC4/CapSense_INT.c ****             if ((CapSense_CSD_NOISE_METRIC_TH < ((CY_GET_REG32(CapSense_RESULT_VAL1_PTR) &
+ 362:Generated_Source\PSoC4/CapSense_INT.c ****                                                       CapSense_RESULT_VAL1_BAD_CONVS_MASK) >>
+ 363:Generated_Source\PSoC4/CapSense_INT.c ****                                                       CapSense_RESULT_VAL1_BAD_CONVS_SHIFT)) &&
+ 364:Generated_Source\PSoC4/CapSense_INT.c ****                                                       (0u < CapSense_badConversionsNum))
+ 365:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 366:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Decrement bad conversions number */
+ 367:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_badConversionsNum--;
+ 368:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 369:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Start the re-scan */
+ 370:Generated_Source\PSoC4/CapSense_INT.c ****                 CY_SET_REG32(CapSense_SEQ_START_PTR, CapSense_SEQ_START_AZ0_SKIP_MASK |
+ 371:Generated_Source\PSoC4/CapSense_INT.c ****                                                              CapSense_SEQ_START_AZ1_SKIP_MASK |
+ 372:Generated_Source\PSoC4/CapSense_INT.c ****                                                              CapSense_SEQ_START_START_MASK);
+ 373:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 8
+
+
+ 374:Generated_Source\PSoC4/CapSense_INT.c ****             else
+ 375:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 376:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN) */
+ 377:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 378:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_SsCSDPostScan();
+ 379:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 380:Generated_Source\PSoC4/CapSense_INT.c ****             #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 381:Generated_Source\PSoC4/CapSense_INT.c ****                 if (CapSense_FREQ_CHANNEL_2 == CapSense_scanFreqIndex)
+ 382:Generated_Source\PSoC4/CapSense_INT.c ****             #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 383:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 384:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsCSDDisconnectSnsExt((uint32)CapSense_widgetIndex, (uint32)CapSense_senso
+ 385:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 386:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 387:Generated_Source\PSoC4/CapSense_INT.c ****             #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 388:Generated_Source\PSoC4/CapSense_INT.c ****                 if (CapSense_FREQ_CHANNEL_2 > CapSense_scanFreqIndex)
+ 389:Generated_Source\PSoC4/CapSense_INT.c ****                 {
+ 390:Generated_Source\PSoC4/CapSense_INT.c ****                      /* Scan the next channel */
+ 391:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsNextFrequencyScan();
+ 392:Generated_Source\PSoC4/CapSense_INT.c ****                 }
+ 393:Generated_Source\PSoC4/CapSense_INT.c ****                 else
+ 394:Generated_Source\PSoC4/CapSense_INT.c ****                 {
+ 395:Generated_Source\PSoC4/CapSense_INT.c ****                     /* All channels are scanned. Set IMO to zero channel */
+ 396:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_scanFreqIndex = CapSense_FREQ_CHANNEL_0;
+ 397:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 398:Generated_Source\PSoC4/CapSense_INT.c ****                     #if (CapSense_MFS_IMO == CapSense_MFS_METHOD)
+ 399:Generated_Source\PSoC4/CapSense_INT.c ****                         CapSense_SsChangeImoFreq(CapSense_FREQ_CHANNEL_0);
+ 400:Generated_Source\PSoC4/CapSense_INT.c ****                     #else
+ 401:Generated_Source\PSoC4/CapSense_INT.c ****                         CapSense_SsChangeClkFreq(CapSense_FREQ_CHANNEL_0);
+ 402:Generated_Source\PSoC4/CapSense_INT.c ****                     #endif /* (CapSense_MFS_IMO == CapSense_MFS_METHOD) */
+ 403:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 404:Generated_Source\PSoC4/CapSense_INT.c ****                      /* Scan the next sensor */
+ 405:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsCSDInitNextScan();
+ 406:Generated_Source\PSoC4/CapSense_INT.c ****                 }
+ 407:Generated_Source\PSoC4/CapSense_INT.c ****             #else
+ 408:Generated_Source\PSoC4/CapSense_INT.c ****                  /* Scan the next sensor */
+ 409:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsCSDInitNextScan();
+ 410:Generated_Source\PSoC4/CapSense_INT.c ****             #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 411:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN)
+ 412:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 413:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN) */
+ 414:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 415:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_EXIT_CALLBACK
+ 416:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_ExitCallback();
+ 417:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_EXIT_CALLBACK */
+ 418:Generated_Source\PSoC4/CapSense_INT.c ****     }
+ 419:Generated_Source\PSoC4/CapSense_INT.c ****     #endif /* (CapSense_ENABLE == CapSense_CSD_GANGED_SNS_EN) */
+ 420:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 421:Generated_Source\PSoC4/CapSense_INT.c **** #else
+ 422:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 423:Generated_Source\PSoC4/CapSense_INT.c ****     /* Third-generation HW block part */
+ 424:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 425:Generated_Source\PSoC4/CapSense_INT.c ****     /*******************************************************************************
+ 426:Generated_Source\PSoC4/CapSense_INT.c ****     * Function Name: CapSense_CSDPostSingleScan
+ 427:Generated_Source\PSoC4/CapSense_INT.c ****     ****************************************************************************//**
+ 428:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 429:Generated_Source\PSoC4/CapSense_INT.c ****     * \brief
+ 430:Generated_Source\PSoC4/CapSense_INT.c ****     *  This is an internal ISR function for the single-sensor scanning implementation.
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 9
+
+
+ 431:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 432:Generated_Source\PSoC4/CapSense_INT.c ****     * \details
+ 433:Generated_Source\PSoC4/CapSense_INT.c ****     *  This ISR handler is triggered when the user calls the
+ 434:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_CSDScanExt() function.
+ 435:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 436:Generated_Source\PSoC4/CapSense_INT.c ****     *  The following tasks are performed for Third-generation HW block:
+ 437:Generated_Source\PSoC4/CapSense_INT.c ****     *    1. Disable the CSD interrupt.
+ 438:Generated_Source\PSoC4/CapSense_INT.c ****     *    2. Read the Counter register and update the data structure with raw data.
+ 439:Generated_Source\PSoC4/CapSense_INT.c ****     *    3. Connect the Vref buffer to the AMUX bus.
+ 440:Generated_Source\PSoC4/CapSense_INT.c ****     *    4. Update the Scan Counter.
+ 441:Generated_Source\PSoC4/CapSense_INT.c ****     *    5. Reset the BUSY flag.
+ 442:Generated_Source\PSoC4/CapSense_INT.c ****     *    6. Enable the CSD interrupt.
+ 443:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 444:Generated_Source\PSoC4/CapSense_INT.c ****     *  The following tasks are performed for Fourth-generation HW block:
+ 445:Generated_Source\PSoC4/CapSense_INT.c ****     *    1. Check if the raw data is not noisy.
+ 446:Generated_Source\PSoC4/CapSense_INT.c ****     *    2. Read the Counter register and update the data structure with raw data.
+ 447:Generated_Source\PSoC4/CapSense_INT.c ****     *    3. Configure and start the scan for the next frequency if the
+ 448:Generated_Source\PSoC4/CapSense_INT.c ****     *      multi-frequency is enabled.
+ 449:Generated_Source\PSoC4/CapSense_INT.c ****     *    4. Update the Scan Counter.
+ 450:Generated_Source\PSoC4/CapSense_INT.c ****     *    5. Reset the BUSY flag.
+ 451:Generated_Source\PSoC4/CapSense_INT.c ****     *    6. Enable the CSD interrupt.
+ 452:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 453:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler changes the IMO and initializes scanning for the next frequency
+ 454:Generated_Source\PSoC4/CapSense_INT.c ****     *  channels when multi-frequency scanning is enabled.
+ 455:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 456:Generated_Source\PSoC4/CapSense_INT.c ****     *  This function has two Macro Callbacks that allow calling the user code
+ 457:Generated_Source\PSoC4/CapSense_INT.c ****     *  from macros specified in Component's generated code. Refer to the
+ 458:Generated_Source\PSoC4/CapSense_INT.c ****     *  \ref group_c_macrocallbacks section of the PSoC Creator User Guide
+ 459:Generated_Source\PSoC4/CapSense_INT.c ****     *  for details.
+ 460:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 461:Generated_Source\PSoC4/CapSense_INT.c ****     *******************************************************************************/
+ 462:Generated_Source\PSoC4/CapSense_INT.c ****     CY_ISR(CapSense_CSDPostSingleScan)
+ 463:Generated_Source\PSoC4/CapSense_INT.c ****     {
+ 464:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_ENTRY_CALLBACK
+ 465:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_EntryCallback();
+ 466:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_ENTRY_CALLBACK */
+ 467:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 468:Generated_Source\PSoC4/CapSense_INT.c ****         /* Clear pending interrupt */
+ 469:Generated_Source\PSoC4/CapSense_INT.c ****         CY_SET_REG32(CapSense_INTR_PTR, CapSense_INTR_SET_MASK);
+ 470:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 471:Generated_Source\PSoC4/CapSense_INT.c ****         /* Read Rawdata */
+ 472:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_SsCSDPostScan();
+ 473:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 474:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 475:Generated_Source\PSoC4/CapSense_INT.c ****             if (CapSense_FREQ_CHANNEL_2 > CapSense_scanFreqIndex)
+ 476:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 477:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Connect Vref Buffer to AMUX bus. Third-generation HW block is enabled */
+ 478:Generated_Source\PSoC4/CapSense_INT.c ****                 CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CTANK_PRECHARGE_CON
+ 479:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 480:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsNextFrequencyScan();
+ 481:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 482:Generated_Source\PSoC4/CapSense_INT.c ****             else
+ 483:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 484:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_scanFreqIndex = CapSense_FREQ_CHANNEL_0;
+ 485:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 486:Generated_Source\PSoC4/CapSense_INT.c ****                 #if (CapSense_MFS_IMO == CapSense_MFS_METHOD)
+ 487:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsChangeImoFreq(CapSense_FREQ_CHANNEL_0);
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 10
+
+
+ 488:Generated_Source\PSoC4/CapSense_INT.c ****                 #else
+ 489:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsChangeClkFreq(CapSense_FREQ_CHANNEL_0);
+ 490:Generated_Source\PSoC4/CapSense_INT.c ****                 #endif /* (CapSense_MFS_IMO == CapSense_MFS_METHOD) */
+ 491:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 492:Generated_Source\PSoC4/CapSense_INT.c ****                 #if (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN)
+ 493:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Disable Third-generation HW block. Connect Vref Buffer to AMUX bus */
+ 494:Generated_Source\PSoC4/CapSense_INT.c ****                     #if ((CapSense_CSH_PRECHARGE_IO_BUF == CapSense_CSD_CSH_PRECHARGE_SRC) &&\
+ 495:Generated_Source\PSoC4/CapSense_INT.c ****                          (CapSense_ENABLE == CapSense_CSD_SHIELD_TANK_EN))
+ 496:Generated_Source\PSoC4/CapSense_INT.c ****                         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CMOD_PRECHA
+ 497:Generated_Source\PSoC4/CapSense_INT.c ****                     #else
+ 498:Generated_Source\PSoC4/CapSense_INT.c ****                         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CTANK_PRECH
+ 499:Generated_Source\PSoC4/CapSense_INT.c ****                     #endif /* ((CapSense_CSH_PRECHARGE_IO_BUF == CapSense_CSD_CSH_PRECHARGE_SRC) &&
+ 500:Generated_Source\PSoC4/CapSense_INT.c ****                                (CapSense_ENABLE == CapSense_CSD_SHIELD_TANK_EN)) */
+ 501:Generated_Source\PSoC4/CapSense_INT.c ****                 #else
+ 502:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Connect Vref Buffer to AMUX bus. Third-generation HW block is enabled */
+ 503:Generated_Source\PSoC4/CapSense_INT.c ****                     CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CTANK_PRECHARGE
+ 504:Generated_Source\PSoC4/CapSense_INT.c ****                 #endif /* (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN) */
+ 505:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 506:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Update Scan Counter */
+ 507:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_dsRam.scanCounter++;
+ 508:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 509:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Sensor is totally scanned. Reset BUSY flag */
+ 510:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_dsRam.status &= ~(CapSense_SW_STS_BUSY | CapSense_WDGT_SW_STS_BUSY);
+ 511:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 512:Generated_Source\PSoC4/CapSense_INT.c ****         #else
+ 513:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 514:Generated_Source\PSoC4/CapSense_INT.c ****                 #if (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN)
+ 515:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Disable Third-generation HW block. Connect Vref Buffer to AMUX bus */
+ 516:Generated_Source\PSoC4/CapSense_INT.c ****                     #if ((CapSense_CSH_PRECHARGE_IO_BUF == CapSense_CSD_CSH_PRECHARGE_SRC) &&\
+ 517:Generated_Source\PSoC4/CapSense_INT.c ****                          (CapSense_ENABLE == CapSense_CSD_SHIELD_TANK_EN))
+ 518:Generated_Source\PSoC4/CapSense_INT.c ****                         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CMOD_PRECHA
+ 519:Generated_Source\PSoC4/CapSense_INT.c ****                     #else
+ 520:Generated_Source\PSoC4/CapSense_INT.c ****                         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CTANK_PRECH
+ 521:Generated_Source\PSoC4/CapSense_INT.c ****                     #endif /* ((CapSense_CSH_PRECHARGE_IO_BUF == CapSense_CSD_CSH_PRECHARGE_SRC) &&
+ 522:Generated_Source\PSoC4/CapSense_INT.c ****                                (CapSense_ENABLE == CapSense_CSD_SHIELD_TANK_EN)) */
+ 523:Generated_Source\PSoC4/CapSense_INT.c ****                 #else
+ 524:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Connect Vref Buffer to AMUX bus. Third-generation HW block is enabled */
+ 525:Generated_Source\PSoC4/CapSense_INT.c ****                     CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CTANK_PRECHARGE
+ 526:Generated_Source\PSoC4/CapSense_INT.c ****                 #endif /* (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN) */
+ 527:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 528:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Update Scan Counter */
+ 529:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_dsRam.scanCounter++;
+ 530:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 531:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Sensor is totally scanned. Reset BUSY flag */
+ 532:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_dsRam.status &= ~(CapSense_SW_STS_BUSY | CapSense_WDGT_SW_STS_BUSY);
+ 533:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 534:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 535:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 536:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_EXIT_CALLBACK
+ 537:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_ExitCallback();
+ 538:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_EXIT_CALLBACK */
+ 539:Generated_Source\PSoC4/CapSense_INT.c ****     }
+ 540:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 541:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 542:Generated_Source\PSoC4/CapSense_INT.c ****     /*******************************************************************************
+ 543:Generated_Source\PSoC4/CapSense_INT.c ****     * Function Name: CapSense_CSDPostMultiScan
+ 544:Generated_Source\PSoC4/CapSense_INT.c ****     ****************************************************************************//**
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 11
+
+
+ 545:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 546:Generated_Source\PSoC4/CapSense_INT.c ****     * \brief
+ 547:Generated_Source\PSoC4/CapSense_INT.c ****     *  This is an internal ISR function for the multiple-sensor scanning
+ 548:Generated_Source\PSoC4/CapSense_INT.c ****     *  implementation.
+ 549:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 550:Generated_Source\PSoC4/CapSense_INT.c ****     * \details
+ 551:Generated_Source\PSoC4/CapSense_INT.c ****     *  This ISR handler is triggered when the user calls the
+ 552:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_Scan() or CapSense_ScanAllWidgets() APIs.
+ 553:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 554:Generated_Source\PSoC4/CapSense_INT.c ****     *  The following tasks are performed:
+ 555:Generated_Source\PSoC4/CapSense_INT.c ****     *    1. Disable the CSD interrupt.
+ 556:Generated_Source\PSoC4/CapSense_INT.c ****     *    2. Read the Counter register and update the data structure with raw data.
+ 557:Generated_Source\PSoC4/CapSense_INT.c ****     *    3. Connect the Vref buffer to the AMUX bus.
+ 558:Generated_Source\PSoC4/CapSense_INT.c ****     *    4. Disable the CSD block (after the widget has been scanned).
+ 559:Generated_Source\PSoC4/CapSense_INT.c ****     *    5. Update the Scan Counter.
+ 560:Generated_Source\PSoC4/CapSense_INT.c ****     *    6. Reset the BUSY flag.
+ 561:Generated_Source\PSoC4/CapSense_INT.c ****     *    7. Enable the CSD interrupt.
+ 562:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 563:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler initializes scanning for the previous sensor when the
+ 564:Generated_Source\PSoC4/CapSense_INT.c ****     *  widget has more than one sensor.
+ 565:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler initializes scanning for the next widget when the
+ 566:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_ScanAllWidgets() APIs are called and the project has
+ 567:Generated_Source\PSoC4/CapSense_INT.c ****     *  more than one widget.
+ 568:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler changes the IMO and initializes scanning for the next
+ 569:Generated_Source\PSoC4/CapSense_INT.c ****     *  frequency channels when multi-frequency scanning is enabled.
+ 570:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 571:Generated_Source\PSoC4/CapSense_INT.c ****     *  This function has two Macro Callbacks that allow calling the user
+ 572:Generated_Source\PSoC4/CapSense_INT.c ****     *  code from macros specified in Component's generated code. Refer to the
+ 573:Generated_Source\PSoC4/CapSense_INT.c ****     *  \ref group_c_macrocallbacks section of the PSoC Creator User Guide
+ 574:Generated_Source\PSoC4/CapSense_INT.c ****     *  for details.
+ 575:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 576:Generated_Source\PSoC4/CapSense_INT.c ****     *******************************************************************************/
+ 577:Generated_Source\PSoC4/CapSense_INT.c ****     CY_ISR(CapSense_CSDPostMultiScan)
+ 578:Generated_Source\PSoC4/CapSense_INT.c ****     {
+ 579:Generated_Source\PSoC4/CapSense_INT.c ****         /* Declare and initialize ptr to sensor IO structure to appropriate address        */
+ 580:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_FLASH_IO_STRUCT const *curSnsIOPtr = (CapSense_FLASH_IO_STRUCT const *)
+ 581:Generated_Source\PSoC4/CapSense_INT.c ****                                                           CapSense_dsFlash.wdgtArray[CapSense_widge
+ 582:Generated_Source\PSoC4/CapSense_INT.c ****                                                           + CapSense_sensorIndex;
+ 583:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 584:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_ENTRY_CALLBACK
+ 585:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_EntryCallback();
+ 586:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_ENTRY_CALLBACK */
+ 587:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 588:Generated_Source\PSoC4/CapSense_INT.c ****         /* Clear pending interrupt */
+ 589:Generated_Source\PSoC4/CapSense_INT.c ****         CY_SET_REG32(CapSense_INTR_PTR, CapSense_INTR_SET_MASK);
+ 590:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 591:Generated_Source\PSoC4/CapSense_INT.c ****          /* Read Rawdata */
+ 592:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_SsCSDPostScan();
+ 593:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 594:Generated_Source\PSoC4/CapSense_INT.c ****         /* Connect Vref Buffer to AMUX bus */
+ 595:Generated_Source\PSoC4/CapSense_INT.c ****         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CTANK_PRECHARGE_CONFIG_CSD_
+ 596:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 597:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 598:Generated_Source\PSoC4/CapSense_INT.c ****             /* Disable sensor when all frequency channels are scanned */
+ 599:Generated_Source\PSoC4/CapSense_INT.c ****             if (CapSense_FREQ_CHANNEL_2 == CapSense_scanFreqIndex)
+ 600:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 601:Generated_Source\PSoC4/CapSense_INT.c ****                 /* Disable sensor */
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 12
+
+
+ 602:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_CSDDisconnectSns(curSnsIOPtr);
+ 603:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 604:Generated_Source\PSoC4/CapSense_INT.c ****         #else
+ 605:Generated_Source\PSoC4/CapSense_INT.c ****             /* Disable sensor */
+ 606:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_CSDDisconnectSns(curSnsIOPtr);
+ 607:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 608:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 609:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 610:Generated_Source\PSoC4/CapSense_INT.c ****             if (CapSense_FREQ_CHANNEL_2 > CapSense_scanFreqIndex)
+ 611:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 612:Generated_Source\PSoC4/CapSense_INT.c ****                  /* Scan the next channel */
+ 613:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsNextFrequencyScan();
+ 614:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 615:Generated_Source\PSoC4/CapSense_INT.c ****             else
+ 616:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 617:Generated_Source\PSoC4/CapSense_INT.c ****                  /* All channels are scanned. Set IMO to zero channel */
+ 618:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_scanFreqIndex = CapSense_FREQ_CHANNEL_0;
+ 619:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 620:Generated_Source\PSoC4/CapSense_INT.c ****                 #if (CapSense_MFS_IMO == CapSense_MFS_METHOD)
+ 621:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsChangeImoFreq(CapSense_FREQ_CHANNEL_0);
+ 622:Generated_Source\PSoC4/CapSense_INT.c ****                 #else
+ 623:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsChangeClkFreq(CapSense_FREQ_CHANNEL_0);
+ 624:Generated_Source\PSoC4/CapSense_INT.c ****                 #endif /* (CapSense_MFS_IMO == CapSense_MFS_METHOD) */
+ 625:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 626:Generated_Source\PSoC4/CapSense_INT.c ****                  /* Scan the next sensor */
+ 627:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsCSDInitNextScan();
+ 628:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 629:Generated_Source\PSoC4/CapSense_INT.c ****         #else
+ 630:Generated_Source\PSoC4/CapSense_INT.c ****             /* Scan the next sensor */
+ 631:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_SsCSDInitNextScan();
+ 632:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 633:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 634:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_EXIT_CALLBACK
+ 635:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_ExitCallback();
+ 636:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_EXIT_CALLBACK */
+ 637:Generated_Source\PSoC4/CapSense_INT.c ****     }
+ 638:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 639:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 640:Generated_Source\PSoC4/CapSense_INT.c ****     #if (CapSense_ENABLE == CapSense_CSD_GANGED_SNS_EN)
+ 641:Generated_Source\PSoC4/CapSense_INT.c ****     /*******************************************************************************
+ 642:Generated_Source\PSoC4/CapSense_INT.c ****     * Function Name: CapSense_CSDPostMultiScanGanged
+ 643:Generated_Source\PSoC4/CapSense_INT.c ****     ****************************************************************************//**
+ 644:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 645:Generated_Source\PSoC4/CapSense_INT.c ****     * \brief
+ 646:Generated_Source\PSoC4/CapSense_INT.c ****     *  This is an internal ISR function for the multiple-sensor scanning
+ 647:Generated_Source\PSoC4/CapSense_INT.c ****     *  implementation for ganged sensors.
+ 648:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 649:Generated_Source\PSoC4/CapSense_INT.c ****     * \details
+ 650:Generated_Source\PSoC4/CapSense_INT.c ****     *  This ISR handler is triggered when the user calls the
+ 651:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_Scan() API for a ganged sensor or the
+ 652:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_ScanAllWidgets() API in the project with ganged sensors.
+ 653:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 654:Generated_Source\PSoC4/CapSense_INT.c ****     *  The following tasks are performed:
+ 655:Generated_Source\PSoC4/CapSense_INT.c ****     *    1. Disable the CSD interrupt.
+ 656:Generated_Source\PSoC4/CapSense_INT.c ****     *    2. Read the Counter register and update the data structure with raw data.
+ 657:Generated_Source\PSoC4/CapSense_INT.c ****     *    3. Connect the Vref buffer to the AMUX bus.
+ 658:Generated_Source\PSoC4/CapSense_INT.c ****     *    4. Disable the CSD block (after the widget has been scanned).
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 13
+
+
+ 659:Generated_Source\PSoC4/CapSense_INT.c ****     *    5. Update the Scan Counter.
+ 660:Generated_Source\PSoC4/CapSense_INT.c ****     *    6. Reset the BUSY flag.
+ 661:Generated_Source\PSoC4/CapSense_INT.c ****     *    7. Enable the CSD interrupt.
+ 662:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 663:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler initializes scanning for the previous sensor when the
+ 664:Generated_Source\PSoC4/CapSense_INT.c ****     *  widget has more than one sensor.
+ 665:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler initializes scanning for the next widget when the
+ 666:Generated_Source\PSoC4/CapSense_INT.c ****     *  CapSense_ScanAllWidgets() APIs are called and the project has
+ 667:Generated_Source\PSoC4/CapSense_INT.c ****     *  more than one widget.
+ 668:Generated_Source\PSoC4/CapSense_INT.c ****     *  The ISR handler changes the IMO and initializes scanning for the next
+ 669:Generated_Source\PSoC4/CapSense_INT.c ****     *  frequency channels when multi-frequency scanning is enabled.
+ 670:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 671:Generated_Source\PSoC4/CapSense_INT.c ****     *  This function has two Macro Callbacks that allow calling the user
+ 672:Generated_Source\PSoC4/CapSense_INT.c ****     *  code from macros specified in Component's generated code. Refer to the
+ 673:Generated_Source\PSoC4/CapSense_INT.c ****     *  \ref group_c_macrocallbacks section of the PSoC Creator User Guide
+ 674:Generated_Source\PSoC4/CapSense_INT.c ****     *  for details.
+ 675:Generated_Source\PSoC4/CapSense_INT.c ****     *
+ 676:Generated_Source\PSoC4/CapSense_INT.c ****     *******************************************************************************/
+ 677:Generated_Source\PSoC4/CapSense_INT.c ****     CY_ISR(CapSense_CSDPostMultiScanGanged)
+ 678:Generated_Source\PSoC4/CapSense_INT.c ****     {
+ 679:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_ENTRY_CALLBACK
+ 680:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_EntryCallback();
+ 681:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_ENTRY_CALLBACK */
+ 682:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 683:Generated_Source\PSoC4/CapSense_INT.c ****         /* Clear pending interrupt */
+ 684:Generated_Source\PSoC4/CapSense_INT.c ****         CY_SET_REG32(CapSense_INTR_PTR, CapSense_INTR_SET_MASK);
+ 685:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 686:Generated_Source\PSoC4/CapSense_INT.c ****          /* Read Rawdata */
+ 687:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_SsCSDPostScan();
+ 688:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 689:Generated_Source\PSoC4/CapSense_INT.c ****         /* Connect Vref Buffer to AMUX bus */
+ 690:Generated_Source\PSoC4/CapSense_INT.c ****         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CTANK_PRECHARGE_CONFIG_CSD_
+ 691:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 692:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 693:Generated_Source\PSoC4/CapSense_INT.c ****             if (CapSense_FREQ_CHANNEL_2 == CapSense_scanFreqIndex)
+ 694:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 695:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsCSDDisconnectSnsExt((uint32)CapSense_widgetIndex, (uint32)CapSense_senso
+ 696:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 697:Generated_Source\PSoC4/CapSense_INT.c ****         #else
+ 698:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_SsCSDDisconnectSnsExt((uint32)CapSense_widgetIndex, (uint32)CapSense_sensorInd
+ 699:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 700:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 701:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN)
+ 702:Generated_Source\PSoC4/CapSense_INT.c ****             if (CapSense_FREQ_CHANNEL_2 > CapSense_scanFreqIndex)
+ 703:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 704:Generated_Source\PSoC4/CapSense_INT.c ****                  /* Scan the next channel */
+ 705:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsNextFrequencyScan();
+ 706:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 707:Generated_Source\PSoC4/CapSense_INT.c ****             else
+ 708:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 709:Generated_Source\PSoC4/CapSense_INT.c ****                 /* All channels are scanned. Set IMO to zero channel */
+ 710:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_scanFreqIndex = CapSense_FREQ_CHANNEL_0;
+ 711:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 712:Generated_Source\PSoC4/CapSense_INT.c ****                 #if (CapSense_MFS_IMO == CapSense_MFS_METHOD)
+ 713:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsChangeImoFreq(CapSense_FREQ_CHANNEL_0);
+ 714:Generated_Source\PSoC4/CapSense_INT.c ****                 #else
+ 715:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsChangeClkFreq(CapSense_FREQ_CHANNEL_0);
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 14
+
+
+ 716:Generated_Source\PSoC4/CapSense_INT.c ****                 #endif /* (CapSense_MFS_IMO == CapSense_MFS_METHOD) */
+ 717:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 718:Generated_Source\PSoC4/CapSense_INT.c ****                  /* Scan the next sensor */
+ 719:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsCSDInitNextScan();
+ 720:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 721:Generated_Source\PSoC4/CapSense_INT.c ****         #else
+ 722:Generated_Source\PSoC4/CapSense_INT.c ****              /* Scan the next sensor */
+ 723:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_SsCSDInitNextScan();
+ 724:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 725:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 726:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_EXIT_CALLBACK
+ 727:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_ExitCallback();
+ 728:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* CapSense_EXIT_CALLBACK */
+ 729:Generated_Source\PSoC4/CapSense_INT.c ****     }
+ 730:Generated_Source\PSoC4/CapSense_INT.c ****     #endif /* (CapSense_ENABLE == CapSense_CSD_GANGED_SNS_EN) */
+ 731:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 732:Generated_Source\PSoC4/CapSense_INT.c **** #endif /* (CapSense_ENABLE == CapSense_CSDV2) */
+ 733:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 734:Generated_Source\PSoC4/CapSense_INT.c **** #endif /* ((CapSense_ENABLE == CapSense_CSD_EN) || (CapSense_ENABLE == CapSense_CSD_CSX_EN)) */
+ 735:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 736:Generated_Source\PSoC4/CapSense_INT.c **** /** \}
+ 737:Generated_Source\PSoC4/CapSense_INT.c ****  * \endcond */
+ 738:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 739:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 740:Generated_Source\PSoC4/CapSense_INT.c **** #if ((CapSense_ENABLE == CapSense_CSD_EN) || (CapSense_ENABLE == CapSense_CSD_CSX_EN))
+ 741:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 742:Generated_Source\PSoC4/CapSense_INT.c **** /*******************************************************************************
+ 743:Generated_Source\PSoC4/CapSense_INT.c **** * Function Name: CapSense_SsCSDPostScan
+ 744:Generated_Source\PSoC4/CapSense_INT.c **** ****************************************************************************//**
+ 745:Generated_Source\PSoC4/CapSense_INT.c **** *
+ 746:Generated_Source\PSoC4/CapSense_INT.c **** * \brief
+ 747:Generated_Source\PSoC4/CapSense_INT.c **** *   This function reads rawdata and releases required HW resources after scan.
+ 748:Generated_Source\PSoC4/CapSense_INT.c **** *
+ 749:Generated_Source\PSoC4/CapSense_INT.c **** * \details
+ 750:Generated_Source\PSoC4/CapSense_INT.c **** *   This function performs following tasks after scan:
+ 751:Generated_Source\PSoC4/CapSense_INT.c **** *   - Reads SlotResult from Raw Counter;
+ 752:Generated_Source\PSoC4/CapSense_INT.c **** *   - Inits bad Conversions number;
+ 753:Generated_Source\PSoC4/CapSense_INT.c **** *   - Disconnects Vrefhi from AMUBUF positive input;
+ 754:Generated_Source\PSoC4/CapSense_INT.c **** *   - Disconnects AMUBUF output from CSDBUSB with sych PHI2+HSCMP;
+ 755:Generated_Source\PSoC4/CapSense_INT.c **** *   - Opens HCBV and HCBG switches.
+ 756:Generated_Source\PSoC4/CapSense_INT.c **** *
+ 757:Generated_Source\PSoC4/CapSense_INT.c **** *******************************************************************************/
+ 758:Generated_Source\PSoC4/CapSense_INT.c **** static void CapSense_SsCSDPostScan(void)
+ 759:Generated_Source\PSoC4/CapSense_INT.c **** {
+  27              		.loc 1 759 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+ 760:Generated_Source\PSoC4/CapSense_INT.c ****     #if (CapSense_ENABLE == CapSense_CSDV2)
+ 761:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 762:Generated_Source\PSoC4/CapSense_INT.c ****         uint32 tmpRawData;
+ 763:Generated_Source\PSoC4/CapSense_INT.c ****         uint32 tmpMaxCount;
+ 764:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_RAM_WD_BASE_STRUCT const *ptrWdgt = (CapSense_RAM_WD_BASE_STRUCT *)
+ 765:Generated_Source\PSoC4/CapSense_INT.c ****                                             CapSense_dsFlash.wdgtArray[CapSense_widgetIndex].ptr2Wd
+  32              		.loc 1 765 0
+  33 0000 0F4B     		ldr	r3, .L4
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 15
+
+
+  34 0002 1B78     		ldrb	r3, [r3]
+ 764:Generated_Source\PSoC4/CapSense_INT.c ****                                             CapSense_dsFlash.wdgtArray[CapSense_widgetIndex].ptr2Wd
+  35              		.loc 1 764 0
+  36 0004 2C22     		movs	r2, #44
+  37 0006 5343     		muls	r3, r2
+  38 0008 0E4A     		ldr	r2, .L4+4
+  39 000a D318     		adds	r3, r2, r3
+  40 000c 5B68     		ldr	r3, [r3, #4]
+  41              	.LVL0:
+ 766:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 767:Generated_Source\PSoC4/CapSense_INT.c ****         /* Read SlotResult from Raw Counter */
+ 768:Generated_Source\PSoC4/CapSense_INT.c ****         tmpRawData = CapSense_RESULT_VAL1_VALUE_MASK & CY_GET_REG32(CapSense_COUNTER_PTR);
+  42              		.loc 1 768 0
+  43 000e 0E4A     		ldr	r2, .L4+8
+  44 0010 1168     		ldr	r1, [r2]
+  45 0012 0A04     		lsls	r2, r1, #16
+  46 0014 120C     		lsrs	r2, r2, #16
+  47              	.LVL1:
+ 769:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 770:Generated_Source\PSoC4/CapSense_INT.c ****         tmpMaxCount = ((1uL << ptrWdgt->resolution) - 1uL);
+  48              		.loc 1 770 0
+  49 0016 1888     		ldrh	r0, [r3]
+  50 0018 0123     		movs	r3, #1
+  51              	.LVL2:
+  52 001a 8340     		lsls	r3, r3, r0
+  53 001c 013B     		subs	r3, r3, #1
+  54              	.LVL3:
+ 771:Generated_Source\PSoC4/CapSense_INT.c ****         if(tmpRawData < tmpMaxCount)
+  55              		.loc 1 771 0
+  56 001e 9A42     		cmp	r2, r3
+  57 0020 06D2     		bcs	.L2
+ 772:Generated_Source\PSoC4/CapSense_INT.c ****         {
+ 773:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_curRamSnsPtr->raw[CapSense_scanFreqIndex] = LO16(tmpRawData);
+  58              		.loc 1 773 0
+  59 0022 0A4B     		ldr	r3, .L4+12
+  60              	.LVL4:
+  61 0024 1A68     		ldr	r2, [r3]
+  62              	.LVL5:
+  63 0026 0A4B     		ldr	r3, .L4+16
+  64 0028 1B78     		ldrb	r3, [r3]
+  65 002a 5B00     		lsls	r3, r3, #1
+  66 002c D152     		strh	r1, [r2, r3]
+  67 002e 05E0     		b	.L1
+  68              	.LVL6:
+  69              	.L2:
+ 774:Generated_Source\PSoC4/CapSense_INT.c ****         }
+ 775:Generated_Source\PSoC4/CapSense_INT.c ****         else
+ 776:Generated_Source\PSoC4/CapSense_INT.c ****         {
+ 777:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_curRamSnsPtr->raw[CapSense_scanFreqIndex] = LO16(tmpMaxCount);
+  70              		.loc 1 777 0
+  71 0030 064A     		ldr	r2, .L4+12
+  72              	.LVL7:
+  73 0032 1168     		ldr	r1, [r2]
+  74              	.LVL8:
+  75 0034 064A     		ldr	r2, .L4+16
+  76 0036 1278     		ldrb	r2, [r2]
+  77 0038 5200     		lsls	r2, r2, #1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 16
+
+
+  78 003a 8B52     		strh	r3, [r1, r2]
+  79              	.LVL9:
+  80              	.L1:
+ 778:Generated_Source\PSoC4/CapSense_INT.c ****         }
+ 779:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 780:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN)
+ 781:Generated_Source\PSoC4/CapSense_INT.c ****             /* Init bad Conversions number */
+ 782:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_badConversionsNum = CapSense_BAD_CONVERSIONS_NUM;
+ 783:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_CSD_NOISE_METRIC_EN) */
+ 784:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 785:Generated_Source\PSoC4/CapSense_INT.c ****         #if (CapSense_ENABLE == CapSense_CSD_SHIELD_EN)
+ 786:Generated_Source\PSoC4/CapSense_INT.c ****             /* Open HCBV and HCBG switches */
+ 787:Generated_Source\PSoC4/CapSense_INT.c ****             CY_SET_REG32(CapSense_SW_SHIELD_SEL_PTR, CapSense_SW_SHIELD_SEL_SW_HCBV_STATIC_OPEN |
+ 788:Generated_Source\PSoC4/CapSense_INT.c ****                                                              CapSense_SW_SHIELD_SEL_SW_HCBG_STATIC_
+ 789:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* (CapSense_ENABLE == CapSense_CSD_SHIELD_EN) */
+ 790:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 791:Generated_Source\PSoC4/CapSense_INT.c ****     #else
+ 792:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 793:Generated_Source\PSoC4/CapSense_INT.c ****         /* Read SlotResult from Raw Counter */
+ 794:Generated_Source\PSoC4/CapSense_INT.c ****        CapSense_curRamSnsPtr->raw[CapSense_scanFreqIndex] = (uint16)CY_GET_REG32(CapSense_COUNTER_P
+ 795:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 796:Generated_Source\PSoC4/CapSense_INT.c ****     #endif /* (CapSense_ENABLE == CapSense_CSDV2) */
+ 797:Generated_Source\PSoC4/CapSense_INT.c **** }
+  81              		.loc 1 797 0
+  82              		@ sp needed
+  83 003c 7047     		bx	lr
+  84              	.L5:
+  85 003e C046     		.align	2
+  86              	.L4:
+  87 0040 00000000 		.word	CapSense_widgetIndex
+  88 0044 00000000 		.word	CapSense_dsFlash
+  89 0048 D0000B40 		.word	1074462928
+  90 004c 00000000 		.word	CapSense_curRamSnsPtr
+  91 0050 00000000 		.word	CapSense_scanFreqIndex
+  92              		.cfi_endproc
+  93              	.LFE3:
+  94              		.size	CapSense_SsCSDPostScan, .-CapSense_SsCSDPostScan
+  95              		.section	.text.CapSense_SsCSDInitNextScan,"ax",%progbits
+  96              		.align	2
+  97              		.code	16
+  98              		.thumb_func
+  99              		.type	CapSense_SsCSDInitNextScan, %function
+ 100              	CapSense_SsCSDInitNextScan:
+ 101              	.LFB4:
+ 798:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 799:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 800:Generated_Source\PSoC4/CapSense_INT.c **** /*******************************************************************************
+ 801:Generated_Source\PSoC4/CapSense_INT.c **** * Function Name: CapSense_SsCSDInitNextScan
+ 802:Generated_Source\PSoC4/CapSense_INT.c **** ****************************************************************************//**
+ 803:Generated_Source\PSoC4/CapSense_INT.c **** *
+ 804:Generated_Source\PSoC4/CapSense_INT.c **** * \brief
+ 805:Generated_Source\PSoC4/CapSense_INT.c **** *   This function initializes the next sensor scan.
+ 806:Generated_Source\PSoC4/CapSense_INT.c **** *
+ 807:Generated_Source\PSoC4/CapSense_INT.c **** * \details
+ 808:Generated_Source\PSoC4/CapSense_INT.c **** *   The function increments the sensor index, updates sense clock for matrix
+ 809:Generated_Source\PSoC4/CapSense_INT.c **** *   or touchpad widgets only, sets up Compensation IDAC, enables the sensor and
+ 810:Generated_Source\PSoC4/CapSense_INT.c **** *   scans it. When all the sensors are scanned it continues to set up the next widget
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 17
+
+
+ 811:Generated_Source\PSoC4/CapSense_INT.c **** *   until all the widgets are scanned. The CSD block is disabled when all the widgets are
+ 812:Generated_Source\PSoC4/CapSense_INT.c **** *   scanned.
+ 813:Generated_Source\PSoC4/CapSense_INT.c **** *
+ 814:Generated_Source\PSoC4/CapSense_INT.c **** *******************************************************************************/
+ 815:Generated_Source\PSoC4/CapSense_INT.c **** static void CapSense_SsCSDInitNextScan(void)
+ 816:Generated_Source\PSoC4/CapSense_INT.c **** {
+ 102              		.loc 1 816 0
+ 103              		.cfi_startproc
+ 104              		@ args = 0, pretend = 0, frame = 0
+ 105              		@ frame_needed = 0, uses_anonymous_args = 0
+ 106 0000 70B5     		push	{r4, r5, r6, lr}
+ 107              		.cfi_def_cfa_offset 16
+ 108              		.cfi_offset 4, -16
+ 109              		.cfi_offset 5, -12
+ 110              		.cfi_offset 6, -8
+ 111              		.cfi_offset 14, -4
+ 817:Generated_Source\PSoC4/CapSense_INT.c ****     /* Declare and initialize ptr to widget and sensor structures to appropriate address */
+ 818:Generated_Source\PSoC4/CapSense_INT.c ****     #if (((CapSense_ENABLE == CapSense_CSD_IDAC_COMP_EN) || \
+ 819:Generated_Source\PSoC4/CapSense_INT.c ****           (CapSense_CSD_MATRIX_WIDGET_EN || CapSense_CSD_TOUCHPAD_WIDGET_EN)) || \
+ 820:Generated_Source\PSoC4/CapSense_INT.c ****           (((CapSense_DISABLE == CapSense_CSD_COMMON_SNS_CLK_EN) && \
+ 821:Generated_Source\PSoC4/CapSense_INT.c ****           (CapSense_ENABLE == CapSense_CSDV2) && \
+ 822:Generated_Source\PSoC4/CapSense_INT.c ****           (CapSense_CSD_MATRIX_WIDGET_EN || CapSense_CSD_TOUCHPAD_WIDGET_EN))))
+ 823:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_RAM_WD_BASE_STRUCT *ptrWdgt = (CapSense_RAM_WD_BASE_STRUCT *)
+ 824:Generated_Source\PSoC4/CapSense_INT.c ****                                                         CapSense_dsFlash.wdgtArray[CapSense_widgetI
+ 112              		.loc 1 824 0
+ 113 0002 234C     		ldr	r4, .L10
+ 114 0004 2278     		ldrb	r2, [r4]
+ 823:Generated_Source\PSoC4/CapSense_INT.c ****                                                         CapSense_dsFlash.wdgtArray[CapSense_widgetI
+ 115              		.loc 1 823 0
+ 116 0006 2349     		ldr	r1, .L10+4
+ 117 0008 2C23     		movs	r3, #44
+ 118 000a 5A43     		muls	r2, r3
+ 119 000c 8A18     		adds	r2, r1, r2
+ 120 000e 5068     		ldr	r0, [r2, #4]
+ 121              	.LVL10:
+ 825:Generated_Source\PSoC4/CapSense_INT.c ****     #endif
+ 826:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 827:Generated_Source\PSoC4/CapSense_INT.c ****     /* Check if all the sensors are scanned in widget */
+ 828:Generated_Source\PSoC4/CapSense_INT.c ****     if (((uint8)CapSense_dsFlash.wdgtArray[(CapSense_widgetIndex)].totalNumSns - 1u) > CapSense_sen
+ 122              		.loc 1 828 0
+ 123 0010 2278     		ldrb	r2, [r4]
+ 124 0012 5343     		muls	r3, r2
+ 125 0014 CB18     		adds	r3, r1, r3
+ 126 0016 1A7E     		ldrb	r2, [r3, #24]
+ 127 0018 013A     		subs	r2, r2, #1
+ 128 001a 1F4B     		ldr	r3, .L10+8
+ 129 001c 1B78     		ldrb	r3, [r3]
+ 130 001e DBB2     		uxtb	r3, r3
+ 131 0020 9A42     		cmp	r2, r3
+ 132 0022 1DD9     		bls	.L7
+ 829:Generated_Source\PSoC4/CapSense_INT.c ****     {
+ 830:Generated_Source\PSoC4/CapSense_INT.c ****         /* Increment sensor index to configure next sensor in widget */
+ 831:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_sensorIndex++;
+ 133              		.loc 1 831 0
+ 134 0024 1C4C     		ldr	r4, .L10+8
+ 135 0026 2378     		ldrb	r3, [r4]
+ 136 0028 0133     		adds	r3, r3, #1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 18
+
+
+ 137 002a DBB2     		uxtb	r3, r3
+ 138 002c 2370     		strb	r3, [r4]
+ 832:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 833:Generated_Source\PSoC4/CapSense_INT.c ****         /* Update global pointer to CapSense_RAM_SNS_STRUCT to current sensor  */
+ 834:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_curRamSnsPtr = (CapSense_RAM_SNS_STRUCT *)
+ 139              		.loc 1 834 0
+ 140 002e 184D     		ldr	r5, .L10
+ 141 0030 2B78     		ldrb	r3, [r5]
+ 835:Generated_Source\PSoC4/CapSense_INT.c ****                                                   CapSense_dsFlash.wdgtArray[CapSense_widgetIndex].
+ 142              		.loc 1 835 0
+ 143 0032 2C22     		movs	r2, #44
+ 144 0034 5343     		muls	r3, r2
+ 145 0036 CB18     		adds	r3, r1, r3
+ 146 0038 9968     		ldr	r1, [r3, #8]
+ 836:Generated_Source\PSoC4/CapSense_INT.c ****                                                   + CapSense_sensorIndex;
+ 147              		.loc 1 836 0
+ 148 003a 2378     		ldrb	r3, [r4]
+ 149 003c DBB2     		uxtb	r3, r3
+ 150 003e 9A00     		lsls	r2, r3, #2
+ 151 0040 D318     		adds	r3, r2, r3
+ 152 0042 5A00     		lsls	r2, r3, #1
+ 153 0044 8A18     		adds	r2, r1, r2
+ 834:Generated_Source\PSoC4/CapSense_INT.c ****                                                   CapSense_dsFlash.wdgtArray[CapSense_widgetIndex].
+ 154              		.loc 1 834 0
+ 155 0046 154B     		ldr	r3, .L10+12
+ 156 0048 1A60     		str	r2, [r3]
+ 837:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 838:Generated_Source\PSoC4/CapSense_INT.c ****         /* Configure clock divider to row or column */
+ 839:Generated_Source\PSoC4/CapSense_INT.c ****         #if ((CapSense_DISABLE == CapSense_CSD_COMMON_SNS_CLK_EN) && \
+ 840:Generated_Source\PSoC4/CapSense_INT.c ****              (CapSense_CSD_MATRIX_WIDGET_EN || CapSense_CSD_TOUCHPAD_WIDGET_EN))
+ 841:Generated_Source\PSoC4/CapSense_INT.c ****             if ((CapSense_WD_TOUCHPAD_E == (CapSense_WD_TYPE_ENUM)CapSense_dsFlash.wdgtArray[(CapSe
+ 842:Generated_Source\PSoC4/CapSense_INT.c ****                 (CapSense_WD_MATRIX_BUTTON_E == (CapSense_WD_TYPE_ENUM)CapSense_dsFlash.wdgtArray[(
+ 843:Generated_Source\PSoC4/CapSense_INT.c ****             {
+ 844:Generated_Source\PSoC4/CapSense_INT.c ****                 CapSense_SsCSDConfigClock();
+ 845:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 846:Generated_Source\PSoC4/CapSense_INT.c ****                 #if (CapSense_ENABLE == CapSense_CSDV2)
+ 847:Generated_Source\PSoC4/CapSense_INT.c ****                      /* Set up scanning resolution */
+ 848:Generated_Source\PSoC4/CapSense_INT.c ****                     CapSense_SsCSDCalculateScanDuration(ptrWdgt);
+ 849:Generated_Source\PSoC4/CapSense_INT.c ****                 #endif /* (CapSense_ENABLE == CapSense_CSDV2) */
+ 850:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 851:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* ((CapSense_DISABLE == CapSense_CSD_COMMON_SNS_CLK_EN) && \
+ 852:Generated_Source\PSoC4/CapSense_INT.c ****                    (CapSense_CSD_MATRIX_WIDGET_EN || CapSense_CSD_TOUCHPAD_WIDGET_EN))) */
+ 853:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 854:Generated_Source\PSoC4/CapSense_INT.c ****         /* Setup Compensation IDAC for next sensor in widget */
+ 855:Generated_Source\PSoC4/CapSense_INT.c ****         #if ((CapSense_ENABLE == CapSense_CSD_IDAC_COMP_EN) || \
+ 856:Generated_Source\PSoC4/CapSense_INT.c ****              (CapSense_CSD_MATRIX_WIDGET_EN || CapSense_CSD_TOUCHPAD_WIDGET_EN))
+ 857:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_SsCSDSetUpIdacs(ptrWdgt);
+ 157              		.loc 1 857 0
+ 158 004a FFF7FEFF 		bl	CapSense_SsCSDSetUpIdacs
+ 159              	.LVL11:
+ 858:Generated_Source\PSoC4/CapSense_INT.c ****         #endif /* ((CapSense_ENABLE == CapSense_CSD_IDAC_COMP_EN) || \
+ 859:Generated_Source\PSoC4/CapSense_INT.c ****                    (CapSense_CSD_MATRIX_WIDGET_EN || CapSense_CSD_TOUCHPAD_WIDGET_EN)) */
+ 860:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 861:Generated_Source\PSoC4/CapSense_INT.c ****         /* Enable sensor */
+ 862:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_SsCSDConnectSensorExt((uint32)CapSense_widgetIndex, (uint32)CapSense_sensorIndex);
+ 160              		.loc 1 862 0
+ 161 004e 2878     		ldrb	r0, [r5]
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 19
+
+
+ 162 0050 C0B2     		uxtb	r0, r0
+ 163 0052 2178     		ldrb	r1, [r4]
+ 164 0054 C9B2     		uxtb	r1, r1
+ 165 0056 FFF7FEFF 		bl	CapSense_SsCSDConnectSensorExt
+ 166              	.LVL12:
+ 863:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 864:Generated_Source\PSoC4/CapSense_INT.c ****         /* Proceed scanning */
+ 865:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_SsCSDStartSample();
+ 167              		.loc 1 865 0
+ 168 005a FFF7FEFF 		bl	CapSense_SsCSDStartSample
+ 169              	.LVL13:
+ 170 005e 16E0     		b	.L6
+ 171              	.LVL14:
+ 172              	.L7:
+ 866:Generated_Source\PSoC4/CapSense_INT.c ****     }
+ 867:Generated_Source\PSoC4/CapSense_INT.c ****     /* Call scan next widget API if requested, if not, complete the scan  */
+ 868:Generated_Source\PSoC4/CapSense_INT.c ****     else
+ 869:Generated_Source\PSoC4/CapSense_INT.c ****     {
+ 870:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_sensorIndex = 0u;
+ 173              		.loc 1 870 0
+ 174 0060 0022     		movs	r2, #0
+ 175 0062 0D4B     		ldr	r3, .L10+8
+ 176 0064 1A70     		strb	r2, [r3]
+ 871:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 872:Generated_Source\PSoC4/CapSense_INT.c ****         /* Current widget is totally scanned. Reset WIDGET BUSY flag */
+ 873:Generated_Source\PSoC4/CapSense_INT.c ****         CapSense_dsRam.status &= ~CapSense_WDGT_SW_STS_BUSY;
+ 177              		.loc 1 873 0
+ 178 0066 0E4A     		ldr	r2, .L10+16
+ 179 0068 D168     		ldr	r1, [r2, #12]
+ 180 006a 0E4B     		ldr	r3, .L10+20
+ 181 006c 0B40     		ands	r3, r1
+ 182 006e D360     		str	r3, [r2, #12]
+ 874:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 875:Generated_Source\PSoC4/CapSense_INT.c ****         /* Check if all the widgets have been scanned */
+ 876:Generated_Source\PSoC4/CapSense_INT.c ****         if (CapSense_ENABLE == CapSense_requestScanAllWidget)
+ 183              		.loc 1 876 0
+ 184 0070 0D4B     		ldr	r3, .L10+24
+ 185 0072 1B78     		ldrb	r3, [r3]
+ 186 0074 012B     		cmp	r3, #1
+ 187 0076 02D1     		bne	.L9
+ 877:Generated_Source\PSoC4/CapSense_INT.c ****         {
+ 878:Generated_Source\PSoC4/CapSense_INT.c ****             /* Configure and begin scanning next widget */
+ 879:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_SsPostAllWidgetsScan();
+ 188              		.loc 1 879 0
+ 189 0078 FFF7FEFF 		bl	CapSense_SsPostAllWidgetsScan
+ 190              	.LVL15:
+ 191 007c 07E0     		b	.L6
+ 192              	.LVL16:
+ 193              	.L9:
+ 880:Generated_Source\PSoC4/CapSense_INT.c ****         }
+ 881:Generated_Source\PSoC4/CapSense_INT.c ****         else
+ 882:Generated_Source\PSoC4/CapSense_INT.c ****         {
+ 883:Generated_Source\PSoC4/CapSense_INT.c ****             #if (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN)
+ 884:Generated_Source\PSoC4/CapSense_INT.c ****                 #if (CapSense_ENABLE == CapSense_CSDV2)
+ 885:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Disable the CSD block */
+ 886:Generated_Source\PSoC4/CapSense_INT.c ****                     CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd);
+ 887:Generated_Source\PSoC4/CapSense_INT.c ****                 #else
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 20
+
+
+ 888:Generated_Source\PSoC4/CapSense_INT.c ****                     /* Disable the CSD block. Connect Vref Buffer to AMUX bus */
+ 889:Generated_Source\PSoC4/CapSense_INT.c ****                     #if ((CapSense_CSH_PRECHARGE_IO_BUF == CapSense_CSD_CSH_PRECHARGE_SRC) &&\
+ 890:Generated_Source\PSoC4/CapSense_INT.c ****                          (CapSense_ENABLE == CapSense_CSD_SHIELD_TANK_EN))
+ 891:Generated_Source\PSoC4/CapSense_INT.c ****                         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CMOD_PRECHA
+ 892:Generated_Source\PSoC4/CapSense_INT.c ****                     #else
+ 893:Generated_Source\PSoC4/CapSense_INT.c ****                         CY_SET_REG32(CapSense_CONFIG_PTR, CapSense_configCsd | CapSense_CTANK_PRECH
+ 894:Generated_Source\PSoC4/CapSense_INT.c ****                     #endif /* ((CapSense_CSH_PRECHARGE_IO_BUF == CapSense_CSD_CSH_PRECHARGE_SRC) &&
+ 895:Generated_Source\PSoC4/CapSense_INT.c ****                                (CapSense_ENABLE == CapSense_CSD_SHIELD_TANK_EN)) */
+ 896:Generated_Source\PSoC4/CapSense_INT.c ****                 #endif /* (CapSense_ENABLE == CapSense_CSDV2) */
+ 897:Generated_Source\PSoC4/CapSense_INT.c ****             #endif /* (CapSense_ENABLE == CapSense_BLOCK_OFF_AFTER_SCAN_EN) */
+ 898:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 899:Generated_Source\PSoC4/CapSense_INT.c ****             /* All widgets are totally scanned. Reset BUSY flag */
+ 900:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_dsRam.status &= ~CapSense_SW_STS_BUSY;
+ 194              		.loc 1 900 0
+ 195 007e 084B     		ldr	r3, .L10+16
+ 196 0080 DA68     		ldr	r2, [r3, #12]
+ 197 0082 8021     		movs	r1, #128
+ 198 0084 8A43     		bics	r2, r1
+ 199 0086 DA60     		str	r2, [r3, #12]
+ 901:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 902:Generated_Source\PSoC4/CapSense_INT.c ****             /* Update scan Counter */
+ 903:Generated_Source\PSoC4/CapSense_INT.c ****             CapSense_dsRam.scanCounter++;
+ 200              		.loc 1 903 0
+ 201 0088 1A89     		ldrh	r2, [r3, #8]
+ 202 008a 0132     		adds	r2, r2, #1
+ 203 008c 1A81     		strh	r2, [r3, #8]
+ 204              	.LVL17:
+ 205              	.L6:
+ 904:Generated_Source\PSoC4/CapSense_INT.c ****         }
+ 905:Generated_Source\PSoC4/CapSense_INT.c ****     }
+ 906:Generated_Source\PSoC4/CapSense_INT.c **** }
+ 206              		.loc 1 906 0
+ 207              		@ sp needed
+ 208 008e 70BD     		pop	{r4, r5, r6, pc}
+ 209              	.L11:
+ 210              		.align	2
+ 211              	.L10:
+ 212 0090 00000000 		.word	CapSense_widgetIndex
+ 213 0094 00000000 		.word	CapSense_dsFlash
+ 214 0098 00000000 		.word	CapSense_sensorIndex
+ 215 009c 00000000 		.word	CapSense_curRamSnsPtr
+ 216 00a0 00000000 		.word	CapSense_dsRam
+ 217 00a4 FFFFFEFF 		.word	-65537
+ 218 00a8 00000000 		.word	CapSense_requestScanAllWidget
+ 219              		.cfi_endproc
+ 220              	.LFE4:
+ 221              		.size	CapSense_SsCSDInitNextScan, .-CapSense_SsCSDInitNextScan
+ 222              		.section	.text.CapSense_CSDPostSingleScan,"ax",%progbits
+ 223              		.align	2
+ 224              		.global	CapSense_CSDPostSingleScan
+ 225              		.code	16
+ 226              		.thumb_func
+ 227              		.type	CapSense_CSDPostSingleScan, %function
+ 228              	CapSense_CSDPostSingleScan:
+ 229              	.LFB1:
+ 122:Generated_Source\PSoC4/CapSense_INT.c ****         #ifdef CapSense_ENTRY_CALLBACK
+ 230              		.loc 1 122 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 21
+
+
+ 231              		.cfi_startproc
+ 232              		@ args = 0, pretend = 0, frame = 0
+ 233              		@ frame_needed = 0, uses_anonymous_args = 0
+ 234 0000 10B5     		push	{r4, lr}
+ 235              		.cfi_def_cfa_offset 8
+ 236              		.cfi_offset 4, -8
+ 237              		.cfi_offset 14, -4
+ 128:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 238              		.loc 1 128 0
+ 239 0002 8322     		movs	r2, #131
+ 240 0004 5200     		lsls	r2, r2, #1
+ 241 0006 064B     		ldr	r3, .L13
+ 242 0008 1A60     		str	r2, [r3]
+ 148:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 243              		.loc 1 148 0
+ 244 000a FFF7FEFF 		bl	CapSense_SsCSDPostScan
+ 245              	.LVL18:
+ 186:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 246              		.loc 1 186 0
+ 247 000e 054B     		ldr	r3, .L13+4
+ 248 0010 1A89     		ldrh	r2, [r3, #8]
+ 249 0012 0132     		adds	r2, r2, #1
+ 250 0014 1A81     		strh	r2, [r3, #8]
+ 189:Generated_Source\PSoC4/CapSense_INT.c ****                 }
+ 251              		.loc 1 189 0
+ 252 0016 D968     		ldr	r1, [r3, #12]
+ 253 0018 034A     		ldr	r2, .L13+8
+ 254 001a 0A40     		ands	r2, r1
+ 255 001c DA60     		str	r2, [r3, #12]
+ 199:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 256              		.loc 1 199 0
+ 257              		@ sp needed
+ 258 001e 10BD     		pop	{r4, pc}
+ 259              	.L14:
+ 260              		.align	2
+ 261              	.L13:
+ 262 0020 F0000B40 		.word	1074462960
+ 263 0024 00000000 		.word	CapSense_dsRam
+ 264 0028 7FFFFEFF 		.word	-65665
+ 265              		.cfi_endproc
+ 266              	.LFE1:
+ 267              		.size	CapSense_CSDPostSingleScan, .-CapSense_CSDPostSingleScan
+ 268              		.section	.text.CapSense_CSDPostMultiScan,"ax",%progbits
+ 269              		.align	2
+ 270              		.global	CapSense_CSDPostMultiScan
+ 271              		.code	16
+ 272              		.thumb_func
+ 273              		.type	CapSense_CSDPostMultiScan, %function
+ 274              	CapSense_CSDPostMultiScan:
+ 275              	.LFB2:
+ 238:Generated_Source\PSoC4/CapSense_INT.c ****         /* Declare and initialize ptr to sensor IO structure to appropriate address */
+ 276              		.loc 1 238 0
+ 277              		.cfi_startproc
+ 278              		@ args = 0, pretend = 0, frame = 0
+ 279              		@ frame_needed = 0, uses_anonymous_args = 0
+ 280 0000 10B5     		push	{r4, lr}
+ 281              		.cfi_def_cfa_offset 8
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 22
+
+
+ 282              		.cfi_offset 4, -8
+ 283              		.cfi_offset 14, -4
+ 240:Generated_Source\PSoC4/CapSense_INT.c ****                                                           CapSense_dsFlash.wdgtArray[CapSense_widge
+ 284              		.loc 1 240 0
+ 285 0002 0C4B     		ldr	r3, .L16
+ 286 0004 1B78     		ldrb	r3, [r3]
+ 241:Generated_Source\PSoC4/CapSense_INT.c ****                                                           + CapSense_sensorIndex;
+ 287              		.loc 1 241 0
+ 288 0006 2C22     		movs	r2, #44
+ 289 0008 5343     		muls	r3, r2
+ 290 000a 0B4A     		ldr	r2, .L16+4
+ 291 000c 9C58     		ldr	r4, [r3, r2]
+ 242:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 292              		.loc 1 242 0
+ 293 000e 0B4B     		ldr	r3, .L16+8
+ 294 0010 1A78     		ldrb	r2, [r3]
+ 295 0012 D2B2     		uxtb	r2, r2
+ 296 0014 D100     		lsls	r1, r2, #3
+ 297 0016 8A1A     		subs	r2, r1, r2
+ 298 0018 9300     		lsls	r3, r2, #2
+ 240:Generated_Source\PSoC4/CapSense_INT.c ****                                                           CapSense_dsFlash.wdgtArray[CapSense_widge
+ 299              		.loc 1 240 0
+ 300 001a E418     		adds	r4, r4, r3
+ 301              	.LVL19:
+ 249:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 302              		.loc 1 249 0
+ 303 001c 8322     		movs	r2, #131
+ 304 001e 5200     		lsls	r2, r2, #1
+ 305 0020 074B     		ldr	r3, .L16+12
+ 306 0022 1A60     		str	r2, [r3]
+ 269:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 307              		.loc 1 269 0
+ 308 0024 FFF7FEFF 		bl	CapSense_SsCSDPostScan
+ 309              	.LVL20:
+ 277:Generated_Source\PSoC4/CapSense_INT.c ****             }
+ 310              		.loc 1 277 0
+ 311 0028 2000     		movs	r0, r4
+ 312 002a FFF7FEFF 		bl	CapSense_CSDDisconnectSns
+ 313              	.LVL21:
+ 302:Generated_Source\PSoC4/CapSense_INT.c ****             #endif /* (CapSense_ENABLE == CapSense_MULTI_FREQ_SCAN_EN) */
+ 314              		.loc 1 302 0
+ 315 002e FFF7FEFF 		bl	CapSense_SsCSDInitNextScan
+ 316              	.LVL22:
+ 311:Generated_Source\PSoC4/CapSense_INT.c **** 
+ 317              		.loc 1 311 0
+ 318              		@ sp needed
+ 319              	.LVL23:
+ 320 0032 10BD     		pop	{r4, pc}
+ 321              	.L17:
+ 322              		.align	2
+ 323              	.L16:
+ 324 0034 00000000 		.word	CapSense_widgetIndex
+ 325 0038 00000000 		.word	CapSense_dsFlash
+ 326 003c 00000000 		.word	CapSense_sensorIndex
+ 327 0040 F0000B40 		.word	1074462960
+ 328              		.cfi_endproc
+ 329              	.LFE2:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 23
+
+
+ 330              		.size	CapSense_CSDPostMultiScan, .-CapSense_CSDPostMultiScan
+ 331              		.text
+ 332              	.Letext0:
+ 333              		.file 2 "Generated_Source\\PSoC4\\cytypes.h"
+ 334              		.file 3 "Generated_Source\\PSoC4\\CapSense_Configuration.h"
+ 335              		.file 4 "Generated_Source\\PSoC4\\CapSense_SmartSense_LL.h"
+ 336              		.file 5 "Generated_Source\\PSoC4\\CapSense_Structure.h"
+ 337              		.file 6 "Generated_Source\\PSoC4\\CapSense_Sensing.h"
+ 338              		.file 7 "Generated_Source\\PSoC4\\CapSense_SensingCSD_LL.h"
+ 339              		.section	.debug_info,"",%progbits
+ 340              	.Ldebug_info0:
+ 341 0000 D8070000 		.4byte	0x7d8
+ 342 0004 0400     		.2byte	0x4
+ 343 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 344 000a 04       		.byte	0x4
+ 345 000b 01       		.uleb128 0x1
+ 346 000c 2B010000 		.4byte	.LASF115
+ 347 0010 0C       		.byte	0xc
+ 348 0011 7A030000 		.4byte	.LASF116
+ 349 0015 5E000000 		.4byte	.LASF117
+ 350 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 351 001d 00000000 		.4byte	0
+ 352 0021 00000000 		.4byte	.Ldebug_line0
+ 353 0025 02       		.uleb128 0x2
+ 354 0026 01       		.byte	0x1
+ 355 0027 06       		.byte	0x6
+ 356 0028 05060000 		.4byte	.LASF0
+ 357 002c 02       		.uleb128 0x2
+ 358 002d 01       		.byte	0x1
+ 359 002e 08       		.byte	0x8
+ 360 002f 41030000 		.4byte	.LASF1
+ 361 0033 02       		.uleb128 0x2
+ 362 0034 02       		.byte	0x2
+ 363 0035 05       		.byte	0x5
+ 364 0036 E2000000 		.4byte	.LASF2
+ 365 003a 02       		.uleb128 0x2
+ 366 003b 02       		.byte	0x2
+ 367 003c 07       		.byte	0x7
+ 368 003d D8040000 		.4byte	.LASF3
+ 369 0041 02       		.uleb128 0x2
+ 370 0042 04       		.byte	0x4
+ 371 0043 05       		.byte	0x5
+ 372 0044 E0020000 		.4byte	.LASF4
+ 373 0048 02       		.uleb128 0x2
+ 374 0049 04       		.byte	0x4
+ 375 004a 07       		.byte	0x7
+ 376 004b 6C050000 		.4byte	.LASF5
+ 377 004f 02       		.uleb128 0x2
+ 378 0050 08       		.byte	0x8
+ 379 0051 05       		.byte	0x5
+ 380 0052 D1010000 		.4byte	.LASF6
+ 381 0056 02       		.uleb128 0x2
+ 382 0057 08       		.byte	0x8
+ 383 0058 07       		.byte	0x7
+ 384 0059 28040000 		.4byte	.LASF7
+ 385 005d 03       		.uleb128 0x3
+ 386 005e 04       		.byte	0x4
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 24
+
+
+ 387 005f 05       		.byte	0x5
+ 388 0060 696E7400 		.ascii	"int\000"
+ 389 0064 02       		.uleb128 0x2
+ 390 0065 04       		.byte	0x4
+ 391 0066 07       		.byte	0x7
+ 392 0067 4C040000 		.4byte	.LASF8
+ 393 006b 04       		.uleb128 0x4
+ 394 006c 55020000 		.4byte	.LASF9
+ 395 0070 02       		.byte	0x2
+ 396 0071 E401     		.2byte	0x1e4
+ 397 0073 2C000000 		.4byte	0x2c
+ 398 0077 04       		.uleb128 0x4
+ 399 0078 3E020000 		.4byte	.LASF10
+ 400 007c 02       		.byte	0x2
+ 401 007d E501     		.2byte	0x1e5
+ 402 007f 3A000000 		.4byte	0x3a
+ 403 0083 04       		.uleb128 0x4
+ 404 0084 65050000 		.4byte	.LASF11
+ 405 0088 02       		.byte	0x2
+ 406 0089 E601     		.2byte	0x1e6
+ 407 008b 48000000 		.4byte	0x48
+ 408 008f 02       		.uleb128 0x2
+ 409 0090 04       		.byte	0x4
+ 410 0091 04       		.byte	0x4
+ 411 0092 7F020000 		.4byte	.LASF12
+ 412 0096 02       		.uleb128 0x2
+ 413 0097 08       		.byte	0x8
+ 414 0098 04       		.byte	0x4
+ 415 0099 7E050000 		.4byte	.LASF13
+ 416 009d 02       		.uleb128 0x2
+ 417 009e 01       		.byte	0x1
+ 418 009f 08       		.byte	0x8
+ 419 00a0 BD020000 		.4byte	.LASF14
+ 420 00a4 05       		.uleb128 0x5
+ 421 00a5 6B000000 		.4byte	0x6b
+ 422 00a9 04       		.uleb128 0x4
+ 423 00aa 72040000 		.4byte	.LASF15
+ 424 00ae 02       		.byte	0x2
+ 425 00af 9002     		.2byte	0x290
+ 426 00b1 B5000000 		.4byte	0xb5
+ 427 00b5 05       		.uleb128 0x5
+ 428 00b6 83000000 		.4byte	0x83
+ 429 00ba 04       		.uleb128 0x4
+ 430 00bb D4030000 		.4byte	.LASF16
+ 431 00bf 03       		.byte	0x3
+ 432 00c0 2101     		.2byte	0x121
+ 433 00c2 77000000 		.4byte	0x77
+ 434 00c6 04       		.uleb128 0x4
+ 435 00c7 90040000 		.4byte	.LASF17
+ 436 00cb 03       		.byte	0x3
+ 437 00cc 2501     		.2byte	0x125
+ 438 00ce 6B000000 		.4byte	0x6b
+ 439 00d2 06       		.uleb128 0x6
+ 440 00d3 0C       		.byte	0xc
+ 441 00d4 04       		.byte	0x4
+ 442 00d5 6E       		.byte	0x6e
+ 443 00d6 2F010000 		.4byte	0x12f
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 25
+
+
+ 444 00da 07       		.uleb128 0x7
+ 445 00db 59040000 		.4byte	.LASF18
+ 446 00df 04       		.byte	0x4
+ 447 00e0 73       		.byte	0x73
+ 448 00e1 77000000 		.4byte	0x77
+ 449 00e5 00       		.byte	0
+ 450 00e6 07       		.uleb128 0x7
+ 451 00e7 6B040000 		.4byte	.LASF19
+ 452 00eb 04       		.byte	0x4
+ 453 00ec 77       		.byte	0x77
+ 454 00ed 77000000 		.4byte	0x77
+ 455 00f1 02       		.byte	0x2
+ 456 00f2 07       		.uleb128 0x7
+ 457 00f3 F6010000 		.4byte	.LASF20
+ 458 00f7 04       		.byte	0x4
+ 459 00f8 7B       		.byte	0x7b
+ 460 00f9 77000000 		.4byte	0x77
+ 461 00fd 04       		.byte	0x4
+ 462 00fe 07       		.uleb128 0x7
+ 463 00ff FD010000 		.4byte	.LASF21
+ 464 0103 04       		.byte	0x4
+ 465 0104 7F       		.byte	0x7f
+ 466 0105 77000000 		.4byte	0x77
+ 467 0109 06       		.byte	0x6
+ 468 010a 07       		.uleb128 0x7
+ 469 010b 04020000 		.4byte	.LASF22
+ 470 010f 04       		.byte	0x4
+ 471 0110 83       		.byte	0x83
+ 472 0111 77000000 		.4byte	0x77
+ 473 0115 08       		.byte	0x8
+ 474 0116 07       		.uleb128 0x7
+ 475 0117 4B000000 		.4byte	.LASF23
+ 476 011b 04       		.byte	0x4
+ 477 011c 87       		.byte	0x87
+ 478 011d 6B000000 		.4byte	0x6b
+ 479 0121 0A       		.byte	0xa
+ 480 0122 07       		.uleb128 0x7
+ 481 0123 26020000 		.4byte	.LASF24
+ 482 0127 04       		.byte	0x4
+ 483 0128 8B       		.byte	0x8b
+ 484 0129 6B000000 		.4byte	0x6b
+ 485 012d 0B       		.byte	0xb
+ 486 012e 00       		.byte	0
+ 487 012f 08       		.uleb128 0x8
+ 488 0130 AD060000 		.4byte	.LASF25
+ 489 0134 04       		.byte	0x4
+ 490 0135 8C       		.byte	0x8c
+ 491 0136 D2000000 		.4byte	0xd2
+ 492 013a 06       		.uleb128 0x6
+ 493 013b 12       		.byte	0x12
+ 494 013c 05       		.byte	0x5
+ 495 013d 8E       		.byte	0x8e
+ 496 013e D3010000 		.4byte	0x1d3
+ 497 0142 07       		.uleb128 0x7
+ 498 0143 CD040000 		.4byte	.LASF26
+ 499 0147 05       		.byte	0x5
+ 500 0148 93       		.byte	0x93
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 26
+
+
+ 501 0149 77000000 		.4byte	0x77
+ 502 014d 00       		.byte	0
+ 503 014e 07       		.uleb128 0x7
+ 504 014f 30030000 		.4byte	.LASF27
+ 505 0153 05       		.byte	0x5
+ 506 0154 98       		.byte	0x98
+ 507 0155 BA000000 		.4byte	0xba
+ 508 0159 02       		.byte	0x2
+ 509 015a 07       		.uleb128 0x7
+ 510 015b 2D020000 		.4byte	.LASF28
+ 511 015f 05       		.byte	0x5
+ 512 0160 9D       		.byte	0x9d
+ 513 0161 6B000000 		.4byte	0x6b
+ 514 0165 04       		.byte	0x4
+ 515 0166 07       		.uleb128 0x7
+ 516 0167 41050000 		.4byte	.LASF29
+ 517 016b 05       		.byte	0x5
+ 518 016c A2       		.byte	0xa2
+ 519 016d 6B000000 		.4byte	0x6b
+ 520 0171 05       		.byte	0x5
+ 521 0172 07       		.uleb128 0x7
+ 522 0173 4F030000 		.4byte	.LASF30
+ 523 0177 05       		.byte	0x5
+ 524 0178 A8       		.byte	0xa8
+ 525 0179 6B000000 		.4byte	0x6b
+ 526 017d 06       		.byte	0x6
+ 527 017e 07       		.uleb128 0x7
+ 528 017f F5000000 		.4byte	.LASF31
+ 529 0183 05       		.byte	0x5
+ 530 0184 AE       		.byte	0xae
+ 531 0185 6B000000 		.4byte	0x6b
+ 532 0189 07       		.byte	0x7
+ 533 018a 07       		.uleb128 0x7
+ 534 018b A0030000 		.4byte	.LASF32
+ 535 018f 05       		.byte	0x5
+ 536 0190 B5       		.byte	0xb5
+ 537 0191 C6000000 		.4byte	0xc6
+ 538 0195 08       		.byte	0x8
+ 539 0196 07       		.uleb128 0x7
+ 540 0197 C5000000 		.4byte	.LASF33
+ 541 019b 05       		.byte	0x5
+ 542 019c BC       		.byte	0xbc
+ 543 019d D3010000 		.4byte	0x1d3
+ 544 01a1 09       		.byte	0x9
+ 545 01a2 07       		.uleb128 0x7
+ 546 01a3 61020000 		.4byte	.LASF34
+ 547 01a7 05       		.byte	0x5
+ 548 01a8 C4       		.byte	0xc4
+ 549 01a9 77000000 		.4byte	0x77
+ 550 01ad 0A       		.byte	0xa
+ 551 01ae 07       		.uleb128 0x7
+ 552 01af E9010000 		.4byte	.LASF35
+ 553 01b3 05       		.byte	0x5
+ 554 01b4 C9       		.byte	0xc9
+ 555 01b5 6B000000 		.4byte	0x6b
+ 556 01b9 0C       		.byte	0xc
+ 557 01ba 07       		.uleb128 0x7
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 27
+
+
+ 558 01bb 46060000 		.4byte	.LASF36
+ 559 01bf 05       		.byte	0x5
+ 560 01c0 CF       		.byte	0xcf
+ 561 01c1 77000000 		.4byte	0x77
+ 562 01c5 0E       		.byte	0xe
+ 563 01c6 07       		.uleb128 0x7
+ 564 01c7 5E050000 		.4byte	.LASF37
+ 565 01cb 05       		.byte	0x5
+ 566 01cc D4       		.byte	0xd4
+ 567 01cd 77000000 		.4byte	0x77
+ 568 01d1 10       		.byte	0x10
+ 569 01d2 00       		.byte	0
+ 570 01d3 09       		.uleb128 0x9
+ 571 01d4 6B000000 		.4byte	0x6b
+ 572 01d8 E3010000 		.4byte	0x1e3
+ 573 01dc 0A       		.uleb128 0xa
+ 574 01dd E3010000 		.4byte	0x1e3
+ 575 01e1 00       		.byte	0
+ 576 01e2 00       		.byte	0
+ 577 01e3 02       		.uleb128 0x2
+ 578 01e4 04       		.byte	0x4
+ 579 01e5 07       		.byte	0x7
+ 580 01e6 00010000 		.4byte	.LASF38
+ 581 01ea 08       		.uleb128 0x8
+ 582 01eb 6A060000 		.4byte	.LASF39
+ 583 01ef 05       		.byte	0x5
+ 584 01f0 D5       		.byte	0xd5
+ 585 01f1 3A010000 		.4byte	0x13a
+ 586 01f5 06       		.uleb128 0x6
+ 587 01f6 14       		.byte	0x14
+ 588 01f7 05       		.byte	0x5
+ 589 01f8 DA       		.byte	0xda
+ 590 01f9 A1020000 		.4byte	0x2a1
+ 591 01fd 07       		.uleb128 0x7
+ 592 01fe CD040000 		.4byte	.LASF26
+ 593 0202 05       		.byte	0x5
+ 594 0203 DF       		.byte	0xdf
+ 595 0204 77000000 		.4byte	0x77
+ 596 0208 00       		.byte	0
+ 597 0209 07       		.uleb128 0x7
+ 598 020a 30030000 		.4byte	.LASF27
+ 599 020e 05       		.byte	0x5
+ 600 020f E4       		.byte	0xe4
+ 601 0210 BA000000 		.4byte	0xba
+ 602 0214 02       		.byte	0x2
+ 603 0215 07       		.uleb128 0x7
+ 604 0216 2D020000 		.4byte	.LASF28
+ 605 021a 05       		.byte	0x5
+ 606 021b E9       		.byte	0xe9
+ 607 021c 6B000000 		.4byte	0x6b
+ 608 0220 04       		.byte	0x4
+ 609 0221 07       		.uleb128 0x7
+ 610 0222 41050000 		.4byte	.LASF29
+ 611 0226 05       		.byte	0x5
+ 612 0227 EE       		.byte	0xee
+ 613 0228 6B000000 		.4byte	0x6b
+ 614 022c 05       		.byte	0x5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 28
+
+
+ 615 022d 07       		.uleb128 0x7
+ 616 022e 4F030000 		.4byte	.LASF30
+ 617 0232 05       		.byte	0x5
+ 618 0233 F4       		.byte	0xf4
+ 619 0234 6B000000 		.4byte	0x6b
+ 620 0238 06       		.byte	0x6
+ 621 0239 07       		.uleb128 0x7
+ 622 023a F5000000 		.4byte	.LASF31
+ 623 023e 05       		.byte	0x5
+ 624 023f FA       		.byte	0xfa
+ 625 0240 6B000000 		.4byte	0x6b
+ 626 0244 07       		.byte	0x7
+ 627 0245 0B       		.uleb128 0xb
+ 628 0246 A0030000 		.4byte	.LASF32
+ 629 024a 05       		.byte	0x5
+ 630 024b 0101     		.2byte	0x101
+ 631 024d C6000000 		.4byte	0xc6
+ 632 0251 08       		.byte	0x8
+ 633 0252 0B       		.uleb128 0xb
+ 634 0253 C5000000 		.4byte	.LASF33
+ 635 0257 05       		.byte	0x5
+ 636 0258 0801     		.2byte	0x108
+ 637 025a D3010000 		.4byte	0x1d3
+ 638 025e 09       		.byte	0x9
+ 639 025f 0B       		.uleb128 0xb
+ 640 0260 61020000 		.4byte	.LASF34
+ 641 0264 05       		.byte	0x5
+ 642 0265 1001     		.2byte	0x110
+ 643 0267 77000000 		.4byte	0x77
+ 644 026b 0A       		.byte	0xa
+ 645 026c 0B       		.uleb128 0xb
+ 646 026d E9010000 		.4byte	.LASF35
+ 647 0271 05       		.byte	0x5
+ 648 0272 1501     		.2byte	0x115
+ 649 0274 6B000000 		.4byte	0x6b
+ 650 0278 0C       		.byte	0xc
+ 651 0279 0B       		.uleb128 0xb
+ 652 027a 46060000 		.4byte	.LASF36
+ 653 027e 05       		.byte	0x5
+ 654 027f 1B01     		.2byte	0x11b
+ 655 0281 77000000 		.4byte	0x77
+ 656 0285 0E       		.byte	0xe
+ 657 0286 0B       		.uleb128 0xb
+ 658 0287 5E050000 		.4byte	.LASF37
+ 659 028b 05       		.byte	0x5
+ 660 028c 2001     		.2byte	0x120
+ 661 028e 77000000 		.4byte	0x77
+ 662 0292 10       		.byte	0x10
+ 663 0293 0B       		.uleb128 0xb
+ 664 0294 61060000 		.4byte	.LASF40
+ 665 0298 05       		.byte	0x5
+ 666 0299 2501     		.2byte	0x125
+ 667 029b A1020000 		.4byte	0x2a1
+ 668 029f 12       		.byte	0x12
+ 669 02a0 00       		.byte	0
+ 670 02a1 09       		.uleb128 0x9
+ 671 02a2 77000000 		.4byte	0x77
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 29
+
+
+ 672 02a6 B1020000 		.4byte	0x2b1
+ 673 02aa 0A       		.uleb128 0xa
+ 674 02ab E3010000 		.4byte	0x1e3
+ 675 02af 00       		.byte	0
+ 676 02b0 00       		.byte	0
+ 677 02b1 04       		.uleb128 0x4
+ 678 02b2 FE060000 		.4byte	.LASF41
+ 679 02b6 05       		.byte	0x5
+ 680 02b7 2601     		.2byte	0x126
+ 681 02b9 F5010000 		.4byte	0x1f5
+ 682 02bd 0C       		.uleb128 0xc
+ 683 02be 14       		.byte	0x14
+ 684 02bf 05       		.byte	0x5
+ 685 02c0 2C01     		.2byte	0x12c
+ 686 02c2 D4020000 		.4byte	0x2d4
+ 687 02c6 0D       		.uleb128 0xd
+ 688 02c7 736C6400 		.ascii	"sld\000"
+ 689 02cb 05       		.byte	0x5
+ 690 02cc 3101     		.2byte	0x131
+ 691 02ce B1020000 		.4byte	0x2b1
+ 692 02d2 00       		.byte	0
+ 693 02d3 00       		.byte	0
+ 694 02d4 04       		.uleb128 0x4
+ 695 02d5 91020000 		.4byte	.LASF42
+ 696 02d9 05       		.byte	0x5
+ 697 02da 3201     		.2byte	0x132
+ 698 02dc BD020000 		.4byte	0x2bd
+ 699 02e0 0C       		.uleb128 0xc
+ 700 02e1 0A       		.byte	0xa
+ 701 02e2 05       		.byte	0x5
+ 702 02e3 3801     		.2byte	0x138
+ 703 02e5 38030000 		.4byte	0x338
+ 704 02e9 0D       		.uleb128 0xd
+ 705 02ea 72617700 		.ascii	"raw\000"
+ 706 02ee 05       		.byte	0x5
+ 707 02ef 3D01     		.2byte	0x13d
+ 708 02f1 A1020000 		.4byte	0x2a1
+ 709 02f5 00       		.byte	0
+ 710 02f6 0B       		.uleb128 0xb
+ 711 02f7 3B000000 		.4byte	.LASF43
+ 712 02fb 05       		.byte	0x5
+ 713 02fc 4201     		.2byte	0x142
+ 714 02fe A1020000 		.4byte	0x2a1
+ 715 0302 02       		.byte	0x2
+ 716 0303 0B       		.uleb128 0xb
+ 717 0304 9F050000 		.4byte	.LASF44
+ 718 0308 05       		.byte	0x5
+ 719 0309 4801     		.2byte	0x148
+ 720 030b D3010000 		.4byte	0x1d3
+ 721 030f 04       		.byte	0x4
+ 722 0310 0B       		.uleb128 0xb
+ 723 0311 A8000000 		.4byte	.LASF45
+ 724 0315 05       		.byte	0x5
+ 725 0316 4D01     		.2byte	0x14d
+ 726 0318 BA000000 		.4byte	0xba
+ 727 031c 06       		.byte	0x6
+ 728 031d 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 30
+
+
+ 729 031e D3050000 		.4byte	.LASF46
+ 730 0322 05       		.byte	0x5
+ 731 0323 5201     		.2byte	0x152
+ 732 0325 38030000 		.4byte	0x338
+ 733 0329 08       		.byte	0x8
+ 734 032a 0B       		.uleb128 0xb
+ 735 032b BD010000 		.4byte	.LASF47
+ 736 032f 05       		.byte	0x5
+ 737 0330 5701     		.2byte	0x157
+ 738 0332 D3010000 		.4byte	0x1d3
+ 739 0336 09       		.byte	0x9
+ 740 0337 00       		.byte	0
+ 741 0338 09       		.uleb128 0x9
+ 742 0339 C6000000 		.4byte	0xc6
+ 743 033d 48030000 		.4byte	0x348
+ 744 0341 0A       		.uleb128 0xa
+ 745 0342 E3010000 		.4byte	0x1e3
+ 746 0346 00       		.byte	0
+ 747 0347 00       		.byte	0
+ 748 0348 04       		.uleb128 0x4
+ 749 0349 78040000 		.4byte	.LASF48
+ 750 034d 05       		.byte	0x5
+ 751 034e 5801     		.2byte	0x158
+ 752 0350 E0020000 		.4byte	0x2e0
+ 753 0354 0C       		.uleb128 0xc
+ 754 0355 32       		.byte	0x32
+ 755 0356 05       		.byte	0x5
+ 756 0357 5E01     		.2byte	0x15e
+ 757 0359 6B030000 		.4byte	0x36b
+ 758 035d 0D       		.uleb128 0xd
+ 759 035e 736C6400 		.ascii	"sld\000"
+ 760 0362 05       		.byte	0x5
+ 761 0363 6301     		.2byte	0x163
+ 762 0365 6B030000 		.4byte	0x36b
+ 763 0369 00       		.byte	0
+ 764 036a 00       		.byte	0
+ 765 036b 09       		.uleb128 0x9
+ 766 036c 48030000 		.4byte	0x348
+ 767 0370 7B030000 		.4byte	0x37b
+ 768 0374 0A       		.uleb128 0xa
+ 769 0375 E3010000 		.4byte	0x1e3
+ 770 0379 04       		.byte	0x4
+ 771 037a 00       		.byte	0
+ 772 037b 04       		.uleb128 0x4
+ 773 037c 0B040000 		.4byte	.LASF49
+ 774 0380 05       		.byte	0x5
+ 775 0381 6401     		.2byte	0x164
+ 776 0383 54030000 		.4byte	0x354
+ 777 0387 0C       		.uleb128 0xc
+ 778 0388 6C       		.byte	0x6c
+ 779 0389 05       		.byte	0x5
+ 780 038a 6A01     		.2byte	0x16a
+ 781 038c 6E040000 		.4byte	0x46e
+ 782 0390 0B       		.uleb128 0xb
+ 783 0391 22010000 		.4byte	.LASF50
+ 784 0395 05       		.byte	0x5
+ 785 0396 7101     		.2byte	0x171
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 31
+
+
+ 786 0398 77000000 		.4byte	0x77
+ 787 039c 00       		.byte	0
+ 788 039d 0B       		.uleb128 0xb
+ 789 039e 35020000 		.4byte	.LASF51
+ 790 03a2 05       		.byte	0x5
+ 791 03a3 7601     		.2byte	0x176
+ 792 03a5 77000000 		.4byte	0x77
+ 793 03a9 02       		.byte	0x2
+ 794 03aa 0B       		.uleb128 0xb
+ 795 03ab B2040000 		.4byte	.LASF52
+ 796 03af 05       		.byte	0x5
+ 797 03b0 7B01     		.2byte	0x17b
+ 798 03b2 77000000 		.4byte	0x77
+ 799 03b6 04       		.byte	0x4
+ 800 03b7 0B       		.uleb128 0xb
+ 801 03b8 5A030000 		.4byte	.LASF53
+ 802 03bc 05       		.byte	0x5
+ 803 03bd 8101     		.2byte	0x181
+ 804 03bf 77000000 		.4byte	0x77
+ 805 03c3 06       		.byte	0x6
+ 806 03c4 0B       		.uleb128 0xb
+ 807 03c5 35050000 		.4byte	.LASF54
+ 808 03c9 05       		.byte	0x5
+ 809 03ca 8601     		.2byte	0x186
+ 810 03cc 77000000 		.4byte	0x77
+ 811 03d0 08       		.byte	0x8
+ 812 03d1 0B       		.uleb128 0xb
+ 813 03d2 AB040000 		.4byte	.LASF55
+ 814 03d6 05       		.byte	0x5
+ 815 03d7 8B01     		.2byte	0x18b
+ 816 03d9 B5000000 		.4byte	0xb5
+ 817 03dd 0C       		.byte	0xc
+ 818 03de 0B       		.uleb128 0xb
+ 819 03df 60040000 		.4byte	.LASF56
+ 820 03e3 05       		.byte	0x5
+ 821 03e4 9101     		.2byte	0x191
+ 822 03e6 6E040000 		.4byte	0x46e
+ 823 03ea 10       		.byte	0x10
+ 824 03eb 0B       		.uleb128 0xb
+ 825 03ec 6F030000 		.4byte	.LASF57
+ 826 03f0 05       		.byte	0x5
+ 827 03f1 9801     		.2byte	0x198
+ 828 03f3 6E040000 		.4byte	0x46e
+ 829 03f7 14       		.byte	0x14
+ 830 03f8 0B       		.uleb128 0xb
+ 831 03f9 DF060000 		.4byte	.LASF58
+ 832 03fd 05       		.byte	0x5
+ 833 03fe A801     		.2byte	0x1a8
+ 834 0400 D3010000 		.4byte	0x1d3
+ 835 0404 18       		.byte	0x18
+ 836 0405 0B       		.uleb128 0xb
+ 837 0406 C6010000 		.4byte	.LASF59
+ 838 040a 05       		.byte	0x5
+ 839 040b AE01     		.2byte	0x1ae
+ 840 040d 77000000 		.4byte	0x77
+ 841 0411 1A       		.byte	0x1a
+ 842 0412 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 32
+
+
+ 843 0413 2B050000 		.4byte	.LASF60
+ 844 0417 05       		.byte	0x5
+ 845 0418 B301     		.2byte	0x1b3
+ 846 041a 6B000000 		.4byte	0x6b
+ 847 041e 1C       		.byte	0x1c
+ 848 041f 0B       		.uleb128 0xb
+ 849 0420 16000000 		.4byte	.LASF61
+ 850 0424 05       		.byte	0x5
+ 851 0425 B801     		.2byte	0x1b8
+ 852 0427 D4020000 		.4byte	0x2d4
+ 853 042b 1E       		.byte	0x1e
+ 854 042c 0B       		.uleb128 0xb
+ 855 042d 05050000 		.4byte	.LASF62
+ 856 0431 05       		.byte	0x5
+ 857 0432 BD01     		.2byte	0x1bd
+ 858 0434 7B030000 		.4byte	0x37b
+ 859 0438 32       		.byte	0x32
+ 860 0439 0B       		.uleb128 0xb
+ 861 043a 86060000 		.4byte	.LASF63
+ 862 043e 05       		.byte	0x5
+ 863 043f C201     		.2byte	0x1c2
+ 864 0441 6B000000 		.4byte	0x6b
+ 865 0445 64       		.byte	0x64
+ 866 0446 0B       		.uleb128 0xb
+ 867 0447 AD020000 		.4byte	.LASF64
+ 868 044b 05       		.byte	0x5
+ 869 044c C701     		.2byte	0x1c7
+ 870 044e 6B000000 		.4byte	0x6b
+ 871 0452 65       		.byte	0x65
+ 872 0453 0B       		.uleb128 0xb
+ 873 0454 BA040000 		.4byte	.LASF65
+ 874 0458 05       		.byte	0x5
+ 875 0459 CC01     		.2byte	0x1cc
+ 876 045b 77000000 		.4byte	0x77
+ 877 045f 66       		.byte	0x66
+ 878 0460 0B       		.uleb128 0xb
+ 879 0461 1F000000 		.4byte	.LASF66
+ 880 0465 05       		.byte	0x5
+ 881 0466 D101     		.2byte	0x1d1
+ 882 0468 A1020000 		.4byte	0x2a1
+ 883 046c 68       		.byte	0x68
+ 884 046d 00       		.byte	0
+ 885 046e 09       		.uleb128 0x9
+ 886 046f 83000000 		.4byte	0x83
+ 887 0473 7E040000 		.4byte	0x47e
+ 888 0477 0A       		.uleb128 0xa
+ 889 0478 E3010000 		.4byte	0x1e3
+ 890 047c 00       		.byte	0
+ 891 047d 00       		.byte	0
+ 892 047e 04       		.uleb128 0x4
+ 893 047f 4A050000 		.4byte	.LASF67
+ 894 0483 05       		.byte	0x5
+ 895 0484 D201     		.2byte	0x1d2
+ 896 0486 87030000 		.4byte	0x387
+ 897 048a 0C       		.uleb128 0xc
+ 898 048b 1C       		.byte	0x1c
+ 899 048c 05       		.byte	0x5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 33
+
+
+ 900 048d D801     		.2byte	0x1d8
+ 901 048f 09050000 		.4byte	0x509
+ 902 0493 0B       		.uleb128 0xb
+ 903 0494 EC000000 		.4byte	.LASF68
+ 904 0498 05       		.byte	0x5
+ 905 0499 DD01     		.2byte	0x1dd
+ 906 049b 09050000 		.4byte	0x509
+ 907 049f 00       		.byte	0
+ 908 04a0 0B       		.uleb128 0xb
+ 909 04a1 CD000000 		.4byte	.LASF69
+ 910 04a5 05       		.byte	0x5
+ 911 04a6 E201     		.2byte	0x1e2
+ 912 04a8 09050000 		.4byte	0x509
+ 913 04ac 04       		.byte	0x4
+ 914 04ad 0B       		.uleb128 0xb
+ 915 04ae C8050000 		.4byte	.LASF70
+ 916 04b2 05       		.byte	0x5
+ 917 04b3 E701     		.2byte	0x1e7
+ 918 04b5 09050000 		.4byte	0x509
+ 919 04b9 08       		.byte	0x8
+ 920 04ba 0B       		.uleb128 0xb
+ 921 04bb 5B020000 		.4byte	.LASF71
+ 922 04bf 05       		.byte	0x5
+ 923 04c0 EC01     		.2byte	0x1ec
+ 924 04c2 09050000 		.4byte	0x509
+ 925 04c6 0C       		.byte	0xc
+ 926 04c7 0B       		.uleb128 0xb
+ 927 04c8 DF010000 		.4byte	.LASF72
+ 928 04cc 05       		.byte	0x5
+ 929 04cd F101     		.2byte	0x1f1
+ 930 04cf 83000000 		.4byte	0x83
+ 931 04d3 10       		.byte	0x10
+ 932 04d4 0B       		.uleb128 0xb
+ 933 04d5 CE050000 		.4byte	.LASF73
+ 934 04d9 05       		.byte	0x5
+ 935 04da F601     		.2byte	0x1f6
+ 936 04dc 83000000 		.4byte	0x83
+ 937 04e0 14       		.byte	0x14
+ 938 04e1 0B       		.uleb128 0xb
+ 939 04e2 A7050000 		.4byte	.LASF74
+ 940 04e6 05       		.byte	0x5
+ 941 04e7 FB01     		.2byte	0x1fb
+ 942 04e9 6B000000 		.4byte	0x6b
+ 943 04ed 18       		.byte	0x18
+ 944 04ee 0B       		.uleb128 0xb
+ 945 04ef 00030000 		.4byte	.LASF75
+ 946 04f3 05       		.byte	0x5
+ 947 04f4 0002     		.2byte	0x200
+ 948 04f6 6B000000 		.4byte	0x6b
+ 949 04fa 19       		.byte	0x19
+ 950 04fb 0B       		.uleb128 0xb
+ 951 04fc E9020000 		.4byte	.LASF76
+ 952 0500 05       		.byte	0x5
+ 953 0501 0502     		.2byte	0x205
+ 954 0503 6B000000 		.4byte	0x6b
+ 955 0507 1A       		.byte	0x1a
+ 956 0508 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 34
+
+
+ 957 0509 0E       		.uleb128 0xe
+ 958 050a 04       		.byte	0x4
+ 959 050b A9000000 		.4byte	0xa9
+ 960 050f 04       		.uleb128 0x4
+ 961 0510 08030000 		.4byte	.LASF77
+ 962 0514 05       		.byte	0x5
+ 963 0515 0602     		.2byte	0x206
+ 964 0517 8A040000 		.4byte	0x48a
+ 965 051b 0C       		.uleb128 0xc
+ 966 051c 2C       		.byte	0x2c
+ 967 051d 05       		.byte	0x5
+ 968 051e 3902     		.2byte	0x239
+ 969 0520 CE050000 		.4byte	0x5ce
+ 970 0524 0B       		.uleb128 0xb
+ 971 0525 D2060000 		.4byte	.LASF78
+ 972 0529 05       		.byte	0x5
+ 973 052a 4202     		.2byte	0x242
+ 974 052c CE050000 		.4byte	0x5ce
+ 975 0530 00       		.byte	0
+ 976 0531 0B       		.uleb128 0xb
+ 977 0532 B9000000 		.4byte	.LASF79
+ 978 0536 05       		.byte	0x5
+ 979 0537 4902     		.2byte	0x249
+ 980 0539 D5050000 		.4byte	0x5d5
+ 981 053d 04       		.byte	0x4
+ 982 053e 0B       		.uleb128 0xb
+ 983 053f FA050000 		.4byte	.LASF80
+ 984 0543 05       		.byte	0x5
+ 985 0544 4F02     		.2byte	0x24f
+ 986 0546 D7050000 		.4byte	0x5d7
+ 987 054a 08       		.byte	0x8
+ 988 054b 0B       		.uleb128 0xb
+ 989 054c 11060000 		.4byte	.LASF81
+ 990 0550 05       		.byte	0x5
+ 991 0551 5502     		.2byte	0x255
+ 992 0553 D5050000 		.4byte	0x5d5
+ 993 0557 0C       		.byte	0xc
+ 994 0558 0B       		.uleb128 0xb
+ 995 0559 45020000 		.4byte	.LASF82
+ 996 055d 05       		.byte	0x5
+ 997 055e 5C02     		.2byte	0x25c
+ 998 0560 DD050000 		.4byte	0x5dd
+ 999 0564 10       		.byte	0x10
+ 1000 0565 0B       		.uleb128 0xb
+ 1001 0566 3F040000 		.4byte	.LASF83
+ 1002 056a 05       		.byte	0x5
+ 1003 056b 6102     		.2byte	0x261
+ 1004 056d 83000000 		.4byte	0x83
+ 1005 0571 14       		.byte	0x14
+ 1006 0572 0B       		.uleb128 0xb
+ 1007 0573 AD000000 		.4byte	.LASF84
+ 1008 0577 05       		.byte	0x5
+ 1009 0578 6802     		.2byte	0x268
+ 1010 057a 77000000 		.4byte	0x77
+ 1011 057e 18       		.byte	0x18
+ 1012 057f 0B       		.uleb128 0xb
+ 1013 0580 EF020000 		.4byte	.LASF85
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 35
+
+
+ 1014 0584 05       		.byte	0x5
+ 1015 0585 6F02     		.2byte	0x26f
+ 1016 0587 6B000000 		.4byte	0x6b
+ 1017 058b 1A       		.byte	0x1a
+ 1018 058c 0B       		.uleb128 0xb
+ 1019 058d 39030000 		.4byte	.LASF86
+ 1020 0591 05       		.byte	0x5
+ 1021 0592 7902     		.2byte	0x279
+ 1022 0594 6B000000 		.4byte	0x6b
+ 1023 0598 1B       		.byte	0x1b
+ 1024 0599 0B       		.uleb128 0xb
+ 1025 059a 2F000000 		.4byte	.LASF87
+ 1026 059e 05       		.byte	0x5
+ 1027 059f 7E02     		.2byte	0x27e
+ 1028 05a1 77000000 		.4byte	0x77
+ 1029 05a5 1C       		.byte	0x1c
+ 1030 05a6 0B       		.uleb128 0xb
+ 1031 05a7 AB030000 		.4byte	.LASF88
+ 1032 05ab 05       		.byte	0x5
+ 1033 05ac 8702     		.2byte	0x287
+ 1034 05ae 83000000 		.4byte	0x83
+ 1035 05b2 20       		.byte	0x20
+ 1036 05b3 0B       		.uleb128 0xb
+ 1037 05b4 36070000 		.4byte	.LASF89
+ 1038 05b8 05       		.byte	0x5
+ 1039 05b9 8F02     		.2byte	0x28f
+ 1040 05bb E3050000 		.4byte	0x5e3
+ 1041 05bf 24       		.byte	0x24
+ 1042 05c0 0B       		.uleb128 0xb
+ 1043 05c1 D3000000 		.4byte	.LASF90
+ 1044 05c5 05       		.byte	0x5
+ 1045 05c6 9402     		.2byte	0x294
+ 1046 05c8 6B000000 		.4byte	0x6b
+ 1047 05cc 28       		.byte	0x28
+ 1048 05cd 00       		.byte	0
+ 1049 05ce 0E       		.uleb128 0xe
+ 1050 05cf 04       		.byte	0x4
+ 1051 05d0 D4050000 		.4byte	0x5d4
+ 1052 05d4 0F       		.uleb128 0xf
+ 1053 05d5 10       		.uleb128 0x10
+ 1054 05d6 04       		.byte	0x4
+ 1055 05d7 0E       		.uleb128 0xe
+ 1056 05d8 04       		.byte	0x4
+ 1057 05d9 48030000 		.4byte	0x348
+ 1058 05dd 0E       		.uleb128 0xe
+ 1059 05de 04       		.byte	0x4
+ 1060 05df 6B000000 		.4byte	0x6b
+ 1061 05e3 0E       		.uleb128 0xe
+ 1062 05e4 04       		.byte	0x4
+ 1063 05e5 2F010000 		.4byte	0x12f
+ 1064 05e9 04       		.uleb128 0x4
+ 1065 05ea 09010000 		.4byte	.LASF91
+ 1066 05ee 05       		.byte	0x5
+ 1067 05ef 9502     		.2byte	0x295
+ 1068 05f1 1B050000 		.4byte	0x51b
+ 1069 05f5 0C       		.uleb128 0xc
+ 1070 05f6 2C       		.byte	0x2c
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 36
+
+
+ 1071 05f7 05       		.byte	0x5
+ 1072 05f8 9B02     		.2byte	0x29b
+ 1073 05fa 0C060000 		.4byte	0x60c
+ 1074 05fe 0B       		.uleb128 0xb
+ 1075 05ff 3C060000 		.4byte	.LASF92
+ 1076 0603 05       		.byte	0x5
+ 1077 0604 A002     		.2byte	0x2a0
+ 1078 0606 0C060000 		.4byte	0x60c
+ 1079 060a 00       		.byte	0
+ 1080 060b 00       		.byte	0
+ 1081 060c 09       		.uleb128 0x9
+ 1082 060d E9050000 		.4byte	0x5e9
+ 1083 0611 1C060000 		.4byte	0x61c
+ 1084 0615 0A       		.uleb128 0xa
+ 1085 0616 E3010000 		.4byte	0x1e3
+ 1086 061a 00       		.byte	0
+ 1087 061b 00       		.byte	0
+ 1088 061c 04       		.uleb128 0x4
+ 1089 061d 00000000 		.4byte	.LASF93
+ 1090 0621 05       		.byte	0x5
+ 1091 0622 A102     		.2byte	0x2a1
+ 1092 0624 F5050000 		.4byte	0x5f5
+ 1093 0628 02       		.uleb128 0x2
+ 1094 0629 08       		.byte	0x8
+ 1095 062a 04       		.byte	0x4
+ 1096 062b 63030000 		.4byte	.LASF94
+ 1097 062f 11       		.uleb128 0x11
+ 1098 0630 68020000 		.4byte	.LASF98
+ 1099 0634 01       		.byte	0x1
+ 1100 0635 F602     		.2byte	0x2f6
+ 1101 0637 00000000 		.4byte	.LFB3
+ 1102 063b 54000000 		.4byte	.LFE3-.LFB3
+ 1103 063f 01       		.uleb128 0x1
+ 1104 0640 9C       		.byte	0x9c
+ 1105 0641 76060000 		.4byte	0x676
+ 1106 0645 12       		.uleb128 0x12
+ 1107 0646 40000000 		.4byte	.LASF95
+ 1108 064a 01       		.byte	0x1
+ 1109 064b FA02     		.2byte	0x2fa
+ 1110 064d 83000000 		.4byte	0x83
+ 1111 0651 00000000 		.4byte	.LLST0
+ 1112 0655 12       		.uleb128 0x12
+ 1113 0656 52000000 		.4byte	.LASF96
+ 1114 065a 01       		.byte	0x1
+ 1115 065b FB02     		.2byte	0x2fb
+ 1116 065d 83000000 		.4byte	0x83
+ 1117 0661 40000000 		.4byte	.LLST1
+ 1118 0665 12       		.uleb128 0x12
+ 1119 0666 F8020000 		.4byte	.LASF97
+ 1120 066a 01       		.byte	0x1
+ 1121 066b FC02     		.2byte	0x2fc
+ 1122 066d 76060000 		.4byte	0x676
+ 1123 0671 80000000 		.4byte	.LLST2
+ 1124 0675 00       		.byte	0
+ 1125 0676 0E       		.uleb128 0xe
+ 1126 0677 04       		.byte	0x4
+ 1127 0678 7C060000 		.4byte	0x67c
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 37
+
+
+ 1128 067c 13       		.uleb128 0x13
+ 1129 067d EA010000 		.4byte	0x1ea
+ 1130 0681 11       		.uleb128 0x11
+ 1131 0682 21060000 		.4byte	.LASF99
+ 1132 0686 01       		.byte	0x1
+ 1133 0687 2F03     		.2byte	0x32f
+ 1134 0689 00000000 		.4byte	.LFB4
+ 1135 068d AC000000 		.4byte	.LFE4-.LFB4
+ 1136 0691 01       		.uleb128 0x1
+ 1137 0692 9C       		.byte	0x9c
+ 1138 0693 CC060000 		.4byte	0x6cc
+ 1139 0697 12       		.uleb128 0x12
+ 1140 0698 F8020000 		.4byte	.LASF97
+ 1141 069c 01       		.byte	0x1
+ 1142 069d 3703     		.2byte	0x337
+ 1143 069f CC060000 		.4byte	0x6cc
+ 1144 06a3 93000000 		.4byte	.LLST3
+ 1145 06a7 14       		.uleb128 0x14
+ 1146 06a8 4E000000 		.4byte	.LVL11
+ 1147 06ac A0070000 		.4byte	0x7a0
+ 1148 06b0 14       		.uleb128 0x14
+ 1149 06b1 5A000000 		.4byte	.LVL12
+ 1150 06b5 AC070000 		.4byte	0x7ac
+ 1151 06b9 14       		.uleb128 0x14
+ 1152 06ba 5E000000 		.4byte	.LVL13
+ 1153 06be B8070000 		.4byte	0x7b8
+ 1154 06c2 14       		.uleb128 0x14
+ 1155 06c3 7C000000 		.4byte	.LVL15
+ 1156 06c7 C4070000 		.4byte	0x7c4
+ 1157 06cb 00       		.byte	0
+ 1158 06cc 0E       		.uleb128 0xe
+ 1159 06cd 04       		.byte	0x4
+ 1160 06ce EA010000 		.4byte	0x1ea
+ 1161 06d2 15       		.uleb128 0x15
+ 1162 06d3 0B020000 		.4byte	.LASF100
+ 1163 06d7 01       		.byte	0x1
+ 1164 06d8 79       		.byte	0x79
+ 1165 06d9 00000000 		.4byte	.LFB1
+ 1166 06dd 2C000000 		.4byte	.LFE1-.LFB1
+ 1167 06e1 01       		.uleb128 0x1
+ 1168 06e2 9C       		.byte	0x9c
+ 1169 06e3 F1060000 		.4byte	0x6f1
+ 1170 06e7 14       		.uleb128 0x14
+ 1171 06e8 0E000000 		.4byte	.LVL18
+ 1172 06ec 2F060000 		.4byte	0x62f
+ 1173 06f0 00       		.byte	0
+ 1174 06f1 15       		.uleb128 0x15
+ 1175 06f2 85050000 		.4byte	.LASF101
+ 1176 06f6 01       		.byte	0x1
+ 1177 06f7 ED       		.byte	0xed
+ 1178 06f8 00000000 		.4byte	.LFB2
+ 1179 06fc 44000000 		.4byte	.LFE2-.LFB2
+ 1180 0700 01       		.uleb128 0x1
+ 1181 0701 9C       		.byte	0x9c
+ 1182 0702 3C070000 		.4byte	0x73c
+ 1183 0706 16       		.uleb128 0x16
+ 1184 0707 85020000 		.4byte	.LASF102
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 38
+
+
+ 1185 070b 01       		.byte	0x1
+ 1186 070c F0       		.byte	0xf0
+ 1187 070d 3C070000 		.4byte	0x73c
+ 1188 0711 BC000000 		.4byte	.LLST4
+ 1189 0715 14       		.uleb128 0x14
+ 1190 0716 28000000 		.4byte	.LVL20
+ 1191 071a 2F060000 		.4byte	0x62f
+ 1192 071e 17       		.uleb128 0x17
+ 1193 071f 2E000000 		.4byte	.LVL21
+ 1194 0723 CF070000 		.4byte	0x7cf
+ 1195 0727 32070000 		.4byte	0x732
+ 1196 072b 18       		.uleb128 0x18
+ 1197 072c 01       		.uleb128 0x1
+ 1198 072d 50       		.byte	0x50
+ 1199 072e 02       		.uleb128 0x2
+ 1200 072f 74       		.byte	0x74
+ 1201 0730 00       		.sleb128 0
+ 1202 0731 00       		.byte	0
+ 1203 0732 14       		.uleb128 0x14
+ 1204 0733 32000000 		.4byte	.LVL22
+ 1205 0737 81060000 		.4byte	0x681
+ 1206 073b 00       		.byte	0
+ 1207 073c 0E       		.uleb128 0xe
+ 1208 073d 04       		.byte	0x4
+ 1209 073e 42070000 		.4byte	0x742
+ 1210 0742 13       		.uleb128 0x13
+ 1211 0743 0F050000 		.4byte	0x50f
+ 1212 0747 19       		.uleb128 0x19
+ 1213 0748 21030000 		.4byte	.LASF103
+ 1214 074c 05       		.byte	0x5
+ 1215 074d 3504     		.2byte	0x435
+ 1216 074f 7E040000 		.4byte	0x47e
+ 1217 0753 19       		.uleb128 0x19
+ 1218 0754 50060000 		.4byte	.LASF104
+ 1219 0758 05       		.byte	0x5
+ 1220 0759 3604     		.2byte	0x436
+ 1221 075b 5F070000 		.4byte	0x75f
+ 1222 075f 13       		.uleb128 0x13
+ 1223 0760 1C060000 		.4byte	0x61c
+ 1224 0764 1A       		.uleb128 0x1a
+ 1225 0765 BF030000 		.4byte	.LASF105
+ 1226 0769 06       		.byte	0x6
+ 1227 076a 9D       		.byte	0x9d
+ 1228 076b A4000000 		.4byte	0xa4
+ 1229 076f 1A       		.uleb128 0x1a
+ 1230 0770 E9060000 		.4byte	.LASF106
+ 1231 0774 06       		.byte	0x6
+ 1232 0775 9E       		.byte	0x9e
+ 1233 0776 A4000000 		.4byte	0xa4
+ 1234 077a 1A       		.uleb128 0x1a
+ 1235 077b 0D050000 		.4byte	.LASF107
+ 1236 077f 06       		.byte	0x6
+ 1237 0780 9F       		.byte	0x9f
+ 1238 0781 6B000000 		.4byte	0x6b
+ 1239 0785 1A       		.uleb128 0x1a
+ 1240 0786 B2050000 		.4byte	.LASF108
+ 1241 078a 06       		.byte	0x6
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 39
+
+
+ 1242 078b A1       		.byte	0xa1
+ 1243 078c D7050000 		.4byte	0x5d7
+ 1244 0790 1A       		.uleb128 0x1a
+ 1245 0791 96060000 		.4byte	.LASF109
+ 1246 0795 06       		.byte	0x6
+ 1247 0796 A8       		.byte	0xa8
+ 1248 0797 9B070000 		.4byte	0x79b
+ 1249 079b 13       		.uleb128 0x13
+ 1250 079c 6B000000 		.4byte	0x6b
+ 1251 07a0 1B       		.uleb128 0x1b
+ 1252 07a1 E1050000 		.4byte	.LASF110
+ 1253 07a5 E1050000 		.4byte	.LASF110
+ 1254 07a9 07       		.byte	0x7
+ 1255 07aa D201     		.2byte	0x1d2
+ 1256 07ac 1B       		.uleb128 0x1b
+ 1257 07ad EC030000 		.4byte	.LASF111
+ 1258 07b1 EC030000 		.4byte	.LASF111
+ 1259 07b5 07       		.byte	0x7
+ 1260 07b6 DE01     		.2byte	0x1de
+ 1261 07b8 1B       		.uleb128 0x1b
+ 1262 07b9 EB040000 		.4byte	.LASF112
+ 1263 07bd EB040000 		.4byte	.LASF112
+ 1264 07c1 07       		.byte	0x7
+ 1265 07c2 D101     		.2byte	0x1d1
+ 1266 07c4 1C       		.uleb128 0x1c
+ 1267 07c5 C2020000 		.4byte	.LASF113
+ 1268 07c9 C2020000 		.4byte	.LASF113
+ 1269 07cd 06       		.byte	0x6
+ 1270 07ce 6C       		.byte	0x6c
+ 1271 07cf 1B       		.uleb128 0x1b
+ 1272 07d0 1C070000 		.4byte	.LASF114
+ 1273 07d4 1C070000 		.4byte	.LASF114
+ 1274 07d8 07       		.byte	0x7
+ 1275 07d9 C101     		.2byte	0x1c1
+ 1276 07db 00       		.byte	0
+ 1277              		.section	.debug_abbrev,"",%progbits
+ 1278              	.Ldebug_abbrev0:
+ 1279 0000 01       		.uleb128 0x1
+ 1280 0001 11       		.uleb128 0x11
+ 1281 0002 01       		.byte	0x1
+ 1282 0003 25       		.uleb128 0x25
+ 1283 0004 0E       		.uleb128 0xe
+ 1284 0005 13       		.uleb128 0x13
+ 1285 0006 0B       		.uleb128 0xb
+ 1286 0007 03       		.uleb128 0x3
+ 1287 0008 0E       		.uleb128 0xe
+ 1288 0009 1B       		.uleb128 0x1b
+ 1289 000a 0E       		.uleb128 0xe
+ 1290 000b 55       		.uleb128 0x55
+ 1291 000c 17       		.uleb128 0x17
+ 1292 000d 11       		.uleb128 0x11
+ 1293 000e 01       		.uleb128 0x1
+ 1294 000f 10       		.uleb128 0x10
+ 1295 0010 17       		.uleb128 0x17
+ 1296 0011 00       		.byte	0
+ 1297 0012 00       		.byte	0
+ 1298 0013 02       		.uleb128 0x2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 40
+
+
+ 1299 0014 24       		.uleb128 0x24
+ 1300 0015 00       		.byte	0
+ 1301 0016 0B       		.uleb128 0xb
+ 1302 0017 0B       		.uleb128 0xb
+ 1303 0018 3E       		.uleb128 0x3e
+ 1304 0019 0B       		.uleb128 0xb
+ 1305 001a 03       		.uleb128 0x3
+ 1306 001b 0E       		.uleb128 0xe
+ 1307 001c 00       		.byte	0
+ 1308 001d 00       		.byte	0
+ 1309 001e 03       		.uleb128 0x3
+ 1310 001f 24       		.uleb128 0x24
+ 1311 0020 00       		.byte	0
+ 1312 0021 0B       		.uleb128 0xb
+ 1313 0022 0B       		.uleb128 0xb
+ 1314 0023 3E       		.uleb128 0x3e
+ 1315 0024 0B       		.uleb128 0xb
+ 1316 0025 03       		.uleb128 0x3
+ 1317 0026 08       		.uleb128 0x8
+ 1318 0027 00       		.byte	0
+ 1319 0028 00       		.byte	0
+ 1320 0029 04       		.uleb128 0x4
+ 1321 002a 16       		.uleb128 0x16
+ 1322 002b 00       		.byte	0
+ 1323 002c 03       		.uleb128 0x3
+ 1324 002d 0E       		.uleb128 0xe
+ 1325 002e 3A       		.uleb128 0x3a
+ 1326 002f 0B       		.uleb128 0xb
+ 1327 0030 3B       		.uleb128 0x3b
+ 1328 0031 05       		.uleb128 0x5
+ 1329 0032 49       		.uleb128 0x49
+ 1330 0033 13       		.uleb128 0x13
+ 1331 0034 00       		.byte	0
+ 1332 0035 00       		.byte	0
+ 1333 0036 05       		.uleb128 0x5
+ 1334 0037 35       		.uleb128 0x35
+ 1335 0038 00       		.byte	0
+ 1336 0039 49       		.uleb128 0x49
+ 1337 003a 13       		.uleb128 0x13
+ 1338 003b 00       		.byte	0
+ 1339 003c 00       		.byte	0
+ 1340 003d 06       		.uleb128 0x6
+ 1341 003e 13       		.uleb128 0x13
+ 1342 003f 01       		.byte	0x1
+ 1343 0040 0B       		.uleb128 0xb
+ 1344 0041 0B       		.uleb128 0xb
+ 1345 0042 3A       		.uleb128 0x3a
+ 1346 0043 0B       		.uleb128 0xb
+ 1347 0044 3B       		.uleb128 0x3b
+ 1348 0045 0B       		.uleb128 0xb
+ 1349 0046 01       		.uleb128 0x1
+ 1350 0047 13       		.uleb128 0x13
+ 1351 0048 00       		.byte	0
+ 1352 0049 00       		.byte	0
+ 1353 004a 07       		.uleb128 0x7
+ 1354 004b 0D       		.uleb128 0xd
+ 1355 004c 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 41
+
+
+ 1356 004d 03       		.uleb128 0x3
+ 1357 004e 0E       		.uleb128 0xe
+ 1358 004f 3A       		.uleb128 0x3a
+ 1359 0050 0B       		.uleb128 0xb
+ 1360 0051 3B       		.uleb128 0x3b
+ 1361 0052 0B       		.uleb128 0xb
+ 1362 0053 49       		.uleb128 0x49
+ 1363 0054 13       		.uleb128 0x13
+ 1364 0055 38       		.uleb128 0x38
+ 1365 0056 0B       		.uleb128 0xb
+ 1366 0057 00       		.byte	0
+ 1367 0058 00       		.byte	0
+ 1368 0059 08       		.uleb128 0x8
+ 1369 005a 16       		.uleb128 0x16
+ 1370 005b 00       		.byte	0
+ 1371 005c 03       		.uleb128 0x3
+ 1372 005d 0E       		.uleb128 0xe
+ 1373 005e 3A       		.uleb128 0x3a
+ 1374 005f 0B       		.uleb128 0xb
+ 1375 0060 3B       		.uleb128 0x3b
+ 1376 0061 0B       		.uleb128 0xb
+ 1377 0062 49       		.uleb128 0x49
+ 1378 0063 13       		.uleb128 0x13
+ 1379 0064 00       		.byte	0
+ 1380 0065 00       		.byte	0
+ 1381 0066 09       		.uleb128 0x9
+ 1382 0067 01       		.uleb128 0x1
+ 1383 0068 01       		.byte	0x1
+ 1384 0069 49       		.uleb128 0x49
+ 1385 006a 13       		.uleb128 0x13
+ 1386 006b 01       		.uleb128 0x1
+ 1387 006c 13       		.uleb128 0x13
+ 1388 006d 00       		.byte	0
+ 1389 006e 00       		.byte	0
+ 1390 006f 0A       		.uleb128 0xa
+ 1391 0070 21       		.uleb128 0x21
+ 1392 0071 00       		.byte	0
+ 1393 0072 49       		.uleb128 0x49
+ 1394 0073 13       		.uleb128 0x13
+ 1395 0074 2F       		.uleb128 0x2f
+ 1396 0075 0B       		.uleb128 0xb
+ 1397 0076 00       		.byte	0
+ 1398 0077 00       		.byte	0
+ 1399 0078 0B       		.uleb128 0xb
+ 1400 0079 0D       		.uleb128 0xd
+ 1401 007a 00       		.byte	0
+ 1402 007b 03       		.uleb128 0x3
+ 1403 007c 0E       		.uleb128 0xe
+ 1404 007d 3A       		.uleb128 0x3a
+ 1405 007e 0B       		.uleb128 0xb
+ 1406 007f 3B       		.uleb128 0x3b
+ 1407 0080 05       		.uleb128 0x5
+ 1408 0081 49       		.uleb128 0x49
+ 1409 0082 13       		.uleb128 0x13
+ 1410 0083 38       		.uleb128 0x38
+ 1411 0084 0B       		.uleb128 0xb
+ 1412 0085 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 42
+
+
+ 1413 0086 00       		.byte	0
+ 1414 0087 0C       		.uleb128 0xc
+ 1415 0088 13       		.uleb128 0x13
+ 1416 0089 01       		.byte	0x1
+ 1417 008a 0B       		.uleb128 0xb
+ 1418 008b 0B       		.uleb128 0xb
+ 1419 008c 3A       		.uleb128 0x3a
+ 1420 008d 0B       		.uleb128 0xb
+ 1421 008e 3B       		.uleb128 0x3b
+ 1422 008f 05       		.uleb128 0x5
+ 1423 0090 01       		.uleb128 0x1
+ 1424 0091 13       		.uleb128 0x13
+ 1425 0092 00       		.byte	0
+ 1426 0093 00       		.byte	0
+ 1427 0094 0D       		.uleb128 0xd
+ 1428 0095 0D       		.uleb128 0xd
+ 1429 0096 00       		.byte	0
+ 1430 0097 03       		.uleb128 0x3
+ 1431 0098 08       		.uleb128 0x8
+ 1432 0099 3A       		.uleb128 0x3a
+ 1433 009a 0B       		.uleb128 0xb
+ 1434 009b 3B       		.uleb128 0x3b
+ 1435 009c 05       		.uleb128 0x5
+ 1436 009d 49       		.uleb128 0x49
+ 1437 009e 13       		.uleb128 0x13
+ 1438 009f 38       		.uleb128 0x38
+ 1439 00a0 0B       		.uleb128 0xb
+ 1440 00a1 00       		.byte	0
+ 1441 00a2 00       		.byte	0
+ 1442 00a3 0E       		.uleb128 0xe
+ 1443 00a4 0F       		.uleb128 0xf
+ 1444 00a5 00       		.byte	0
+ 1445 00a6 0B       		.uleb128 0xb
+ 1446 00a7 0B       		.uleb128 0xb
+ 1447 00a8 49       		.uleb128 0x49
+ 1448 00a9 13       		.uleb128 0x13
+ 1449 00aa 00       		.byte	0
+ 1450 00ab 00       		.byte	0
+ 1451 00ac 0F       		.uleb128 0xf
+ 1452 00ad 26       		.uleb128 0x26
+ 1453 00ae 00       		.byte	0
+ 1454 00af 00       		.byte	0
+ 1455 00b0 00       		.byte	0
+ 1456 00b1 10       		.uleb128 0x10
+ 1457 00b2 0F       		.uleb128 0xf
+ 1458 00b3 00       		.byte	0
+ 1459 00b4 0B       		.uleb128 0xb
+ 1460 00b5 0B       		.uleb128 0xb
+ 1461 00b6 00       		.byte	0
+ 1462 00b7 00       		.byte	0
+ 1463 00b8 11       		.uleb128 0x11
+ 1464 00b9 2E       		.uleb128 0x2e
+ 1465 00ba 01       		.byte	0x1
+ 1466 00bb 03       		.uleb128 0x3
+ 1467 00bc 0E       		.uleb128 0xe
+ 1468 00bd 3A       		.uleb128 0x3a
+ 1469 00be 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 43
+
+
+ 1470 00bf 3B       		.uleb128 0x3b
+ 1471 00c0 05       		.uleb128 0x5
+ 1472 00c1 27       		.uleb128 0x27
+ 1473 00c2 19       		.uleb128 0x19
+ 1474 00c3 11       		.uleb128 0x11
+ 1475 00c4 01       		.uleb128 0x1
+ 1476 00c5 12       		.uleb128 0x12
+ 1477 00c6 06       		.uleb128 0x6
+ 1478 00c7 40       		.uleb128 0x40
+ 1479 00c8 18       		.uleb128 0x18
+ 1480 00c9 9742     		.uleb128 0x2117
+ 1481 00cb 19       		.uleb128 0x19
+ 1482 00cc 01       		.uleb128 0x1
+ 1483 00cd 13       		.uleb128 0x13
+ 1484 00ce 00       		.byte	0
+ 1485 00cf 00       		.byte	0
+ 1486 00d0 12       		.uleb128 0x12
+ 1487 00d1 34       		.uleb128 0x34
+ 1488 00d2 00       		.byte	0
+ 1489 00d3 03       		.uleb128 0x3
+ 1490 00d4 0E       		.uleb128 0xe
+ 1491 00d5 3A       		.uleb128 0x3a
+ 1492 00d6 0B       		.uleb128 0xb
+ 1493 00d7 3B       		.uleb128 0x3b
+ 1494 00d8 05       		.uleb128 0x5
+ 1495 00d9 49       		.uleb128 0x49
+ 1496 00da 13       		.uleb128 0x13
+ 1497 00db 02       		.uleb128 0x2
+ 1498 00dc 17       		.uleb128 0x17
+ 1499 00dd 00       		.byte	0
+ 1500 00de 00       		.byte	0
+ 1501 00df 13       		.uleb128 0x13
+ 1502 00e0 26       		.uleb128 0x26
+ 1503 00e1 00       		.byte	0
+ 1504 00e2 49       		.uleb128 0x49
+ 1505 00e3 13       		.uleb128 0x13
+ 1506 00e4 00       		.byte	0
+ 1507 00e5 00       		.byte	0
+ 1508 00e6 14       		.uleb128 0x14
+ 1509 00e7 898201   		.uleb128 0x4109
+ 1510 00ea 00       		.byte	0
+ 1511 00eb 11       		.uleb128 0x11
+ 1512 00ec 01       		.uleb128 0x1
+ 1513 00ed 31       		.uleb128 0x31
+ 1514 00ee 13       		.uleb128 0x13
+ 1515 00ef 00       		.byte	0
+ 1516 00f0 00       		.byte	0
+ 1517 00f1 15       		.uleb128 0x15
+ 1518 00f2 2E       		.uleb128 0x2e
+ 1519 00f3 01       		.byte	0x1
+ 1520 00f4 3F       		.uleb128 0x3f
+ 1521 00f5 19       		.uleb128 0x19
+ 1522 00f6 03       		.uleb128 0x3
+ 1523 00f7 0E       		.uleb128 0xe
+ 1524 00f8 3A       		.uleb128 0x3a
+ 1525 00f9 0B       		.uleb128 0xb
+ 1526 00fa 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 44
+
+
+ 1527 00fb 0B       		.uleb128 0xb
+ 1528 00fc 27       		.uleb128 0x27
+ 1529 00fd 19       		.uleb128 0x19
+ 1530 00fe 11       		.uleb128 0x11
+ 1531 00ff 01       		.uleb128 0x1
+ 1532 0100 12       		.uleb128 0x12
+ 1533 0101 06       		.uleb128 0x6
+ 1534 0102 40       		.uleb128 0x40
+ 1535 0103 18       		.uleb128 0x18
+ 1536 0104 9742     		.uleb128 0x2117
+ 1537 0106 19       		.uleb128 0x19
+ 1538 0107 01       		.uleb128 0x1
+ 1539 0108 13       		.uleb128 0x13
+ 1540 0109 00       		.byte	0
+ 1541 010a 00       		.byte	0
+ 1542 010b 16       		.uleb128 0x16
+ 1543 010c 34       		.uleb128 0x34
+ 1544 010d 00       		.byte	0
+ 1545 010e 03       		.uleb128 0x3
+ 1546 010f 0E       		.uleb128 0xe
+ 1547 0110 3A       		.uleb128 0x3a
+ 1548 0111 0B       		.uleb128 0xb
+ 1549 0112 3B       		.uleb128 0x3b
+ 1550 0113 0B       		.uleb128 0xb
+ 1551 0114 49       		.uleb128 0x49
+ 1552 0115 13       		.uleb128 0x13
+ 1553 0116 02       		.uleb128 0x2
+ 1554 0117 17       		.uleb128 0x17
+ 1555 0118 00       		.byte	0
+ 1556 0119 00       		.byte	0
+ 1557 011a 17       		.uleb128 0x17
+ 1558 011b 898201   		.uleb128 0x4109
+ 1559 011e 01       		.byte	0x1
+ 1560 011f 11       		.uleb128 0x11
+ 1561 0120 01       		.uleb128 0x1
+ 1562 0121 31       		.uleb128 0x31
+ 1563 0122 13       		.uleb128 0x13
+ 1564 0123 01       		.uleb128 0x1
+ 1565 0124 13       		.uleb128 0x13
+ 1566 0125 00       		.byte	0
+ 1567 0126 00       		.byte	0
+ 1568 0127 18       		.uleb128 0x18
+ 1569 0128 8A8201   		.uleb128 0x410a
+ 1570 012b 00       		.byte	0
+ 1571 012c 02       		.uleb128 0x2
+ 1572 012d 18       		.uleb128 0x18
+ 1573 012e 9142     		.uleb128 0x2111
+ 1574 0130 18       		.uleb128 0x18
+ 1575 0131 00       		.byte	0
+ 1576 0132 00       		.byte	0
+ 1577 0133 19       		.uleb128 0x19
+ 1578 0134 34       		.uleb128 0x34
+ 1579 0135 00       		.byte	0
+ 1580 0136 03       		.uleb128 0x3
+ 1581 0137 0E       		.uleb128 0xe
+ 1582 0138 3A       		.uleb128 0x3a
+ 1583 0139 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 45
+
+
+ 1584 013a 3B       		.uleb128 0x3b
+ 1585 013b 05       		.uleb128 0x5
+ 1586 013c 49       		.uleb128 0x49
+ 1587 013d 13       		.uleb128 0x13
+ 1588 013e 3F       		.uleb128 0x3f
+ 1589 013f 19       		.uleb128 0x19
+ 1590 0140 3C       		.uleb128 0x3c
+ 1591 0141 19       		.uleb128 0x19
+ 1592 0142 00       		.byte	0
+ 1593 0143 00       		.byte	0
+ 1594 0144 1A       		.uleb128 0x1a
+ 1595 0145 34       		.uleb128 0x34
+ 1596 0146 00       		.byte	0
+ 1597 0147 03       		.uleb128 0x3
+ 1598 0148 0E       		.uleb128 0xe
+ 1599 0149 3A       		.uleb128 0x3a
+ 1600 014a 0B       		.uleb128 0xb
+ 1601 014b 3B       		.uleb128 0x3b
+ 1602 014c 0B       		.uleb128 0xb
+ 1603 014d 49       		.uleb128 0x49
+ 1604 014e 13       		.uleb128 0x13
+ 1605 014f 3F       		.uleb128 0x3f
+ 1606 0150 19       		.uleb128 0x19
+ 1607 0151 3C       		.uleb128 0x3c
+ 1608 0152 19       		.uleb128 0x19
+ 1609 0153 00       		.byte	0
+ 1610 0154 00       		.byte	0
+ 1611 0155 1B       		.uleb128 0x1b
+ 1612 0156 2E       		.uleb128 0x2e
+ 1613 0157 00       		.byte	0
+ 1614 0158 3F       		.uleb128 0x3f
+ 1615 0159 19       		.uleb128 0x19
+ 1616 015a 3C       		.uleb128 0x3c
+ 1617 015b 19       		.uleb128 0x19
+ 1618 015c 6E       		.uleb128 0x6e
+ 1619 015d 0E       		.uleb128 0xe
+ 1620 015e 03       		.uleb128 0x3
+ 1621 015f 0E       		.uleb128 0xe
+ 1622 0160 3A       		.uleb128 0x3a
+ 1623 0161 0B       		.uleb128 0xb
+ 1624 0162 3B       		.uleb128 0x3b
+ 1625 0163 05       		.uleb128 0x5
+ 1626 0164 00       		.byte	0
+ 1627 0165 00       		.byte	0
+ 1628 0166 1C       		.uleb128 0x1c
+ 1629 0167 2E       		.uleb128 0x2e
+ 1630 0168 00       		.byte	0
+ 1631 0169 3F       		.uleb128 0x3f
+ 1632 016a 19       		.uleb128 0x19
+ 1633 016b 3C       		.uleb128 0x3c
+ 1634 016c 19       		.uleb128 0x19
+ 1635 016d 6E       		.uleb128 0x6e
+ 1636 016e 0E       		.uleb128 0xe
+ 1637 016f 03       		.uleb128 0x3
+ 1638 0170 0E       		.uleb128 0xe
+ 1639 0171 3A       		.uleb128 0x3a
+ 1640 0172 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 46
+
+
+ 1641 0173 3B       		.uleb128 0x3b
+ 1642 0174 0B       		.uleb128 0xb
+ 1643 0175 00       		.byte	0
+ 1644 0176 00       		.byte	0
+ 1645 0177 00       		.byte	0
+ 1646              		.section	.debug_loc,"",%progbits
+ 1647              	.Ldebug_loc0:
+ 1648              	.LLST0:
+ 1649 0000 16000000 		.4byte	.LVL1
+ 1650 0004 26000000 		.4byte	.LVL5
+ 1651 0008 0100     		.2byte	0x1
+ 1652 000a 52       		.byte	0x52
+ 1653 000b 26000000 		.4byte	.LVL5
+ 1654 000f 30000000 		.4byte	.LVL6
+ 1655 0013 0700     		.2byte	0x7
+ 1656 0015 71       		.byte	0x71
+ 1657 0016 00       		.sleb128 0
+ 1658 0017 40       		.byte	0x40
+ 1659 0018 24       		.byte	0x24
+ 1660 0019 40       		.byte	0x40
+ 1661 001a 25       		.byte	0x25
+ 1662 001b 9F       		.byte	0x9f
+ 1663 001c 30000000 		.4byte	.LVL6
+ 1664 0020 32000000 		.4byte	.LVL7
+ 1665 0024 0100     		.2byte	0x1
+ 1666 0026 52       		.byte	0x52
+ 1667 0027 32000000 		.4byte	.LVL7
+ 1668 002b 34000000 		.4byte	.LVL8
+ 1669 002f 0700     		.2byte	0x7
+ 1670 0031 71       		.byte	0x71
+ 1671 0032 00       		.sleb128 0
+ 1672 0033 40       		.byte	0x40
+ 1673 0034 24       		.byte	0x24
+ 1674 0035 40       		.byte	0x40
+ 1675 0036 25       		.byte	0x25
+ 1676 0037 9F       		.byte	0x9f
+ 1677 0038 00000000 		.4byte	0
+ 1678 003c 00000000 		.4byte	0
+ 1679              	.LLST1:
+ 1680 0040 1E000000 		.4byte	.LVL3
+ 1681 0044 24000000 		.4byte	.LVL4
+ 1682 0048 0100     		.2byte	0x1
+ 1683 004a 53       		.byte	0x53
+ 1684 004b 24000000 		.4byte	.LVL4
+ 1685 004f 30000000 		.4byte	.LVL6
+ 1686 0053 0700     		.2byte	0x7
+ 1687 0055 31       		.byte	0x31
+ 1688 0056 70       		.byte	0x70
+ 1689 0057 00       		.sleb128 0
+ 1690 0058 24       		.byte	0x24
+ 1691 0059 31       		.byte	0x31
+ 1692 005a 1C       		.byte	0x1c
+ 1693 005b 9F       		.byte	0x9f
+ 1694 005c 30000000 		.4byte	.LVL6
+ 1695 0060 3C000000 		.4byte	.LVL9
+ 1696 0064 0100     		.2byte	0x1
+ 1697 0066 53       		.byte	0x53
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 47
+
+
+ 1698 0067 3C000000 		.4byte	.LVL9
+ 1699 006b 54000000 		.4byte	.LFE3
+ 1700 006f 0700     		.2byte	0x7
+ 1701 0071 31       		.byte	0x31
+ 1702 0072 70       		.byte	0x70
+ 1703 0073 00       		.sleb128 0
+ 1704 0074 24       		.byte	0x24
+ 1705 0075 31       		.byte	0x31
+ 1706 0076 1C       		.byte	0x1c
+ 1707 0077 9F       		.byte	0x9f
+ 1708 0078 00000000 		.4byte	0
+ 1709 007c 00000000 		.4byte	0
+ 1710              	.LLST2:
+ 1711 0080 0E000000 		.4byte	.LVL0
+ 1712 0084 1A000000 		.4byte	.LVL2
+ 1713 0088 0100     		.2byte	0x1
+ 1714 008a 53       		.byte	0x53
+ 1715 008b 00000000 		.4byte	0
+ 1716 008f 00000000 		.4byte	0
+ 1717              	.LLST3:
+ 1718 0093 10000000 		.4byte	.LVL10
+ 1719 0097 4D000000 		.4byte	.LVL11-1
+ 1720 009b 0100     		.2byte	0x1
+ 1721 009d 50       		.byte	0x50
+ 1722 009e 60000000 		.4byte	.LVL14
+ 1723 00a2 7B000000 		.4byte	.LVL15-1
+ 1724 00a6 0100     		.2byte	0x1
+ 1725 00a8 50       		.byte	0x50
+ 1726 00a9 7E000000 		.4byte	.LVL16
+ 1727 00ad 8E000000 		.4byte	.LVL17
+ 1728 00b1 0100     		.2byte	0x1
+ 1729 00b3 50       		.byte	0x50
+ 1730 00b4 00000000 		.4byte	0
+ 1731 00b8 00000000 		.4byte	0
+ 1732              	.LLST4:
+ 1733 00bc 1C000000 		.4byte	.LVL19
+ 1734 00c0 32000000 		.4byte	.LVL23
+ 1735 00c4 0100     		.2byte	0x1
+ 1736 00c6 54       		.byte	0x54
+ 1737 00c7 00000000 		.4byte	0
+ 1738 00cb 00000000 		.4byte	0
+ 1739              		.section	.debug_aranges,"",%progbits
+ 1740 0000 34000000 		.4byte	0x34
+ 1741 0004 0200     		.2byte	0x2
+ 1742 0006 00000000 		.4byte	.Ldebug_info0
+ 1743 000a 04       		.byte	0x4
+ 1744 000b 00       		.byte	0
+ 1745 000c 0000     		.2byte	0
+ 1746 000e 0000     		.2byte	0
+ 1747 0010 00000000 		.4byte	.LFB3
+ 1748 0014 54000000 		.4byte	.LFE3-.LFB3
+ 1749 0018 00000000 		.4byte	.LFB4
+ 1750 001c AC000000 		.4byte	.LFE4-.LFB4
+ 1751 0020 00000000 		.4byte	.LFB1
+ 1752 0024 2C000000 		.4byte	.LFE1-.LFB1
+ 1753 0028 00000000 		.4byte	.LFB2
+ 1754 002c 44000000 		.4byte	.LFE2-.LFB2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 48
+
+
+ 1755 0030 00000000 		.4byte	0
+ 1756 0034 00000000 		.4byte	0
+ 1757              		.section	.debug_ranges,"",%progbits
+ 1758              	.Ldebug_ranges0:
+ 1759 0000 00000000 		.4byte	.LFB3
+ 1760 0004 54000000 		.4byte	.LFE3
+ 1761 0008 00000000 		.4byte	.LFB4
+ 1762 000c AC000000 		.4byte	.LFE4
+ 1763 0010 00000000 		.4byte	.LFB1
+ 1764 0014 2C000000 		.4byte	.LFE1
+ 1765 0018 00000000 		.4byte	.LFB2
+ 1766 001c 44000000 		.4byte	.LFE2
+ 1767 0020 00000000 		.4byte	0
+ 1768 0024 00000000 		.4byte	0
+ 1769              		.section	.debug_line,"",%progbits
+ 1770              	.Ldebug_line0:
+ 1771 0000 4D010000 		.section	.debug_str,"MS",%progbits,1
+ 1771      0200CB00 
+ 1771      00000201 
+ 1771      FB0E0D00 
+ 1771      01010101 
+ 1772              	.LASF93:
+ 1773 0000 43617053 		.ascii	"CapSense_FLASH_STRUCT\000"
+ 1773      656E7365 
+ 1773      5F464C41 
+ 1773      53485F53 
+ 1773      54525543 
+ 1774              	.LASF61:
+ 1775 0016 77646774 		.ascii	"wdgtList\000"
+ 1775      4C697374 
+ 1775      00
+ 1776              	.LASF66:
+ 1777 001f 736E7254 		.ascii	"snrTestRawCount\000"
+ 1777      65737452 
+ 1777      6177436F 
+ 1777      756E7400 
+ 1778              	.LASF87:
+ 1779 002f 78526573 		.ascii	"xResolution\000"
+ 1779      6F6C7574 
+ 1779      696F6E00 
+ 1780              	.LASF43:
+ 1781 003b 62736C6E 		.ascii	"bsln\000"
+ 1781      00
+ 1782              	.LASF95:
+ 1783 0040 746D7052 		.ascii	"tmpRawData\000"
+ 1783      61774461 
+ 1783      746100
+ 1784              	.LASF23:
+ 1785 004b 70617261 		.ascii	"param5\000"
+ 1785      6D3500
+ 1786              	.LASF96:
+ 1787 0052 746D704D 		.ascii	"tmpMaxCount\000"
+ 1787      6178436F 
+ 1787      756E7400 
+ 1788              	.LASF117:
+ 1789 005e 433A5C55 		.ascii	"C:\\Users\\dmytro.fedorchenko\\Documents\\PSoC Crea"
+ 1789      73657273 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 49
+
+
+ 1789      5C646D79 
+ 1789      74726F2E 
+ 1789      6665646F 
+ 1790 008d 746F725C 		.ascii	"tor\\PWM01\\midiPlayer.cydsn\000"
+ 1790      50574D30 
+ 1790      315C6D69 
+ 1790      6469506C 
+ 1790      61796572 
+ 1791              	.LASF45:
+ 1792 00a8 64696666 		.ascii	"diff\000"
+ 1792      00
+ 1793              	.LASF84:
+ 1794 00ad 746F7461 		.ascii	"totalNumSns\000"
+ 1794      6C4E756D 
+ 1794      536E7300 
+ 1795              	.LASF79:
+ 1796 00b9 70747232 		.ascii	"ptr2WdgtRam\000"
+ 1796      57646774 
+ 1796      52616D00 
+ 1797              	.LASF33:
+ 1798 00c5 69646163 		.ascii	"idacMod\000"
+ 1798      4D6F6400 
+ 1799              	.LASF69:
+ 1800 00cd 70635074 		.ascii	"pcPtr\000"
+ 1800      7200
+ 1801              	.LASF90:
+ 1802 00d3 69697246 		.ascii	"iirFilterCoeff\000"
+ 1802      696C7465 
+ 1802      72436F65 
+ 1802      666600
+ 1803              	.LASF2:
+ 1804 00e2 73686F72 		.ascii	"short int\000"
+ 1804      7420696E 
+ 1804      7400
+ 1805              	.LASF68:
+ 1806 00ec 6873696F 		.ascii	"hsiomPtr\000"
+ 1806      6D507472 
+ 1806      00
+ 1807              	.LASF31:
+ 1808 00f5 6F6E4465 		.ascii	"onDebounce\000"
+ 1808      626F756E 
+ 1808      636500
+ 1809              	.LASF38:
+ 1810 0100 73697A65 		.ascii	"sizetype\000"
+ 1810      74797065 
+ 1810      00
+ 1811              	.LASF91:
+ 1812 0109 43617053 		.ascii	"CapSense_FLASH_WD_STRUCT\000"
+ 1812      656E7365 
+ 1812      5F464C41 
+ 1812      53485F57 
+ 1812      445F5354 
+ 1813              	.LASF50:
+ 1814 0122 636F6E66 		.ascii	"configId\000"
+ 1814      69674964 
+ 1814      00
+ 1815              	.LASF115:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 50
+
+
+ 1816 012b 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1816      43313120 
+ 1816      352E342E 
+ 1816      31203230 
+ 1816      31363036 
+ 1817 015e 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0plus -mthumb -"
+ 1817      20726576 
+ 1817      6973696F 
+ 1817      6E203233 
+ 1817      37373135 
+ 1818 0191 67202D4F 		.ascii	"g -Og -ffunction-sections -ffat-lto-objects\000"
+ 1818      67202D66 
+ 1818      66756E63 
+ 1818      74696F6E 
+ 1818      2D736563 
+ 1819              	.LASF47:
+ 1820 01bd 69646163 		.ascii	"idacComp\000"
+ 1820      436F6D70 
+ 1820      00
+ 1821              	.LASF59:
+ 1822 01c6 63736430 		.ascii	"csd0Config\000"
+ 1822      436F6E66 
+ 1822      696700
+ 1823              	.LASF6:
+ 1824 01d1 6C6F6E67 		.ascii	"long long int\000"
+ 1824      206C6F6E 
+ 1824      6720696E 
+ 1824      7400
+ 1825              	.LASF72:
+ 1826 01df 6873696F 		.ascii	"hsiomMask\000"
+ 1826      6D4D6173 
+ 1826      6B00
+ 1827              	.LASF35:
+ 1828 01e9 736E7343 		.ascii	"snsClkSource\000"
+ 1828      6C6B536F 
+ 1828      75726365 
+ 1828      00
+ 1829              	.LASF20:
+ 1830 01f6 70617261 		.ascii	"param2\000"
+ 1830      6D3200
+ 1831              	.LASF21:
+ 1832 01fd 70617261 		.ascii	"param3\000"
+ 1832      6D3300
+ 1833              	.LASF22:
+ 1834 0204 70617261 		.ascii	"param4\000"
+ 1834      6D3400
+ 1835              	.LASF100:
+ 1836 020b 43617053 		.ascii	"CapSense_CSDPostSingleScan\000"
+ 1836      656E7365 
+ 1836      5F435344 
+ 1836      506F7374 
+ 1836      53696E67 
+ 1837              	.LASF24:
+ 1838 0226 70617261 		.ascii	"param6\000"
+ 1838      6D3600
+ 1839              	.LASF28:
+ 1840 022d 6E6F6973 		.ascii	"noiseTh\000"
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 51
+
+
+ 1840      65546800 
+ 1841              	.LASF51:
+ 1842 0235 64657669 		.ascii	"deviceId\000"
+ 1842      63654964 
+ 1842      00
+ 1843              	.LASF10:
+ 1844 023e 75696E74 		.ascii	"uint16\000"
+ 1844      313600
+ 1845              	.LASF82:
+ 1846 0245 70747232 		.ascii	"ptr2DebounceArr\000"
+ 1846      4465626F 
+ 1846      756E6365 
+ 1846      41727200 
+ 1847              	.LASF9:
+ 1848 0255 75696E74 		.ascii	"uint8\000"
+ 1848      3800
+ 1849              	.LASF71:
+ 1850 025b 70735074 		.ascii	"psPtr\000"
+ 1850      7200
+ 1851              	.LASF34:
+ 1852 0261 736E7343 		.ascii	"snsClk\000"
+ 1852      6C6B00
+ 1853              	.LASF98:
+ 1854 0268 43617053 		.ascii	"CapSense_SsCSDPostScan\000"
+ 1854      656E7365 
+ 1854      5F537343 
+ 1854      5344506F 
+ 1854      73745363 
+ 1855              	.LASF12:
+ 1856 027f 666C6F61 		.ascii	"float\000"
+ 1856      7400
+ 1857              	.LASF102:
+ 1858 0285 63757253 		.ascii	"curSnsIOPtr\000"
+ 1858      6E73494F 
+ 1858      50747200 
+ 1859              	.LASF42:
+ 1860 0291 43617053 		.ascii	"CapSense_RAM_WD_LIST_STRUCT\000"
+ 1860      656E7365 
+ 1860      5F52414D 
+ 1860      5F57445F 
+ 1860      4C495354 
+ 1861              	.LASF64:
+ 1862 02ad 736E7254 		.ascii	"snrTestSensorId\000"
+ 1862      65737453 
+ 1862      656E736F 
+ 1862      72496400 
+ 1863              	.LASF14:
+ 1864 02bd 63686172 		.ascii	"char\000"
+ 1864      00
+ 1865              	.LASF113:
+ 1866 02c2 43617053 		.ascii	"CapSense_SsPostAllWidgetsScan\000"
+ 1866      656E7365 
+ 1866      5F537350 
+ 1866      6F737441 
+ 1866      6C6C5769 
+ 1867              	.LASF4:
+ 1868 02e0 6C6F6E67 		.ascii	"long int\000"
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 52
+
+
+ 1868      20696E74 
+ 1868      00
+ 1869              	.LASF76:
+ 1870 02e9 73686966 		.ascii	"shift\000"
+ 1870      7400
+ 1871              	.LASF85:
+ 1872 02ef 77646774 		.ascii	"wdgtType\000"
+ 1872      54797065 
+ 1872      00
+ 1873              	.LASF97:
+ 1874 02f8 70747257 		.ascii	"ptrWdgt\000"
+ 1874      64677400 
+ 1875              	.LASF75:
+ 1876 0300 64725368 		.ascii	"drShift\000"
+ 1876      69667400 
+ 1877              	.LASF77:
+ 1878 0308 43617053 		.ascii	"CapSense_FLASH_IO_STRUCT\000"
+ 1878      656E7365 
+ 1878      5F464C41 
+ 1878      53485F49 
+ 1878      4F5F5354 
+ 1879              	.LASF103:
+ 1880 0321 43617053 		.ascii	"CapSense_dsRam\000"
+ 1880      656E7365 
+ 1880      5F647352 
+ 1880      616D00
+ 1881              	.LASF27:
+ 1882 0330 66696E67 		.ascii	"fingerTh\000"
+ 1882      65725468 
+ 1882      00
+ 1883              	.LASF86:
+ 1884 0339 6E756D43 		.ascii	"numCols\000"
+ 1884      6F6C7300 
+ 1885              	.LASF1:
+ 1886 0341 756E7369 		.ascii	"unsigned char\000"
+ 1886      676E6564 
+ 1886      20636861 
+ 1886      7200
+ 1887              	.LASF30:
+ 1888 034f 68797374 		.ascii	"hysteresis\000"
+ 1888      65726573 
+ 1888      697300
+ 1889              	.LASF53:
+ 1890 035a 74756E65 		.ascii	"tunerCmd\000"
+ 1890      72436D64 
+ 1890      00
+ 1891              	.LASF94:
+ 1892 0363 6C6F6E67 		.ascii	"long double\000"
+ 1892      20646F75 
+ 1892      626C6500 
+ 1893              	.LASF57:
+ 1894 036f 77646774 		.ascii	"wdgtStatus\000"
+ 1894      53746174 
+ 1894      757300
+ 1895              	.LASF116:
+ 1896 037a 47656E65 		.ascii	"Generated_Source\\PSoC4\\CapSense_INT.c\000"
+ 1896      72617465 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 53
+
+
+ 1896      645F536F 
+ 1896      75726365 
+ 1896      5C50536F 
+ 1897              	.LASF32:
+ 1898 03a0 6C6F7742 		.ascii	"lowBslnRst\000"
+ 1898      736C6E52 
+ 1898      737400
+ 1899              	.LASF88:
+ 1900 03ab 7843656E 		.ascii	"xCentroidMultiplier\000"
+ 1900      74726F69 
+ 1900      644D756C 
+ 1900      7469706C 
+ 1900      69657200 
+ 1901              	.LASF105:
+ 1902 03bf 43617053 		.ascii	"CapSense_widgetIndex\000"
+ 1902      656E7365 
+ 1902      5F776964 
+ 1902      67657449 
+ 1902      6E646578 
+ 1903              	.LASF16:
+ 1904 03d4 43617053 		.ascii	"CapSense_THRESHOLD_TYPE\000"
+ 1904      656E7365 
+ 1904      5F544852 
+ 1904      4553484F 
+ 1904      4C445F54 
+ 1905              	.LASF111:
+ 1906 03ec 43617053 		.ascii	"CapSense_SsCSDConnectSensorExt\000"
+ 1906      656E7365 
+ 1906      5F537343 
+ 1906      5344436F 
+ 1906      6E6E6563 
+ 1907              	.LASF49:
+ 1908 040b 43617053 		.ascii	"CapSense_RAM_SNS_LIST_STRUCT\000"
+ 1908      656E7365 
+ 1908      5F52414D 
+ 1908      5F534E53 
+ 1908      5F4C4953 
+ 1909              	.LASF7:
+ 1910 0428 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1910      206C6F6E 
+ 1910      6720756E 
+ 1910      7369676E 
+ 1910      65642069 
+ 1911              	.LASF83:
+ 1912 043f 73746174 		.ascii	"staticConfig\000"
+ 1912      6963436F 
+ 1912      6E666967 
+ 1912      00
+ 1913              	.LASF8:
+ 1914 044c 756E7369 		.ascii	"unsigned int\000"
+ 1914      676E6564 
+ 1914      20696E74 
+ 1914      00
+ 1915              	.LASF18:
+ 1916 0459 70617261 		.ascii	"param0\000"
+ 1916      6D3000
+ 1917              	.LASF56:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 54
+
+
+ 1918 0460 77646774 		.ascii	"wdgtEnable\000"
+ 1918      456E6162 
+ 1918      6C6500
+ 1919              	.LASF19:
+ 1920 046b 70617261 		.ascii	"param1\000"
+ 1920      6D3100
+ 1921              	.LASF15:
+ 1922 0472 72656733 		.ascii	"reg32\000"
+ 1922      3200
+ 1923              	.LASF48:
+ 1924 0478 43617053 		.ascii	"CapSense_RAM_SNS_STRUCT\000"
+ 1924      656E7365 
+ 1924      5F52414D 
+ 1924      5F534E53 
+ 1924      5F535452 
+ 1925              	.LASF17:
+ 1926 0490 43617053 		.ascii	"CapSense_LOW_BSLN_RST_TYPE\000"
+ 1926      656E7365 
+ 1926      5F4C4F57 
+ 1926      5F42534C 
+ 1926      4E5F5253 
+ 1927              	.LASF55:
+ 1928 04ab 73746174 		.ascii	"status\000"
+ 1928      757300
+ 1929              	.LASF52:
+ 1930 04b2 6877436C 		.ascii	"hwClock\000"
+ 1930      6F636B00 
+ 1931              	.LASF65:
+ 1932 04ba 736E7254 		.ascii	"snrTestScanCounter\000"
+ 1932      65737453 
+ 1932      63616E43 
+ 1932      6F756E74 
+ 1932      657200
+ 1933              	.LASF26:
+ 1934 04cd 7265736F 		.ascii	"resolution\000"
+ 1934      6C757469 
+ 1934      6F6E00
+ 1935              	.LASF3:
+ 1936 04d8 73686F72 		.ascii	"short unsigned int\000"
+ 1936      7420756E 
+ 1936      7369676E 
+ 1936      65642069 
+ 1936      6E7400
+ 1937              	.LASF112:
+ 1938 04eb 43617053 		.ascii	"CapSense_SsCSDStartSample\000"
+ 1938      656E7365 
+ 1938      5F537343 
+ 1938      53445374 
+ 1938      61727453 
+ 1939              	.LASF62:
+ 1940 0505 736E734C 		.ascii	"snsList\000"
+ 1940      69737400 
+ 1941              	.LASF107:
+ 1942 050d 43617053 		.ascii	"CapSense_requestScanAllWidget\000"
+ 1942      656E7365 
+ 1942      5F726571 
+ 1942      75657374 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 55
+
+
+ 1942      5363616E 
+ 1943              	.LASF60:
+ 1944 052b 6D6F6443 		.ascii	"modCsdClk\000"
+ 1944      7364436C 
+ 1944      6B00
+ 1945              	.LASF54:
+ 1946 0535 7363616E 		.ascii	"scanCounter\000"
+ 1946      436F756E 
+ 1946      74657200 
+ 1947              	.LASF29:
+ 1948 0541 6E4E6F69 		.ascii	"nNoiseTh\000"
+ 1948      73655468 
+ 1948      00
+ 1949              	.LASF67:
+ 1950 054a 43617053 		.ascii	"CapSense_RAM_STRUCT\000"
+ 1950      656E7365 
+ 1950      5F52414D 
+ 1950      5F535452 
+ 1950      55435400 
+ 1951              	.LASF37:
+ 1952 055e 73696750 		.ascii	"sigPFC\000"
+ 1952      464300
+ 1953              	.LASF11:
+ 1954 0565 75696E74 		.ascii	"uint32\000"
+ 1954      333200
+ 1955              	.LASF5:
+ 1956 056c 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1956      20756E73 
+ 1956      69676E65 
+ 1956      6420696E 
+ 1956      7400
+ 1957              	.LASF13:
+ 1958 057e 646F7562 		.ascii	"double\000"
+ 1958      6C6500
+ 1959              	.LASF101:
+ 1960 0585 43617053 		.ascii	"CapSense_CSDPostMultiScan\000"
+ 1960      656E7365 
+ 1960      5F435344 
+ 1960      506F7374 
+ 1960      4D756C74 
+ 1961              	.LASF44:
+ 1962 059f 62736C6E 		.ascii	"bslnExt\000"
+ 1962      45787400 
+ 1963              	.LASF74:
+ 1964 05a7 6873696F 		.ascii	"hsiomShift\000"
+ 1964      6D536869 
+ 1964      667400
+ 1965              	.LASF108:
+ 1966 05b2 43617053 		.ascii	"CapSense_curRamSnsPtr\000"
+ 1966      656E7365 
+ 1966      5F637572 
+ 1966      52616D53 
+ 1966      6E735074 
+ 1967              	.LASF70:
+ 1968 05c8 64725074 		.ascii	"drPtr\000"
+ 1968      7200
+ 1969              	.LASF73:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 56
+
+
+ 1970 05ce 6D61736B 		.ascii	"mask\000"
+ 1970      00
+ 1971              	.LASF46:
+ 1972 05d3 6E656742 		.ascii	"negBslnRstCnt\000"
+ 1972      736C6E52 
+ 1972      7374436E 
+ 1972      7400
+ 1973              	.LASF110:
+ 1974 05e1 43617053 		.ascii	"CapSense_SsCSDSetUpIdacs\000"
+ 1974      656E7365 
+ 1974      5F537343 
+ 1974      53445365 
+ 1974      74557049 
+ 1975              	.LASF80:
+ 1976 05fa 70747232 		.ascii	"ptr2SnsRam\000"
+ 1976      536E7352 
+ 1976      616D00
+ 1977              	.LASF0:
+ 1978 0605 7369676E 		.ascii	"signed char\000"
+ 1978      65642063 
+ 1978      68617200 
+ 1979              	.LASF81:
+ 1980 0611 70747232 		.ascii	"ptr2FltrHistory\000"
+ 1980      466C7472 
+ 1980      48697374 
+ 1980      6F727900 
+ 1981              	.LASF99:
+ 1982 0621 43617053 		.ascii	"CapSense_SsCSDInitNextScan\000"
+ 1982      656E7365 
+ 1982      5F537343 
+ 1982      5344496E 
+ 1982      69744E65 
+ 1983              	.LASF92:
+ 1984 063c 77646774 		.ascii	"wdgtArray\000"
+ 1984      41727261 
+ 1984      7900
+ 1985              	.LASF36:
+ 1986 0646 66696E67 		.ascii	"fingerCap\000"
+ 1986      65724361 
+ 1986      7000
+ 1987              	.LASF104:
+ 1988 0650 43617053 		.ascii	"CapSense_dsFlash\000"
+ 1988      656E7365 
+ 1988      5F647346 
+ 1988      6C617368 
+ 1988      00
+ 1989              	.LASF40:
+ 1990 0661 706F7369 		.ascii	"position\000"
+ 1990      74696F6E 
+ 1990      00
+ 1991              	.LASF39:
+ 1992 066a 43617053 		.ascii	"CapSense_RAM_WD_BASE_STRUCT\000"
+ 1992      656E7365 
+ 1992      5F52414D 
+ 1992      5F57445F 
+ 1992      42415345 
+ 1993              	.LASF63:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccqWmD4v.s 			page 57
+
+
+ 1994 0686 736E7254 		.ascii	"snrTestWidgetId\000"
+ 1994      65737457 
+ 1994      69646765 
+ 1994      74496400 
+ 1995              	.LASF109:
+ 1996 0696 43617053 		.ascii	"CapSense_scanFreqIndex\000"
+ 1996      656E7365 
+ 1996      5F736361 
+ 1996      6E467265 
+ 1996      71496E64 
+ 1997              	.LASF25:
+ 1998 06ad 534D4152 		.ascii	"SMARTSENSE_CSD_NOISE_ENVELOPE_STRUCT\000"
+ 1998      5453454E 
+ 1998      53455F43 
+ 1998      53445F4E 
+ 1998      4F495345 
+ 1999              	.LASF78:
+ 2000 06d2 70747232 		.ascii	"ptr2SnsFlash\000"
+ 2000      536E7346 
+ 2000      6C617368 
+ 2000      00
+ 2001              	.LASF58:
+ 2002 06df 736E7353 		.ascii	"snsStatus\000"
+ 2002      74617475 
+ 2002      7300
+ 2003              	.LASF106:
+ 2004 06e9 43617053 		.ascii	"CapSense_sensorIndex\000"
+ 2004      656E7365 
+ 2004      5F73656E 
+ 2004      736F7249 
+ 2004      6E646578 
+ 2005              	.LASF41:
+ 2006 06fe 43617053 		.ascii	"CapSense_RAM_WD_SLIDER_STRUCT\000"
+ 2006      656E7365 
+ 2006      5F52414D 
+ 2006      5F57445F 
+ 2006      534C4944 
+ 2007              	.LASF114:
+ 2008 071c 43617053 		.ascii	"CapSense_CSDDisconnectSns\000"
+ 2008      656E7365 
+ 2008      5F435344 
+ 2008      44697363 
+ 2008      6F6E6E65 
+ 2009              	.LASF89:
+ 2010 0736 70747232 		.ascii	"ptr2NoiseEnvlp\000"
+ 2010      4E6F6973 
+ 2010      65456E76 
+ 2010      6C7000
+ 2011              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

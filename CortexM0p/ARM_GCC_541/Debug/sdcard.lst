@@ -1,0 +1,4790 @@
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0plus
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"sdcard.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.rcvr_mmc,"ax",%progbits
+  20              		.align	2
+  21              		.code	16
+  22              		.thumb_func
+  23              		.type	rcvr_mmc, %function
+  24              	rcvr_mmc:
+  25              	.LFB34:
+  26              		.file 1 "fatfs\\sdcard.c"
+   1:fatfs/sdcard.c **** /*------------------------------------------------------------------------/
+   2:fatfs/sdcard.c **** /  Foolproof MMCv3/SDv1/SDv2 (in SPI mode) control module
+   3:fatfs/sdcard.c **** /-------------------------------------------------------------------------/
+   4:fatfs/sdcard.c **** /
+   5:fatfs/sdcard.c **** /  Copyright (C) 2013, ChaN, all right reserved.
+   6:fatfs/sdcard.c **** /
+   7:fatfs/sdcard.c **** / * This software is a free software and there is NO WARRANTY.
+   8:fatfs/sdcard.c **** / * No restriction on use. You can use, modify and redistribute it for
+   9:fatfs/sdcard.c **** /   personal, non-profit or commercial products UNDER YOUR RESPONSIBILITY.
+  10:fatfs/sdcard.c **** / * Redistributions of source code must retain the above copyright notice.
+  11:fatfs/sdcard.c **** /
+  12:fatfs/sdcard.c **** /-------------------------------------------------------------------------/
+  13:fatfs/sdcard.c ****   Features and Limitations:
+  14:fatfs/sdcard.c **** 
+  15:fatfs/sdcard.c ****   * Easy to Port Bit-banging SPI
+  16:fatfs/sdcard.c ****     It uses only four GPIO pins. No complex peripheral needs to be used.
+  17:fatfs/sdcard.c **** 
+  18:fatfs/sdcard.c ****   * No Media Change Detection
+  19:fatfs/sdcard.c ****     Application program needs to perform a f_mount() after media change.
+  20:fatfs/sdcard.c **** 
+  21:fatfs/sdcard.c **** /-------------------------------------------------------------------------*/
+  22:fatfs/sdcard.c **** 
+  23:fatfs/sdcard.c **** 
+  24:fatfs/sdcard.c **** #include "diskio.h"		/* Common include file for FatFs and disk I/O layer */
+  25:fatfs/sdcard.c **** 
+  26:fatfs/sdcard.c **** 
+  27:fatfs/sdcard.c **** /*-------------------------------------------------------------------------*/
+  28:fatfs/sdcard.c **** /* Platform dependent macros and functions needed to be modified           */
+  29:fatfs/sdcard.c **** /*-------------------------------------------------------------------------*/
+  30:fatfs/sdcard.c **** 
+  31:fatfs/sdcard.c **** #include <project.h>
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 2
+
+
+  32:fatfs/sdcard.c **** #include <cytypes.h>
+  33:fatfs/sdcard.c **** 
+  34:fatfs/sdcard.c ****     /* Put here the same name of the SPI bus module you have used in schematic. */
+  35:fatfs/sdcard.c **** #define SPI_NAME                SPI  
+  36:fatfs/sdcard.c ****     /* Put here function used to control SPI SS line.
+  37:fatfs/sdcard.c ****        Example: 
+  38:fatfs/sdcard.c ****         - if using Cypress API macros: SPI_ss0_m_Write
+  39:fatfs/sdcard.c ****         - if using another gpio pint: SPI_SS_Write. */
+  40:fatfs/sdcard.c **** #define mmSPI_SS_Write(value)   SPI_ss0_m_Write(value)
+  41:fatfs/sdcard.c **** //#define mmSPI_SS_Write(value)     SPI_SS_Write(value)        
+  42:fatfs/sdcard.c **** 
+  43:fatfs/sdcard.c **** #define CS_DELAY_US             1
+  44:fatfs/sdcard.c **** #define M_DELAY_US              1
+  45:fatfs/sdcard.c **** #define DELAY(x)                CyDelayUs(x)
+  46:fatfs/sdcard.c **** 
+  47:fatfs/sdcard.c ****     /* Text substitution macros to avoid changing function names related to SPI API
+  48:fatfs/sdcard.c ****        if SPI module name is changed in schematic. */
+  49:fatfs/sdcard.c **** 
+  50:fatfs/sdcard.c **** #define CONCATENATE(name, function)                 CONCAT(name, function)
+  51:fatfs/sdcard.c **** #define CONCAT(name, function)                      name##function
+  52:fatfs/sdcard.c **** 
+  53:fatfs/sdcard.c **** #if (CY_PSOC4)
+  54:fatfs/sdcard.c **** 
+  55:fatfs/sdcard.c ****     #define mmSPI_SpiUartClearTxBuffer                  CONCATENATE(SPI_NAME, _SpiUartClearTxBuffer
+  56:fatfs/sdcard.c ****     #define mmSPI_SpiUartClearRxBuffer                  CONCATENATE(SPI_NAME, _SpiUartClearRxBuffer
+  57:fatfs/sdcard.c ****     #define mmSPI_SpiUartPutArray(a, b)                 CONCATENATE(SPI_NAME, _SpiUartPutArray(a, b
+  58:fatfs/sdcard.c ****     #define mmSPI_SpiUartWriteTxData(value)             CONCATENATE(SPI_NAME, _SpiUartWriteTxData(v
+  59:fatfs/sdcard.c ****     #define mmSPI_SpiUartReadRxData                     CONCATENATE(SPI_NAME, _SpiUartReadRxData)
+  60:fatfs/sdcard.c ****     #define mmSPI_GetMasterInterruptSource              CONCATENATE(SPI_NAME, _GetMasterInterruptSo
+  61:fatfs/sdcard.c ****     #define mmSPI_ClearMasterInterruptSource(value)     CONCATENATE(SPI_NAME, _ClearMasterInterrupt
+  62:fatfs/sdcard.c ****     #define mmSPI_INTR_MASTER_SPI_DONE                  CONCATENATE(SPI_NAME, _INTR_MASTER_SPI_DONE
+  63:fatfs/sdcard.c ****     #define mmSPI_SpiUartGetRxBufferSize                CONCATENATE(SPI_NAME, _SpiUartGetRxBufferSi
+  64:fatfs/sdcard.c ****     #define mmSPI_SpiUartGetTxBufferSize                CONCATENATE(SPI_NAME, _SpiUartGetTxBufferSi
+  65:fatfs/sdcard.c ****     #define mmSPI_SpiFullRXSize                         CONCATENATE(SPI_NAME, _SPI_RX_BUFFER_SIZE)
+  66:fatfs/sdcard.c **** #endif    
+  67:fatfs/sdcard.c **** 
+  68:fatfs/sdcard.c **** #if (CY_PSOC5LP) 
+  69:fatfs/sdcard.c ****     #define mmSPI_SpiUartClearTxBuffer                  CONCATENATE(SPI_NAME, _ClearTxBuffer)
+  70:fatfs/sdcard.c ****     #define mmSPI_SpiUartClearRxBuffer                  CONCATENATE(SPI_NAME, _ClearRxBuffer)    
+  71:fatfs/sdcard.c ****     #define mmSPI_SpiUartPutArray(a, b)                 CONCATENATE(SPI_NAME, _PutArray(a, b)) 
+  72:fatfs/sdcard.c ****     #define mmSPI_SpiUartWriteTxData(value)             CONCATENATE(SPI_NAME, _WriteTxData(value))
+  73:fatfs/sdcard.c ****     #define mmSPI_SpiUartReadRxData                     CONCATENATE(SPI_NAME, _ReadRxData)
+  74:fatfs/sdcard.c ****     #define mmSPI_GetMasterInterruptSource              CONCATENATE(SPI_NAME, _GetMasterInterruptSo
+  75:fatfs/sdcard.c ****     #define mmSPI_ClearMasterInterruptSource(value)     CONCATENATE(SPI_NAME, _ClearMasterInterrupt
+  76:fatfs/sdcard.c ****     #define mmSPI_INTR_MASTER_SPI_DONE                  CONCATENATE(SPI_NAME, _INTR_MASTER_SPI_DONE
+  77:fatfs/sdcard.c **** #endif 
+  78:fatfs/sdcard.c **** 
+  79:fatfs/sdcard.c ****     /* Delays. */
+  80:fatfs/sdcard.c **** #define dly_us(n)               DELAY(n); /* Delay n microseconds. */
+  81:fatfs/sdcard.c **** 
+  82:fatfs/sdcard.c **** /*--------------------------------------------------------------------------
+  83:fatfs/sdcard.c **** 
+  84:fatfs/sdcard.c ****    Module Private Functions
+  85:fatfs/sdcard.c **** 
+  86:fatfs/sdcard.c **** ---------------------------------------------------------------------------*/
+  87:fatfs/sdcard.c **** 
+  88:fatfs/sdcard.c **** /* MMC/SD command (SPI mode) */
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 3
+
+
+  89:fatfs/sdcard.c **** #define CMD0	(0)			/* GO_IDLE_STATE */
+  90:fatfs/sdcard.c **** #define CMD1	(1)			/* SEND_OP_COND */
+  91:fatfs/sdcard.c **** #define	ACMD41	(0x80+41)	/* SEND_OP_COND (SDC) */
+  92:fatfs/sdcard.c **** #define CMD8	(8)			/* SEND_IF_COND */
+  93:fatfs/sdcard.c **** #define CMD9	(9)			/* SEND_CSD */
+  94:fatfs/sdcard.c **** #define CMD10	(10)		/* SEND_CID */
+  95:fatfs/sdcard.c **** #define CMD12	(12)		/* STOP_TRANSMISSION */
+  96:fatfs/sdcard.c **** #define CMD13	(13)		/* SEND_STATUS */
+  97:fatfs/sdcard.c **** #define ACMD13	(0x80+13)	/* SD_STATUS (SDC) */
+  98:fatfs/sdcard.c **** #define CMD16	(16)		/* SET_BLOCKLEN */
+  99:fatfs/sdcard.c **** #define CMD17	(17)		/* READ_SINGLE_BLOCK */
+ 100:fatfs/sdcard.c **** #define CMD18	(18)		/* READ_MULTIPLE_BLOCK */
+ 101:fatfs/sdcard.c **** #define CMD23	(23)		/* SET_BLOCK_COUNT */
+ 102:fatfs/sdcard.c **** #define	ACMD23	(0x80+23)	/* SET_WR_BLK_ERASE_COUNT (SDC) */
+ 103:fatfs/sdcard.c **** #define CMD24	(24)		/* WRITE_BLOCK */
+ 104:fatfs/sdcard.c **** #define CMD25	(25)		/* WRITE_MULTIPLE_BLOCK */
+ 105:fatfs/sdcard.c **** #define CMD32	(32)		/* ERASE_ER_BLK_START */
+ 106:fatfs/sdcard.c **** #define CMD33	(33)		/* ERASE_ER_BLK_END */
+ 107:fatfs/sdcard.c **** #define CMD38	(38)		/* ERASE */
+ 108:fatfs/sdcard.c **** #define CMD55	(55)		/* APP_CMD */
+ 109:fatfs/sdcard.c **** #define CMD58	(58)		/* READ_OCR */
+ 110:fatfs/sdcard.c **** 
+ 111:fatfs/sdcard.c **** 
+ 112:fatfs/sdcard.c **** static DSTATUS Stat = STA_NOINIT;	/* Disk status */
+ 113:fatfs/sdcard.c **** 
+ 114:fatfs/sdcard.c **** static BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
+ 115:fatfs/sdcard.c **** 
+ 116:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 117:fatfs/sdcard.c **** /* Transmit bytes to the card                                            */
+ 118:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 119:fatfs/sdcard.c **** 
+ 120:fatfs/sdcard.c **** static void xmit_mmc(const BYTE* buff, UINT bc)
+ 121:fatfs/sdcard.c **** {
+ 122:fatfs/sdcard.c **** 
+ 123:fatfs/sdcard.c **** #if (CY_PSOC4)
+ 124:fatfs/sdcard.c ****     
+ 125:fatfs/sdcard.c ****     mmSPI_SpiUartClearTxBuffer();
+ 126:fatfs/sdcard.c ****     mmSPI_SpiUartClearRxBuffer();
+ 127:fatfs/sdcard.c ****     mmSPI_SpiUartPutArray(buff, bc);    
+ 128:fatfs/sdcard.c ****     while(0u == (mmSPI_GetMasterInterruptSource() & mmSPI_INTR_MASTER_SPI_DONE));
+ 129:fatfs/sdcard.c **** #endif
+ 130:fatfs/sdcard.c **** 
+ 131:fatfs/sdcard.c **** #if (CY_PSOC5LP)
+ 132:fatfs/sdcard.c ****     
+ 133:fatfs/sdcard.c ****     UINT loop;
+ 134:fatfs/sdcard.c ****     
+ 135:fatfs/sdcard.c ****     SPI_ClearTxBuffer();
+ 136:fatfs/sdcard.c ****     SPI_ClearRxBuffer();
+ 137:fatfs/sdcard.c ****     
+ 138:fatfs/sdcard.c ****     for (loop = 0; loop < bc; loop++)
+ 139:fatfs/sdcard.c ****         SPI_WriteTxData(buff[loop]);
+ 140:fatfs/sdcard.c ****     
+ 141:fatfs/sdcard.c ****     while (SPI_GetTxBufferSize()) {};
+ 142:fatfs/sdcard.c ****     
+ 143:fatfs/sdcard.c **** #endif    
+ 144:fatfs/sdcard.c **** }
+ 145:fatfs/sdcard.c **** 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 4
+
+
+ 146:fatfs/sdcard.c **** 
+ 147:fatfs/sdcard.c **** 
+ 148:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 149:fatfs/sdcard.c **** /* Receive bytes from the card                                           */
+ 150:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 151:fatfs/sdcard.c **** 
+ 152:fatfs/sdcard.c **** static void rcvr_mmc(BYTE *buff, UINT bc)
+ 153:fatfs/sdcard.c **** {
+  27              		.loc 1 153 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              	.LVL0:
+  32 0000 70B5     		push	{r4, r5, r6, lr}
+  33              		.cfi_def_cfa_offset 16
+  34              		.cfi_offset 4, -16
+  35              		.cfi_offset 5, -12
+  36              		.cfi_offset 6, -8
+  37              		.cfi_offset 14, -4
+  38 0002 0500     		movs	r5, r0
+  39 0004 0C00     		movs	r4, r1
+  40 0006 00E0     		b	.L3
+  41              	.LVL1:
+  42              	.L4:
+ 154:fatfs/sdcard.c **** 
+ 155:fatfs/sdcard.c ****    
+ 156:fatfs/sdcard.c **** #if (CY_PSOC4) 
+ 157:fatfs/sdcard.c ****   #if 0
+ 158:fatfs/sdcard.c ****     mmSPI_SpiUartClearTxBuffer();
+ 159:fatfs/sdcard.c ****     mmSPI_SpiUartClearRxBuffer();
+ 160:fatfs/sdcard.c ****   #endif 
+ 161:fatfs/sdcard.c ****     do
+ 162:fatfs/sdcard.c ****     {
+ 163:fatfs/sdcard.c ****         mmSPI_SpiUartWriteTxData(0xFF);
+ 164:fatfs/sdcard.c ****         while (!mmSPI_SpiUartGetRxBufferSize()) {};
+ 165:fatfs/sdcard.c ****         *buff++ = (BYTE)mmSPI_SpiUartReadRxData();
+  43              		.loc 1 165 0
+  44 0008 3500     		movs	r5, r6
+  45              	.LVL2:
+  46              	.L3:
+ 163:fatfs/sdcard.c ****         while (!mmSPI_SpiUartGetRxBufferSize()) {};
+  47              		.loc 1 163 0
+  48 000a FF20     		movs	r0, #255
+  49 000c FFF7FEFF 		bl	SPI_SpiUartWriteTxData
+  50              	.LVL3:
+  51              	.L2:
+ 164:fatfs/sdcard.c ****         *buff++ = (BYTE)mmSPI_SpiUartReadRxData();
+  52              		.loc 1 164 0 discriminator 1
+  53 0010 FFF7FEFF 		bl	SPI_SpiUartGetRxBufferSize
+  54              	.LVL4:
+  55 0014 0028     		cmp	r0, #0
+  56 0016 FBD0     		beq	.L2
+  57              		.loc 1 165 0
+  58 0018 6E1C     		adds	r6, r5, #1
+  59              	.LVL5:
+  60 001a FFF7FEFF 		bl	SPI_SpiUartReadRxData
+  61              	.LVL6:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 5
+
+
+  62 001e 2870     		strb	r0, [r5]
+ 166:fatfs/sdcard.c ****     } while (--bc);   
+  63              		.loc 1 166 0
+  64 0020 013C     		subs	r4, r4, #1
+  65              	.LVL7:
+  66 0022 002C     		cmp	r4, #0
+  67 0024 F0D1     		bne	.L4
+ 167:fatfs/sdcard.c **** 
+ 168:fatfs/sdcard.c **** #endif    
+ 169:fatfs/sdcard.c ****     
+ 170:fatfs/sdcard.c **** #if (CY_PSOC5LP)
+ 171:fatfs/sdcard.c ****     
+ 172:fatfs/sdcard.c ****     SPI_ClearTxBuffer();
+ 173:fatfs/sdcard.c ****     SPI_ClearRxBuffer();
+ 174:fatfs/sdcard.c ****     
+ 175:fatfs/sdcard.c ****     do
+ 176:fatfs/sdcard.c ****     {
+ 177:fatfs/sdcard.c **** 
+ 178:fatfs/sdcard.c ****         SPI_WriteTxData(0xFF);
+ 179:fatfs/sdcard.c ****         while (SPI_GetTxBufferSize()) {};
+ 180:fatfs/sdcard.c ****         DELAY(M_DELAY_US); // <*> adjust, why?
+ 181:fatfs/sdcard.c ****         *buff++ = (BYTE)SPI_ReadRxData();
+ 182:fatfs/sdcard.c **** 
+ 183:fatfs/sdcard.c ****     } while (--bc);    
+ 184:fatfs/sdcard.c ****     
+ 185:fatfs/sdcard.c **** #endif        
+ 186:fatfs/sdcard.c **** 
+ 187:fatfs/sdcard.c **** }
+  68              		.loc 1 187 0
+  69              		@ sp needed
+  70              	.LVL8:
+  71              	.LVL9:
+  72 0026 70BD     		pop	{r4, r5, r6, pc}
+  73              		.cfi_endproc
+  74              	.LFE34:
+  75              		.size	rcvr_mmc, .-rcvr_mmc
+  76              		.section	.text.wait_ready,"ax",%progbits
+  77              		.align	2
+  78              		.code	16
+  79              		.thumb_func
+  80              		.type	wait_ready, %function
+  81              	wait_ready:
+  82              	.LFB35:
+ 188:fatfs/sdcard.c **** 
+ 189:fatfs/sdcard.c **** 
+ 190:fatfs/sdcard.c **** 
+ 191:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 192:fatfs/sdcard.c **** /* Wait for card ready                                                   */
+ 193:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 194:fatfs/sdcard.c **** 
+ 195:fatfs/sdcard.c **** static int wait_ready(void)	/* 1:OK, 0:Timeout */
+ 196:fatfs/sdcard.c **** {
+  83              		.loc 1 196 0
+  84              		.cfi_startproc
+  85              		@ args = 0, pretend = 0, frame = 8
+  86              		@ frame_needed = 0, uses_anonymous_args = 0
+  87 0000 30B5     		push	{r4, r5, lr}
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 6
+
+
+  88              		.cfi_def_cfa_offset 12
+  89              		.cfi_offset 4, -12
+  90              		.cfi_offset 5, -8
+  91              		.cfi_offset 14, -4
+  92 0002 83B0     		sub	sp, sp, #12
+  93              		.cfi_def_cfa_offset 24
+  94              	.LVL10:
+ 197:fatfs/sdcard.c **** 	BYTE d;
+ 198:fatfs/sdcard.c **** 	UINT tmr;
+ 199:fatfs/sdcard.c **** 
+ 200:fatfs/sdcard.c **** 	for (tmr = 5000; tmr; tmr--) {	/* Wait for ready in timeout of 500ms */
+  95              		.loc 1 200 0
+  96 0004 094C     		ldr	r4, .L9
+  97 0006 09E0     		b	.L6
+  98              	.LVL11:
+  99              	.L8:
+ 201:fatfs/sdcard.c **** 		rcvr_mmc(&d, 1);
+ 100              		.loc 1 201 0
+ 101 0008 6B46     		mov	r3, sp
+ 102 000a DD1D     		adds	r5, r3, #7
+ 103 000c 0121     		movs	r1, #1
+ 104 000e 2800     		movs	r0, r5
+ 105 0010 FFF7FEFF 		bl	rcvr_mmc
+ 106              	.LVL12:
+ 202:fatfs/sdcard.c **** 		if (d == 0xFF) break;
+ 107              		.loc 1 202 0
+ 108 0014 2B78     		ldrb	r3, [r5]
+ 109 0016 FF2B     		cmp	r3, #255
+ 110 0018 02D0     		beq	.L7
+ 200:fatfs/sdcard.c **** 		rcvr_mmc(&d, 1);
+ 111              		.loc 1 200 0 discriminator 2
+ 112 001a 013C     		subs	r4, r4, #1
+ 113              	.LVL13:
+ 114              	.L6:
+ 200:fatfs/sdcard.c **** 		rcvr_mmc(&d, 1);
+ 115              		.loc 1 200 0 is_stmt 0 discriminator 1
+ 116 001c 002C     		cmp	r4, #0
+ 117 001e F3D1     		bne	.L8
+ 118              	.L7:
+ 203:fatfs/sdcard.c **** 		//dly_us(1);
+ 204:fatfs/sdcard.c **** 	}
+ 205:fatfs/sdcard.c **** 
+ 206:fatfs/sdcard.c **** 	return tmr ? 1 : 0;
+ 119              		.loc 1 206 0 is_stmt 1
+ 120 0020 601E     		subs	r0, r4, #1
+ 121 0022 8441     		sbcs	r4, r4, r0
+ 122              	.LVL14:
+ 123 0024 E0B2     		uxtb	r0, r4
+ 207:fatfs/sdcard.c **** }
+ 124              		.loc 1 207 0
+ 125 0026 03B0     		add	sp, sp, #12
+ 126              		@ sp needed
+ 127 0028 30BD     		pop	{r4, r5, pc}
+ 128              	.L10:
+ 129 002a C046     		.align	2
+ 130              	.L9:
+ 131 002c 88130000 		.word	5000
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 7
+
+
+ 132              		.cfi_endproc
+ 133              	.LFE35:
+ 134              		.size	wait_ready, .-wait_ready
+ 135              		.section	.text.rcvr_datablock,"ax",%progbits
+ 136              		.align	2
+ 137              		.code	16
+ 138              		.thumb_func
+ 139              		.type	rcvr_datablock, %function
+ 140              	rcvr_datablock:
+ 141              	.LFB38:
+ 208:fatfs/sdcard.c **** 
+ 209:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 210:fatfs/sdcard.c **** /* Deselect the card and release SPI bus                                 */
+ 211:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 212:fatfs/sdcard.c **** 
+ 213:fatfs/sdcard.c **** static void deselect(void)
+ 214:fatfs/sdcard.c **** {
+ 215:fatfs/sdcard.c ****     SPI_ss0_m_Write(1);
+ 216:fatfs/sdcard.c **** }
+ 217:fatfs/sdcard.c **** 
+ 218:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 219:fatfs/sdcard.c **** /* Select the card and wait for ready                                    */
+ 220:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 221:fatfs/sdcard.c **** 
+ 222:fatfs/sdcard.c **** static int select(void)	/* 1:OK, 0:Timeout */
+ 223:fatfs/sdcard.c **** {
+ 224:fatfs/sdcard.c **** 
+ 225:fatfs/sdcard.c ****     SPI_ss0_m_Write(0);
+ 226:fatfs/sdcard.c **** 	if (wait_ready()) return 1;	/* Wait for card ready */
+ 227:fatfs/sdcard.c **** 
+ 228:fatfs/sdcard.c **** 	deselect();
+ 229:fatfs/sdcard.c **** 	return 0;			/* Failed */
+ 230:fatfs/sdcard.c **** }
+ 231:fatfs/sdcard.c **** 
+ 232:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 233:fatfs/sdcard.c **** /* Receive a data packet from the card                                   */
+ 234:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 235:fatfs/sdcard.c **** 
+ 236:fatfs/sdcard.c **** static int rcvr_datablock(BYTE *buff, UINT btr) 	/* 1:OK, 0:Failed */
+ 237:fatfs/sdcard.c **** {
+ 142              		.loc 1 237 0
+ 143              		.cfi_startproc
+ 144              		@ args = 0, pretend = 0, frame = 8
+ 145              		@ frame_needed = 0, uses_anonymous_args = 0
+ 146              	.LVL15:
+ 147 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 148              		.cfi_def_cfa_offset 20
+ 149              		.cfi_offset 4, -20
+ 150              		.cfi_offset 5, -16
+ 151              		.cfi_offset 6, -12
+ 152              		.cfi_offset 7, -8
+ 153              		.cfi_offset 14, -4
+ 154 0002 83B0     		sub	sp, sp, #12
+ 155              		.cfi_def_cfa_offset 32
+ 156 0004 0600     		movs	r6, r0
+ 157 0006 0F00     		movs	r7, r1
+ 158              	.LVL16:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 8
+
+
+ 238:fatfs/sdcard.c **** 	BYTE d[2];
+ 239:fatfs/sdcard.c **** 	UINT tmr;
+ 240:fatfs/sdcard.c **** 
+ 241:fatfs/sdcard.c **** 	for (tmr = 1000; tmr; tmr--) {	/* Wait for data packet in timeout of 100ms */
+ 159              		.loc 1 241 0
+ 160 0008 FA25     		movs	r5, #250
+ 161 000a AD00     		lsls	r5, r5, #2
+ 162 000c 08E0     		b	.L12
+ 163              	.LVL17:
+ 164              	.L14:
+ 242:fatfs/sdcard.c **** 		rcvr_mmc(d, 1);
+ 165              		.loc 1 242 0
+ 166 000e 01AC     		add	r4, sp, #4
+ 167 0010 0121     		movs	r1, #1
+ 168 0012 2000     		movs	r0, r4
+ 169 0014 FFF7FEFF 		bl	rcvr_mmc
+ 170              	.LVL18:
+ 243:fatfs/sdcard.c **** 		if (d[0] != 0xFF) break;
+ 171              		.loc 1 243 0
+ 172 0018 2378     		ldrb	r3, [r4]
+ 173 001a FF2B     		cmp	r3, #255
+ 174 001c 02D1     		bne	.L13
+ 241:fatfs/sdcard.c **** 		rcvr_mmc(d, 1);
+ 175              		.loc 1 241 0 discriminator 2
+ 176 001e 013D     		subs	r5, r5, #1
+ 177              	.LVL19:
+ 178              	.L12:
+ 241:fatfs/sdcard.c **** 		rcvr_mmc(d, 1);
+ 179              		.loc 1 241 0 is_stmt 0 discriminator 1
+ 180 0020 002D     		cmp	r5, #0
+ 181 0022 F4D1     		bne	.L14
+ 182              	.L13:
+ 244:fatfs/sdcard.c **** 	}
+ 245:fatfs/sdcard.c **** 	if (d[0] != 0xFE) return 0;		/* If not valid data token, return with error */
+ 183              		.loc 1 245 0 is_stmt 1
+ 184 0024 01AB     		add	r3, sp, #4
+ 185 0026 1B78     		ldrb	r3, [r3]
+ 186 0028 FE2B     		cmp	r3, #254
+ 187 002a 09D1     		bne	.L16
+ 246:fatfs/sdcard.c **** 
+ 247:fatfs/sdcard.c **** 	rcvr_mmc(buff, btr);			/* Receive the data block into buffer */
+ 188              		.loc 1 247 0
+ 189 002c 3900     		movs	r1, r7
+ 190 002e 3000     		movs	r0, r6
+ 191 0030 FFF7FEFF 		bl	rcvr_mmc
+ 192              	.LVL20:
+ 248:fatfs/sdcard.c **** 	rcvr_mmc(d, 2);					/* Discard CRC */
+ 193              		.loc 1 248 0
+ 194 0034 0221     		movs	r1, #2
+ 195 0036 01A8     		add	r0, sp, #4
+ 196 0038 FFF7FEFF 		bl	rcvr_mmc
+ 197              	.LVL21:
+ 249:fatfs/sdcard.c **** 
+ 250:fatfs/sdcard.c **** 	return 1;						/* Return with success */
+ 198              		.loc 1 250 0
+ 199 003c 0120     		movs	r0, #1
+ 200 003e 00E0     		b	.L15
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 9
+
+
+ 201              	.L16:
+ 245:fatfs/sdcard.c **** 
+ 202              		.loc 1 245 0
+ 203 0040 0020     		movs	r0, #0
+ 204              	.L15:
+ 251:fatfs/sdcard.c **** }
+ 205              		.loc 1 251 0
+ 206 0042 03B0     		add	sp, sp, #12
+ 207              		@ sp needed
+ 208              	.LVL22:
+ 209              	.LVL23:
+ 210              	.LVL24:
+ 211 0044 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 212              		.cfi_endproc
+ 213              	.LFE38:
+ 214              		.size	rcvr_datablock, .-rcvr_datablock
+ 215 0046 C046     		.section	.text.deselect,"ax",%progbits
+ 216              		.align	2
+ 217              		.code	16
+ 218              		.thumb_func
+ 219              		.type	deselect, %function
+ 220              	deselect:
+ 221              	.LFB36:
+ 214:fatfs/sdcard.c ****     SPI_ss0_m_Write(1);
+ 222              		.loc 1 214 0
+ 223              		.cfi_startproc
+ 224              		@ args = 0, pretend = 0, frame = 0
+ 225              		@ frame_needed = 0, uses_anonymous_args = 0
+ 226 0000 10B5     		push	{r4, lr}
+ 227              		.cfi_def_cfa_offset 8
+ 228              		.cfi_offset 4, -8
+ 229              		.cfi_offset 14, -4
+ 215:fatfs/sdcard.c **** }
+ 230              		.loc 1 215 0
+ 231 0002 0120     		movs	r0, #1
+ 232 0004 FFF7FEFF 		bl	SPI_ss0_m_Write
+ 233              	.LVL25:
+ 216:fatfs/sdcard.c **** 
+ 234              		.loc 1 216 0
+ 235              		@ sp needed
+ 236 0008 10BD     		pop	{r4, pc}
+ 237              		.cfi_endproc
+ 238              	.LFE36:
+ 239              		.size	deselect, .-deselect
+ 240              		.section	.text.select,"ax",%progbits
+ 241              		.align	2
+ 242              		.code	16
+ 243              		.thumb_func
+ 244              		.type	select, %function
+ 245              	select:
+ 246              	.LFB37:
+ 223:fatfs/sdcard.c **** 
+ 247              		.loc 1 223 0
+ 248              		.cfi_startproc
+ 249              		@ args = 0, pretend = 0, frame = 0
+ 250              		@ frame_needed = 0, uses_anonymous_args = 0
+ 251 0000 10B5     		push	{r4, lr}
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 10
+
+
+ 252              		.cfi_def_cfa_offset 8
+ 253              		.cfi_offset 4, -8
+ 254              		.cfi_offset 14, -4
+ 225:fatfs/sdcard.c **** 	if (wait_ready()) return 1;	/* Wait for card ready */
+ 255              		.loc 1 225 0
+ 256 0002 0020     		movs	r0, #0
+ 257 0004 FFF7FEFF 		bl	SPI_ss0_m_Write
+ 258              	.LVL26:
+ 226:fatfs/sdcard.c **** 
+ 259              		.loc 1 226 0
+ 260 0008 FFF7FEFF 		bl	wait_ready
+ 261              	.LVL27:
+ 262 000c 041E     		subs	r4, r0, #0
+ 263 000e 02D1     		bne	.L20
+ 228:fatfs/sdcard.c **** 	return 0;			/* Failed */
+ 264              		.loc 1 228 0
+ 265 0010 FFF7FEFF 		bl	deselect
+ 266              	.LVL28:
+ 229:fatfs/sdcard.c **** }
+ 267              		.loc 1 229 0
+ 268 0014 00E0     		b	.L19
+ 269              	.L20:
+ 226:fatfs/sdcard.c **** 
+ 270              		.loc 1 226 0
+ 271 0016 0124     		movs	r4, #1
+ 272              	.L19:
+ 230:fatfs/sdcard.c **** 
+ 273              		.loc 1 230 0
+ 274 0018 2000     		movs	r0, r4
+ 275              		@ sp needed
+ 276 001a 10BD     		pop	{r4, pc}
+ 277              		.cfi_endproc
+ 278              	.LFE37:
+ 279              		.size	select, .-select
+ 280              		.section	.text.xmit_mmc,"ax",%progbits
+ 281              		.align	2
+ 282              		.code	16
+ 283              		.thumb_func
+ 284              		.type	xmit_mmc, %function
+ 285              	xmit_mmc:
+ 286              	.LFB33:
+ 121:fatfs/sdcard.c **** 
+ 287              		.loc 1 121 0
+ 288              		.cfi_startproc
+ 289              		@ args = 0, pretend = 0, frame = 0
+ 290              		@ frame_needed = 0, uses_anonymous_args = 0
+ 291              	.LVL29:
+ 292 0000 70B5     		push	{r4, r5, r6, lr}
+ 293              		.cfi_def_cfa_offset 16
+ 294              		.cfi_offset 4, -16
+ 295              		.cfi_offset 5, -12
+ 296              		.cfi_offset 6, -8
+ 297              		.cfi_offset 14, -4
+ 298 0002 0400     		movs	r4, r0
+ 299 0004 0D00     		movs	r5, r1
+ 125:fatfs/sdcard.c ****     mmSPI_SpiUartClearRxBuffer();
+ 300              		.loc 1 125 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 11
+
+
+ 301 0006 FFF7FEFF 		bl	SPI_SpiUartClearTxBuffer
+ 302              	.LVL30:
+ 126:fatfs/sdcard.c ****     mmSPI_SpiUartPutArray(buff, bc);    
+ 303              		.loc 1 126 0
+ 304 000a FFF7FEFF 		bl	SPI_SpiUartClearRxBuffer
+ 305              	.LVL31:
+ 127:fatfs/sdcard.c ****     while(0u == (mmSPI_GetMasterInterruptSource() & mmSPI_INTR_MASTER_SPI_DONE));
+ 306              		.loc 1 127 0
+ 307 000e 2900     		movs	r1, r5
+ 308 0010 2000     		movs	r0, r4
+ 309 0012 FFF7FEFF 		bl	SPI_SpiUartPutArray
+ 310              	.LVL32:
+ 311              	.L22:
+ 128:fatfs/sdcard.c **** #endif
+ 312              		.loc 1 128 0 discriminator 1
+ 313 0016 024B     		ldr	r3, .L23
+ 314 0018 1B68     		ldr	r3, [r3]
+ 315 001a 9B05     		lsls	r3, r3, #22
+ 316 001c FBD5     		bpl	.L22
+ 144:fatfs/sdcard.c **** 
+ 317              		.loc 1 144 0
+ 318              		@ sp needed
+ 319              	.LVL33:
+ 320              	.LVL34:
+ 321 001e 70BD     		pop	{r4, r5, r6, pc}
+ 322              	.L24:
+ 323              		.align	2
+ 324              	.L23:
+ 325 0020 000F0840 		.word	1074269952
+ 326              		.cfi_endproc
+ 327              	.LFE33:
+ 328              		.size	xmit_mmc, .-xmit_mmc
+ 329              		.section	.text.send_cmd,"ax",%progbits
+ 330              		.align	2
+ 331              		.code	16
+ 332              		.thumb_func
+ 333              		.type	send_cmd, %function
+ 334              	send_cmd:
+ 335              	.LFB40:
+ 252:fatfs/sdcard.c **** 
+ 253:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 254:fatfs/sdcard.c **** /* Send a data packet to the card                                        */
+ 255:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 256:fatfs/sdcard.c **** 
+ 257:fatfs/sdcard.c **** static int xmit_datablock(const BYTE *buff, BYTE token)	/* 1:OK, 0:Failed */
+ 258:fatfs/sdcard.c **** {
+ 259:fatfs/sdcard.c **** 	BYTE d[2];
+ 260:fatfs/sdcard.c **** 
+ 261:fatfs/sdcard.c **** 	if (!wait_ready()) return 0;
+ 262:fatfs/sdcard.c **** 
+ 263:fatfs/sdcard.c **** 	d[0] = token;
+ 264:fatfs/sdcard.c **** 	xmit_mmc(d, 1);				/* Xmit a token */
+ 265:fatfs/sdcard.c ****   	if (token != 0xFD) {		/* Is it data token? */
+ 266:fatfs/sdcard.c **** 		xmit_mmc(buff, 512);	/* Xmit the 512 byte data block to MMC */
+ 267:fatfs/sdcard.c **** 		rcvr_mmc(d, 2);			/* Xmit dummy CRC (0xFF,0xFF) */
+ 268:fatfs/sdcard.c **** 		rcvr_mmc(d, 1);			/* Receive data response */
+ 269:fatfs/sdcard.c **** 		if ((d[0] & 0x1F) != 0x05)	/* If not accepted, return with error */
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 12
+
+
+ 270:fatfs/sdcard.c **** 			return 0;
+ 271:fatfs/sdcard.c **** 	}
+ 272:fatfs/sdcard.c **** 
+ 273:fatfs/sdcard.c **** 	return 1;
+ 274:fatfs/sdcard.c **** }
+ 275:fatfs/sdcard.c **** 
+ 276:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 277:fatfs/sdcard.c **** /* Send a command packet to the card                                     */
+ 278:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 279:fatfs/sdcard.c **** 
+ 280:fatfs/sdcard.c **** static BYTE send_cmd(BYTE cmd,	DWORD arg)		/* Returns command response (bit7==1:Send failed)*/
+ 281:fatfs/sdcard.c **** {
+ 336              		.loc 1 281 0
+ 337              		.cfi_startproc
+ 338              		@ args = 0, pretend = 0, frame = 8
+ 339              		@ frame_needed = 0, uses_anonymous_args = 0
+ 340              	.LVL35:
+ 341 0000 30B5     		push	{r4, r5, lr}
+ 342              		.cfi_def_cfa_offset 12
+ 343              		.cfi_offset 4, -12
+ 344              		.cfi_offset 5, -8
+ 345              		.cfi_offset 14, -4
+ 346 0002 83B0     		sub	sp, sp, #12
+ 347              		.cfi_def_cfa_offset 24
+ 348 0004 0400     		movs	r4, r0
+ 349 0006 0D00     		movs	r5, r1
+ 282:fatfs/sdcard.c **** 	BYTE n, d, buf[6];
+ 283:fatfs/sdcard.c **** 
+ 284:fatfs/sdcard.c **** 
+ 285:fatfs/sdcard.c **** 	if (cmd & 0x80) {	/* ACMD<n> is the command sequense of CMD55-CMD<n> */
+ 350              		.loc 1 285 0
+ 351 0008 43B2     		sxtb	r3, r0
+ 352 000a 002B     		cmp	r3, #0
+ 353 000c 07DA     		bge	.L26
+ 286:fatfs/sdcard.c **** 		cmd &= 0x7F;
+ 354              		.loc 1 286 0
+ 355 000e 7F23     		movs	r3, #127
+ 356 0010 1C40     		ands	r4, r3
+ 357              	.LVL36:
+ 287:fatfs/sdcard.c **** 		n = send_cmd(CMD55, 0);
+ 358              		.loc 1 287 0
+ 359 0012 0021     		movs	r1, #0
+ 360              	.LVL37:
+ 361 0014 3720     		movs	r0, #55
+ 362 0016 FFF7F3FF 		bl	send_cmd
+ 363              	.LVL38:
+ 288:fatfs/sdcard.c **** 		if (n > 1) return n;
+ 364              		.loc 1 288 0
+ 365 001a 0128     		cmp	r0, #1
+ 366 001c 38D8     		bhi	.L27
+ 367              	.LVL39:
+ 368              	.L26:
+ 289:fatfs/sdcard.c **** 	}
+ 290:fatfs/sdcard.c **** 
+ 291:fatfs/sdcard.c **** 	/* Select the card and wait for ready except to stop multiple block read */
+ 292:fatfs/sdcard.c **** 	if (cmd != CMD12) {
+ 369              		.loc 1 292 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 13
+
+
+ 370 001e 0C2C     		cmp	r4, #12
+ 371 0020 05D0     		beq	.L28
+ 293:fatfs/sdcard.c **** 		deselect();
+ 372              		.loc 1 293 0
+ 373 0022 FFF7FEFF 		bl	deselect
+ 374              	.LVL40:
+ 294:fatfs/sdcard.c **** 		if (!select()) return 0xFF;
+ 375              		.loc 1 294 0
+ 376 0026 FFF7FEFF 		bl	select
+ 377              	.LVL41:
+ 378 002a 0028     		cmp	r0, #0
+ 379 002c 2FD0     		beq	.L34
+ 380              	.L28:
+ 295:fatfs/sdcard.c **** 	}
+ 296:fatfs/sdcard.c **** 
+ 297:fatfs/sdcard.c **** 	/* Send a command packet */
+ 298:fatfs/sdcard.c **** 	buf[0] = 0x40 | cmd;			/* Start + Command index */
+ 381              		.loc 1 298 0
+ 382 002e 4023     		movs	r3, #64
+ 383 0030 2343     		orrs	r3, r4
+ 384 0032 6A46     		mov	r2, sp
+ 385 0034 1370     		strb	r3, [r2]
+ 299:fatfs/sdcard.c **** 	buf[1] = (BYTE)(arg >> 24);		/* Argument[31..24] */
+ 386              		.loc 1 299 0
+ 387 0036 2B0E     		lsrs	r3, r5, #24
+ 388 0038 5370     		strb	r3, [r2, #1]
+ 300:fatfs/sdcard.c **** 	buf[2] = (BYTE)(arg >> 16);		/* Argument[23..16] */
+ 389              		.loc 1 300 0
+ 390 003a 2B0C     		lsrs	r3, r5, #16
+ 391 003c 9370     		strb	r3, [r2, #2]
+ 301:fatfs/sdcard.c **** 	buf[3] = (BYTE)(arg >> 8);		/* Argument[15..8] */
+ 392              		.loc 1 301 0
+ 393 003e 2B0A     		lsrs	r3, r5, #8
+ 394 0040 D370     		strb	r3, [r2, #3]
+ 302:fatfs/sdcard.c **** 	buf[4] = (BYTE)arg;				/* Argument[7..0] */
+ 395              		.loc 1 302 0
+ 396 0042 1571     		strb	r5, [r2, #4]
+ 397              	.LVL42:
+ 303:fatfs/sdcard.c **** 	n = 0x01;						/* Dummy CRC + Stop */
+ 304:fatfs/sdcard.c **** 	if (cmd == CMD0) n = 0x95;		/* (valid CRC for CMD0(0)) */
+ 398              		.loc 1 304 0
+ 399 0044 002C     		cmp	r4, #0
+ 400 0046 01D0     		beq	.L35
+ 303:fatfs/sdcard.c **** 	n = 0x01;						/* Dummy CRC + Stop */
+ 401              		.loc 1 303 0
+ 402 0048 0123     		movs	r3, #1
+ 403 004a 00E0     		b	.L29
+ 404              	.L35:
+ 405              		.loc 1 304 0
+ 406 004c 9523     		movs	r3, #149
+ 407              	.L29:
+ 408              	.LVL43:
+ 305:fatfs/sdcard.c **** 	if (cmd == CMD8) n = 0x87;		/* (valid CRC for CMD8(0x1AA)) */
+ 409              		.loc 1 305 0
+ 410 004e 082C     		cmp	r4, #8
+ 411 0050 00D1     		bne	.L30
+ 412 0052 8723     		movs	r3, #135
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 14
+
+
+ 413              	.LVL44:
+ 414              	.L30:
+ 306:fatfs/sdcard.c **** 	buf[5] = n;
+ 415              		.loc 1 306 0
+ 416 0054 6A46     		mov	r2, sp
+ 417 0056 5371     		strb	r3, [r2, #5]
+ 307:fatfs/sdcard.c **** 	xmit_mmc(buf, 6);
+ 418              		.loc 1 307 0
+ 419 0058 0621     		movs	r1, #6
+ 420 005a 6846     		mov	r0, sp
+ 421 005c FFF7FEFF 		bl	xmit_mmc
+ 422              	.LVL45:
+ 308:fatfs/sdcard.c ****     
+ 309:fatfs/sdcard.c **** 
+ 310:fatfs/sdcard.c **** 	/* Receive command response */
+ 311:fatfs/sdcard.c **** 	if (cmd == CMD12) rcvr_mmc(&d, 1);	/* Skip a stuff byte when stop reading */
+ 423              		.loc 1 311 0
+ 424 0060 0C2C     		cmp	r4, #12
+ 425 0062 04D1     		bne	.L31
+ 426              		.loc 1 311 0 is_stmt 0 discriminator 1
+ 427 0064 0121     		movs	r1, #1
+ 428 0066 6B46     		mov	r3, sp
+ 429 0068 D81D     		adds	r0, r3, #7
+ 430 006a FFF7FEFF 		bl	rcvr_mmc
+ 431              	.LVL46:
+ 432              	.L31:
+ 305:fatfs/sdcard.c **** 	buf[5] = n;
+ 433              		.loc 1 305 0 is_stmt 1 discriminator 2
+ 434 006e 1424     		movs	r4, #20
+ 435              	.LVL47:
+ 436              	.L32:
+ 312:fatfs/sdcard.c **** 	n = 20;								/* Wait for a valid response in timeout of 10 attempts */
+ 313:fatfs/sdcard.c **** 	do
+ 314:fatfs/sdcard.c ****     {
+ 315:fatfs/sdcard.c **** 		rcvr_mmc(&d, 1);
+ 437              		.loc 1 315 0 discriminator 2
+ 438 0070 6B46     		mov	r3, sp
+ 439 0072 DD1D     		adds	r5, r3, #7
+ 440 0074 0121     		movs	r1, #1
+ 441 0076 2800     		movs	r0, r5
+ 442 0078 FFF7FEFF 		bl	rcvr_mmc
+ 443              	.LVL48:
+ 316:fatfs/sdcard.c ****     }
+ 317:fatfs/sdcard.c **** 	while ((d & 0x80) && --n);
+ 444              		.loc 1 317 0 discriminator 2
+ 445 007c 2878     		ldrb	r0, [r5]
+ 446 007e 43B2     		sxtb	r3, r0
+ 447 0080 002B     		cmp	r3, #0
+ 448 0082 05DA     		bge	.L27
+ 449              		.loc 1 317 0 is_stmt 0 discriminator 1
+ 450 0084 013C     		subs	r4, r4, #1
+ 451              	.LVL49:
+ 452 0086 E4B2     		uxtb	r4, r4
+ 453              	.LVL50:
+ 454 0088 002C     		cmp	r4, #0
+ 455 008a F1D1     		bne	.L32
+ 456 008c 00E0     		b	.L27
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 15
+
+
+ 457              	.LVL51:
+ 458              	.L34:
+ 294:fatfs/sdcard.c **** 	}
+ 459              		.loc 1 294 0 is_stmt 1
+ 460 008e FF20     		movs	r0, #255
+ 461              	.LVL52:
+ 462              	.L27:
+ 318:fatfs/sdcard.c **** 
+ 319:fatfs/sdcard.c **** 	return d;			/* Return with the response value */
+ 320:fatfs/sdcard.c **** }
+ 463              		.loc 1 320 0
+ 464 0090 03B0     		add	sp, sp, #12
+ 465              		@ sp needed
+ 466 0092 30BD     		pop	{r4, r5, pc}
+ 467              		.cfi_endproc
+ 468              	.LFE40:
+ 469              		.size	send_cmd, .-send_cmd
+ 470              		.section	.text.xmit_datablock,"ax",%progbits
+ 471              		.align	2
+ 472              		.code	16
+ 473              		.thumb_func
+ 474              		.type	xmit_datablock, %function
+ 475              	xmit_datablock:
+ 476              	.LFB39:
+ 258:fatfs/sdcard.c **** 	BYTE d[2];
+ 477              		.loc 1 258 0
+ 478              		.cfi_startproc
+ 479              		@ args = 0, pretend = 0, frame = 8
+ 480              		@ frame_needed = 0, uses_anonymous_args = 0
+ 481              	.LVL53:
+ 482 0000 30B5     		push	{r4, r5, lr}
+ 483              		.cfi_def_cfa_offset 12
+ 484              		.cfi_offset 4, -12
+ 485              		.cfi_offset 5, -8
+ 486              		.cfi_offset 14, -4
+ 487 0002 83B0     		sub	sp, sp, #12
+ 488              		.cfi_def_cfa_offset 24
+ 489 0004 0500     		movs	r5, r0
+ 490 0006 0C00     		movs	r4, r1
+ 261:fatfs/sdcard.c **** 
+ 491              		.loc 1 261 0
+ 492 0008 FFF7FEFF 		bl	wait_ready
+ 493              	.LVL54:
+ 494 000c 0028     		cmp	r0, #0
+ 495 000e 1ED0     		beq	.L38
+ 263:fatfs/sdcard.c **** 	xmit_mmc(d, 1);				/* Xmit a token */
+ 496              		.loc 1 263 0
+ 497 0010 01A8     		add	r0, sp, #4
+ 498 0012 0470     		strb	r4, [r0]
+ 264:fatfs/sdcard.c ****   	if (token != 0xFD) {		/* Is it data token? */
+ 499              		.loc 1 264 0
+ 500 0014 0121     		movs	r1, #1
+ 501 0016 FFF7FEFF 		bl	xmit_mmc
+ 502              	.LVL55:
+ 265:fatfs/sdcard.c **** 		xmit_mmc(buff, 512);	/* Xmit the 512 byte data block to MMC */
+ 503              		.loc 1 265 0
+ 504 001a FD2C     		cmp	r4, #253
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 16
+
+
+ 505 001c 14D0     		beq	.L39
+ 266:fatfs/sdcard.c **** 		rcvr_mmc(d, 2);			/* Xmit dummy CRC (0xFF,0xFF) */
+ 506              		.loc 1 266 0
+ 507 001e 8021     		movs	r1, #128
+ 508 0020 8900     		lsls	r1, r1, #2
+ 509 0022 2800     		movs	r0, r5
+ 510 0024 FFF7FEFF 		bl	xmit_mmc
+ 511              	.LVL56:
+ 267:fatfs/sdcard.c **** 		rcvr_mmc(d, 1);			/* Receive data response */
+ 512              		.loc 1 267 0
+ 513 0028 01AC     		add	r4, sp, #4
+ 514 002a 0221     		movs	r1, #2
+ 515 002c 2000     		movs	r0, r4
+ 516 002e FFF7FEFF 		bl	rcvr_mmc
+ 517              	.LVL57:
+ 268:fatfs/sdcard.c **** 		if ((d[0] & 0x1F) != 0x05)	/* If not accepted, return with error */
+ 518              		.loc 1 268 0
+ 519 0032 0121     		movs	r1, #1
+ 520 0034 2000     		movs	r0, r4
+ 521 0036 FFF7FEFF 		bl	rcvr_mmc
+ 522              	.LVL58:
+ 269:fatfs/sdcard.c **** 			return 0;
+ 523              		.loc 1 269 0
+ 524 003a 2378     		ldrb	r3, [r4]
+ 525 003c 1F22     		movs	r2, #31
+ 526 003e 1340     		ands	r3, r2
+ 527 0040 052B     		cmp	r3, #5
+ 528 0042 03D0     		beq	.L40
+ 270:fatfs/sdcard.c **** 	}
+ 529              		.loc 1 270 0
+ 530 0044 0020     		movs	r0, #0
+ 531 0046 02E0     		b	.L38
+ 532              	.L39:
+ 273:fatfs/sdcard.c **** }
+ 533              		.loc 1 273 0
+ 534 0048 0120     		movs	r0, #1
+ 535 004a 00E0     		b	.L38
+ 536              	.L40:
+ 537 004c 0120     		movs	r0, #1
+ 538              	.L38:
+ 274:fatfs/sdcard.c **** 
+ 539              		.loc 1 274 0
+ 540 004e 03B0     		add	sp, sp, #12
+ 541              		@ sp needed
+ 542              	.LVL59:
+ 543 0050 30BD     		pop	{r4, r5, pc}
+ 544              		.cfi_endproc
+ 545              	.LFE39:
+ 546              		.size	xmit_datablock, .-xmit_datablock
+ 547 0052 C046     		.section	.text.disk_status,"ax",%progbits
+ 548              		.align	2
+ 549              		.global	disk_status
+ 550              		.code	16
+ 551              		.thumb_func
+ 552              		.type	disk_status, %function
+ 553              	disk_status:
+ 554              	.LFB41:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 17
+
+
+ 321:fatfs/sdcard.c **** 
+ 322:fatfs/sdcard.c **** /*--------------------------------------------------------------------------
+ 323:fatfs/sdcard.c **** 
+ 324:fatfs/sdcard.c ****    Public Functions
+ 325:fatfs/sdcard.c **** 
+ 326:fatfs/sdcard.c **** ---------------------------------------------------------------------------*/
+ 327:fatfs/sdcard.c **** 
+ 328:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 329:fatfs/sdcard.c **** /* Get Disk Status                                                       */
+ 330:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 331:fatfs/sdcard.c **** 
+ 332:fatfs/sdcard.c **** DSTATUS disk_status(BYTE drv) /* Drive number (always 0) */
+ 333:fatfs/sdcard.c **** {
+ 555              		.loc 1 333 0
+ 556              		.cfi_startproc
+ 557              		@ args = 0, pretend = 0, frame = 0
+ 558              		@ frame_needed = 0, uses_anonymous_args = 0
+ 559              		@ link register save eliminated.
+ 560              	.LVL60:
+ 334:fatfs/sdcard.c **** 	if (drv) return STA_NOINIT;
+ 561              		.loc 1 334 0
+ 562 0000 0028     		cmp	r0, #0
+ 563 0002 02D1     		bne	.L43
+ 335:fatfs/sdcard.c **** 
+ 336:fatfs/sdcard.c **** 	return Stat;
+ 564              		.loc 1 336 0
+ 565 0004 024B     		ldr	r3, .L44
+ 566 0006 1878     		ldrb	r0, [r3]
+ 567              	.LVL61:
+ 568 0008 00E0     		b	.L42
+ 569              	.LVL62:
+ 570              	.L43:
+ 334:fatfs/sdcard.c **** 	if (drv) return STA_NOINIT;
+ 571              		.loc 1 334 0
+ 572 000a 0120     		movs	r0, #1
+ 573              	.LVL63:
+ 574              	.L42:
+ 337:fatfs/sdcard.c **** }
+ 575              		.loc 1 337 0
+ 576              		@ sp needed
+ 577 000c 7047     		bx	lr
+ 578              	.L45:
+ 579 000e C046     		.align	2
+ 580              	.L44:
+ 581 0010 00000000 		.word	.LANCHOR0
+ 582              		.cfi_endproc
+ 583              	.LFE41:
+ 584              		.size	disk_status, .-disk_status
+ 585              		.section	.text.disk_initialize,"ax",%progbits
+ 586              		.align	2
+ 587              		.global	disk_initialize
+ 588              		.code	16
+ 589              		.thumb_func
+ 590              		.type	disk_initialize, %function
+ 591              	disk_initialize:
+ 592              	.LFB42:
+ 338:fatfs/sdcard.c **** 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 18
+
+
+ 339:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 340:fatfs/sdcard.c **** /* Initialize Disk Drive                                                 */
+ 341:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 342:fatfs/sdcard.c **** 
+ 343:fatfs/sdcard.c **** DSTATUS disk_initialize(BYTE drv) /* Physical drive nmuber (0) */
+ 344:fatfs/sdcard.c **** {
+ 593              		.loc 1 344 0
+ 594              		.cfi_startproc
+ 595              		@ args = 0, pretend = 0, frame = 8
+ 596              		@ frame_needed = 0, uses_anonymous_args = 0
+ 597              	.LVL64:
+ 598 0000 70B5     		push	{r4, r5, r6, lr}
+ 599              		.cfi_def_cfa_offset 16
+ 600              		.cfi_offset 4, -16
+ 601              		.cfi_offset 5, -12
+ 602              		.cfi_offset 6, -8
+ 603              		.cfi_offset 14, -4
+ 604 0002 82B0     		sub	sp, sp, #8
+ 605              		.cfi_def_cfa_offset 24
+ 345:fatfs/sdcard.c **** 	BYTE n, ty, cmd, buf[4];
+ 346:fatfs/sdcard.c **** 	UINT tmr;
+ 347:fatfs/sdcard.c **** 	DSTATUS s;
+ 348:fatfs/sdcard.c **** 
+ 349:fatfs/sdcard.c **** 	if (drv) return RES_NOTRDY;
+ 606              		.loc 1 349 0
+ 607 0004 0028     		cmp	r0, #0
+ 608 0006 00D0     		beq	.LCB552
+ 609 0008 84E0     		b	.L59	@long jump
+ 610              	.LCB552:
+ 611 000a 0A24     		movs	r4, #10
+ 612 000c 05E0     		b	.L48
+ 613              	.LVL65:
+ 614              	.L49:
+ 350:fatfs/sdcard.c **** 
+ 351:fatfs/sdcard.c **** 	//dly_us(10000);			/* 10ms */
+ 352:fatfs/sdcard.c **** 
+ 353:fatfs/sdcard.c **** 	for (n = 10; n; n--) rcvr_mmc(buf, 1);	/* Apply 80 dummy clocks and the card gets ready to receive
+ 615              		.loc 1 353 0 discriminator 3
+ 616 000e 0121     		movs	r1, #1
+ 617 0010 01A8     		add	r0, sp, #4
+ 618 0012 FFF7FEFF 		bl	rcvr_mmc
+ 619              	.LVL66:
+ 620 0016 013C     		subs	r4, r4, #1
+ 621              	.LVL67:
+ 622 0018 E4B2     		uxtb	r4, r4
+ 623              	.LVL68:
+ 624              	.L48:
+ 625              		.loc 1 353 0 is_stmt 0 discriminator 1
+ 626 001a 002C     		cmp	r4, #0
+ 627 001c F7D1     		bne	.L49
+ 628              	.LVL69:
+ 354:fatfs/sdcard.c **** 
+ 355:fatfs/sdcard.c **** 	ty = 0;
+ 356:fatfs/sdcard.c **** 	if (send_cmd(CMD0, 0) == 1) {			/* Enter Idle state */
+ 629              		.loc 1 356 0 is_stmt 1
+ 630 001e 0021     		movs	r1, #0
+ 631 0020 0020     		movs	r0, #0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 19
+
+
+ 632 0022 FFF7FEFF 		bl	send_cmd
+ 633              	.LVL70:
+ 634 0026 0128     		cmp	r0, #1
+ 635 0028 5CD1     		bne	.L60
+ 357:fatfs/sdcard.c **** 		if (send_cmd(CMD8, 0x1AA) == 1) {	/* SDv2? */
+ 636              		.loc 1 357 0
+ 637 002a D521     		movs	r1, #213
+ 638 002c 4900     		lsls	r1, r1, #1
+ 639 002e 0730     		adds	r0, r0, #7
+ 640 0030 FFF7FEFF 		bl	send_cmd
+ 641              	.LVL71:
+ 642 0034 0128     		cmp	r0, #1
+ 643 0036 30D1     		bne	.L51
+ 358:fatfs/sdcard.c **** 			rcvr_mmc(buf, 4);							/* Get trailing return value of R7 resp */
+ 644              		.loc 1 358 0
+ 645 0038 01AC     		add	r4, sp, #4
+ 646              	.LVL72:
+ 647 003a 0421     		movs	r1, #4
+ 648 003c 2000     		movs	r0, r4
+ 649 003e FFF7FEFF 		bl	rcvr_mmc
+ 650              	.LVL73:
+ 359:fatfs/sdcard.c **** 			if (buf[2] == 0x01 && buf[3] == 0xAA) {		/* The card can work at vdd range of 2.7-3.6V */
+ 651              		.loc 1 359 0
+ 652 0042 A378     		ldrb	r3, [r4, #2]
+ 653 0044 012B     		cmp	r3, #1
+ 654 0046 4FD1     		bne	.L61
+ 655              		.loc 1 359 0 is_stmt 0 discriminator 1
+ 656 0048 01AB     		add	r3, sp, #4
+ 657 004a DB78     		ldrb	r3, [r3, #3]
+ 658 004c AA2B     		cmp	r3, #170
+ 659 004e 0ED0     		beq	.L62
+ 355:fatfs/sdcard.c **** 	if (send_cmd(CMD0, 0) == 1) {			/* Enter Idle state */
+ 660              		.loc 1 355 0 is_stmt 1
+ 661 0050 0024     		movs	r4, #0
+ 662 0052 54E0     		b	.L50
+ 663              	.LVL74:
+ 664              	.L54:
+ 360:fatfs/sdcard.c **** 				for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state (ACMD41 with HCS bit) */
+ 361:fatfs/sdcard.c **** 					if (send_cmd(ACMD41, 1UL << 30) == 0) break;
+ 665              		.loc 1 361 0
+ 666 0054 8021     		movs	r1, #128
+ 667 0056 C905     		lsls	r1, r1, #23
+ 668 0058 A920     		movs	r0, #169
+ 669 005a FFF7FEFF 		bl	send_cmd
+ 670              	.LVL75:
+ 671 005e 0028     		cmp	r0, #0
+ 672 0060 09D0     		beq	.L53
+ 362:fatfs/sdcard.c **** 					dly_us(1000);
+ 673              		.loc 1 362 0 discriminator 2
+ 674 0062 FA20     		movs	r0, #250
+ 675 0064 8000     		lsls	r0, r0, #2
+ 676 0066 FFF7FEFF 		bl	CyDelayUs
+ 677              	.LVL76:
+ 360:fatfs/sdcard.c **** 				for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state (ACMD41 with HCS bit) */
+ 678              		.loc 1 360 0 discriminator 2
+ 679 006a 013C     		subs	r4, r4, #1
+ 680              	.LVL77:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 20
+
+
+ 681 006c 01E0     		b	.L52
+ 682              	.LVL78:
+ 683              	.L62:
+ 684 006e FA24     		movs	r4, #250
+ 685 0070 A400     		lsls	r4, r4, #2
+ 686              	.L52:
+ 687              	.LVL79:
+ 360:fatfs/sdcard.c **** 				for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state (ACMD41 with HCS bit) */
+ 688              		.loc 1 360 0 is_stmt 0 discriminator 1
+ 689 0072 002C     		cmp	r4, #0
+ 690 0074 EED1     		bne	.L54
+ 691              	.L53:
+ 363:fatfs/sdcard.c **** 				}
+ 364:fatfs/sdcard.c **** 				if (tmr && send_cmd(CMD58, 0) == 0) {	/* Check CCS bit in the OCR */
+ 692              		.loc 1 364 0 is_stmt 1
+ 693 0076 002C     		cmp	r4, #0
+ 694 0078 38D0     		beq	.L63
+ 695              		.loc 1 364 0 is_stmt 0 discriminator 1
+ 696 007a 0021     		movs	r1, #0
+ 697 007c 3A20     		movs	r0, #58
+ 698 007e FFF7FEFF 		bl	send_cmd
+ 699              	.LVL80:
+ 700 0082 0028     		cmp	r0, #0
+ 701 0084 34D1     		bne	.L64
+ 365:fatfs/sdcard.c **** 					rcvr_mmc(buf, 4);
+ 702              		.loc 1 365 0 is_stmt 1
+ 703 0086 01AC     		add	r4, sp, #4
+ 704              	.LVL81:
+ 705 0088 0421     		movs	r1, #4
+ 706 008a 2000     		movs	r0, r4
+ 707 008c FFF7FEFF 		bl	rcvr_mmc
+ 708              	.LVL82:
+ 366:fatfs/sdcard.c **** 					ty = (buf[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/* SDv2 */
+ 709              		.loc 1 366 0
+ 710 0090 2378     		ldrb	r3, [r4]
+ 711 0092 5B06     		lsls	r3, r3, #25
+ 712 0094 2ED5     		bpl	.L65
+ 713 0096 0C24     		movs	r4, #12
+ 714 0098 31E0     		b	.L50
+ 715              	.LVL83:
+ 716              	.L51:
+ 367:fatfs/sdcard.c **** 				}
+ 368:fatfs/sdcard.c **** 			}
+ 369:fatfs/sdcard.c **** 		} else {							/* SDv1 or MMCv3 */
+ 370:fatfs/sdcard.c **** 			if (send_cmd(ACMD41, 0) <= 1) 	{
+ 717              		.loc 1 370 0
+ 718 009a 0021     		movs	r1, #0
+ 719 009c A920     		movs	r0, #169
+ 720 009e FFF7FEFF 		bl	send_cmd
+ 721              	.LVL84:
+ 722 00a2 0128     		cmp	r0, #1
+ 723 00a4 02D8     		bhi	.L66
+ 371:fatfs/sdcard.c **** 				ty = CT_SD1; cmd = ACMD41;	/* SDv1 */
+ 724              		.loc 1 371 0
+ 725 00a6 A926     		movs	r6, #169
+ 726 00a8 0224     		movs	r4, #2
+ 727              	.LVL85:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 21
+
+
+ 728 00aa 01E0     		b	.L55
+ 729              	.LVL86:
+ 730              	.L66:
+ 372:fatfs/sdcard.c **** 			} else {
+ 373:fatfs/sdcard.c **** 				ty = CT_MMC; cmd = CMD1;	/* MMCv3 */
+ 731              		.loc 1 373 0
+ 732 00ac 0126     		movs	r6, #1
+ 733 00ae 0124     		movs	r4, #1
+ 734              	.LVL87:
+ 735              	.L55:
+ 374:fatfs/sdcard.c **** 			}
+ 375:fatfs/sdcard.c **** 			for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state */
+ 736              		.loc 1 375 0
+ 737 00b0 FA25     		movs	r5, #250
+ 738 00b2 AD00     		lsls	r5, r5, #2
+ 739 00b4 0AE0     		b	.L56
+ 740              	.LVL88:
+ 741              	.L58:
+ 376:fatfs/sdcard.c **** 				if (send_cmd(cmd, 0) == 0) break;
+ 742              		.loc 1 376 0
+ 743 00b6 0021     		movs	r1, #0
+ 744 00b8 3000     		movs	r0, r6
+ 745 00ba FFF7FEFF 		bl	send_cmd
+ 746              	.LVL89:
+ 747 00be 0028     		cmp	r0, #0
+ 748 00c0 06D0     		beq	.L57
+ 377:fatfs/sdcard.c **** 				dly_us(1000);
+ 749              		.loc 1 377 0 discriminator 2
+ 750 00c2 FA20     		movs	r0, #250
+ 751 00c4 8000     		lsls	r0, r0, #2
+ 752 00c6 FFF7FEFF 		bl	CyDelayUs
+ 753              	.LVL90:
+ 375:fatfs/sdcard.c **** 				if (send_cmd(cmd, 0) == 0) break;
+ 754              		.loc 1 375 0 discriminator 2
+ 755 00ca 013D     		subs	r5, r5, #1
+ 756              	.LVL91:
+ 757              	.L56:
+ 375:fatfs/sdcard.c **** 				if (send_cmd(cmd, 0) == 0) break;
+ 758              		.loc 1 375 0 is_stmt 0 discriminator 1
+ 759 00cc 002D     		cmp	r5, #0
+ 760 00ce F2D1     		bne	.L58
+ 761              	.L57:
+ 378:fatfs/sdcard.c **** 			}
+ 379:fatfs/sdcard.c **** 			if (!tmr || send_cmd(CMD16, 512) != 0)	/* Set R/W block length to 512 */
+ 762              		.loc 1 379 0 is_stmt 1
+ 763 00d0 002D     		cmp	r5, #0
+ 764 00d2 11D0     		beq	.L67
+ 765              		.loc 1 379 0 is_stmt 0 discriminator 1
+ 766 00d4 8021     		movs	r1, #128
+ 767 00d6 8900     		lsls	r1, r1, #2
+ 768 00d8 1020     		movs	r0, #16
+ 769 00da FFF7FEFF 		bl	send_cmd
+ 770              	.LVL92:
+ 771 00de 0028     		cmp	r0, #0
+ 772 00e0 0CD1     		bne	.L68
+ 773 00e2 0CE0     		b	.L50
+ 774              	.LVL93:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 22
+
+
+ 775              	.L60:
+ 355:fatfs/sdcard.c **** 	if (send_cmd(CMD0, 0) == 1) {			/* Enter Idle state */
+ 776              		.loc 1 355 0 is_stmt 1
+ 777 00e4 0024     		movs	r4, #0
+ 778              	.LVL94:
+ 779 00e6 0AE0     		b	.L50
+ 780              	.L61:
+ 781 00e8 0024     		movs	r4, #0
+ 782 00ea 08E0     		b	.L50
+ 783              	.LVL95:
+ 784              	.L63:
+ 785 00ec 0024     		movs	r4, #0
+ 786              	.LVL96:
+ 787 00ee 06E0     		b	.L50
+ 788              	.LVL97:
+ 789              	.L64:
+ 790 00f0 0024     		movs	r4, #0
+ 791              	.LVL98:
+ 792 00f2 04E0     		b	.L50
+ 793              	.L65:
+ 366:fatfs/sdcard.c **** 				}
+ 794              		.loc 1 366 0
+ 795 00f4 0424     		movs	r4, #4
+ 796 00f6 02E0     		b	.L50
+ 797              	.LVL99:
+ 798              	.L67:
+ 380:fatfs/sdcard.c **** 				ty = 0;
+ 799              		.loc 1 380 0
+ 800 00f8 0024     		movs	r4, #0
+ 801              	.LVL100:
+ 802 00fa 00E0     		b	.L50
+ 803              	.LVL101:
+ 804              	.L68:
+ 805 00fc 0024     		movs	r4, #0
+ 806              	.LVL102:
+ 807              	.L50:
+ 381:fatfs/sdcard.c **** 		}
+ 382:fatfs/sdcard.c **** 	}
+ 383:fatfs/sdcard.c **** 	CardType = ty;
+ 808              		.loc 1 383 0
+ 809 00fe 074B     		ldr	r3, .L69
+ 810 0100 1C70     		strb	r4, [r3]
+ 384:fatfs/sdcard.c **** 	s = ty ? 0 : STA_NOINIT;
+ 811              		.loc 1 384 0
+ 812 0102 6042     		rsbs	r0, r4, #0
+ 813 0104 6041     		adcs	r0, r0, r4
+ 814              	.LVL103:
+ 815 0106 C4B2     		uxtb	r4, r0
+ 816              	.LVL104:
+ 385:fatfs/sdcard.c **** 	Stat = s;
+ 817              		.loc 1 385 0
+ 818 0108 054B     		ldr	r3, .L69+4
+ 819 010a 1C70     		strb	r4, [r3]
+ 386:fatfs/sdcard.c **** 
+ 387:fatfs/sdcard.c **** 	deselect();
+ 820              		.loc 1 387 0
+ 821 010c FFF7FEFF 		bl	deselect
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 23
+
+
+ 822              	.LVL105:
+ 388:fatfs/sdcard.c **** 
+ 389:fatfs/sdcard.c **** 	return s;
+ 823              		.loc 1 389 0
+ 824 0110 2000     		movs	r0, r4
+ 825 0112 00E0     		b	.L47
+ 826              	.LVL106:
+ 827              	.L59:
+ 349:fatfs/sdcard.c **** 
+ 828              		.loc 1 349 0
+ 829 0114 0320     		movs	r0, #3
+ 830              	.LVL107:
+ 831              	.L47:
+ 390:fatfs/sdcard.c **** }
+ 832              		.loc 1 390 0
+ 833 0116 02B0     		add	sp, sp, #8
+ 834              		@ sp needed
+ 835 0118 70BD     		pop	{r4, r5, r6, pc}
+ 836              	.L70:
+ 837 011a C046     		.align	2
+ 838              	.L69:
+ 839 011c 00000000 		.word	.LANCHOR1
+ 840 0120 00000000 		.word	.LANCHOR0
+ 841              		.cfi_endproc
+ 842              	.LFE42:
+ 843              		.size	disk_initialize, .-disk_initialize
+ 844              		.section	.text.disk_read,"ax",%progbits
+ 845              		.align	2
+ 846              		.global	disk_read
+ 847              		.code	16
+ 848              		.thumb_func
+ 849              		.type	disk_read, %function
+ 850              	disk_read:
+ 851              	.LFB43:
+ 391:fatfs/sdcard.c **** 
+ 392:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 393:fatfs/sdcard.c **** /* Read Sector(s)                                                        */
+ 394:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 395:fatfs/sdcard.c **** 
+ 396:fatfs/sdcard.c **** DRESULT disk_read(BYTE drv,	BYTE *buff,	DWORD sector, UINT count) /* Physical drive nmuber (0) */
+ 397:fatfs/sdcard.c **** {
+ 852              		.loc 1 397 0
+ 853              		.cfi_startproc
+ 854              		@ args = 0, pretend = 0, frame = 0
+ 855              		@ frame_needed = 0, uses_anonymous_args = 0
+ 856              	.LVL108:
+ 857 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 858              		.cfi_def_cfa_offset 24
+ 859              		.cfi_offset 3, -24
+ 860              		.cfi_offset 4, -20
+ 861              		.cfi_offset 5, -16
+ 862              		.cfi_offset 6, -12
+ 863              		.cfi_offset 7, -8
+ 864              		.cfi_offset 14, -4
+ 865 0002 0D00     		movs	r5, r1
+ 866 0004 1700     		movs	r7, r2
+ 867 0006 1C00     		movs	r4, r3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 24
+
+
+ 398:fatfs/sdcard.c **** 	BYTE cmd;
+ 399:fatfs/sdcard.c **** 
+ 400:fatfs/sdcard.c **** 	if (disk_status(drv) & STA_NOINIT) return RES_NOTRDY;
+ 868              		.loc 1 400 0
+ 869 0008 FFF7FEFF 		bl	disk_status
+ 870              	.LVL109:
+ 871 000c C307     		lsls	r3, r0, #31
+ 872 000e 29D4     		bmi	.L78
+ 401:fatfs/sdcard.c **** 	if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert LBA to byte address if needed */
+ 873              		.loc 1 401 0
+ 874 0010 154B     		ldr	r3, .L80
+ 875 0012 1B78     		ldrb	r3, [r3]
+ 876 0014 1B07     		lsls	r3, r3, #28
+ 877 0016 00D4     		bmi	.L73
+ 878              		.loc 1 401 0 is_stmt 0 discriminator 1
+ 879 0018 7F02     		lsls	r7, r7, #9
+ 880              	.LVL110:
+ 881              	.L73:
+ 402:fatfs/sdcard.c **** 
+ 403:fatfs/sdcard.c **** 	cmd = count > 1 ? CMD18 : CMD17;			/*  READ_MULTIPLE_BLOCK : READ_SINGLE_BLOCK */
+ 882              		.loc 1 403 0 is_stmt 1
+ 883 001a 012C     		cmp	r4, #1
+ 884 001c 01D9     		bls	.L79
+ 885 001e 1226     		movs	r6, #18
+ 886 0020 00E0     		b	.L74
+ 887              	.L79:
+ 888 0022 1126     		movs	r6, #17
+ 889              	.L74:
+ 890              	.LVL111:
+ 404:fatfs/sdcard.c **** 	if (send_cmd(cmd, sector) == 0) {
+ 891              		.loc 1 404 0 discriminator 4
+ 892 0024 3900     		movs	r1, r7
+ 893 0026 3000     		movs	r0, r6
+ 894 0028 FFF7FEFF 		bl	send_cmd
+ 895              	.LVL112:
+ 896 002c 0028     		cmp	r0, #0
+ 897 002e 13D1     		bne	.L75
+ 898              	.L77:
+ 405:fatfs/sdcard.c **** 		do {
+ 406:fatfs/sdcard.c **** 			if (!rcvr_datablock(buff, 512)) break;
+ 899              		.loc 1 406 0
+ 900 0030 8021     		movs	r1, #128
+ 901 0032 8900     		lsls	r1, r1, #2
+ 902 0034 2800     		movs	r0, r5
+ 903 0036 FFF7FEFF 		bl	rcvr_datablock
+ 904              	.LVL113:
+ 905 003a 0028     		cmp	r0, #0
+ 906 003c 06D0     		beq	.L76
+ 407:fatfs/sdcard.c **** 			buff += 512;
+ 907              		.loc 1 407 0
+ 908 003e 8023     		movs	r3, #128
+ 909 0040 9B00     		lsls	r3, r3, #2
+ 910 0042 9C46     		mov	ip, r3
+ 911 0044 6544     		add	r5, r5, ip
+ 912              	.LVL114:
+ 408:fatfs/sdcard.c **** 		} while (--count);
+ 913              		.loc 1 408 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 25
+
+
+ 914 0046 013C     		subs	r4, r4, #1
+ 915              	.LVL115:
+ 916 0048 002C     		cmp	r4, #0
+ 917 004a F1D1     		bne	.L77
+ 918              	.L76:
+ 409:fatfs/sdcard.c **** 		if (cmd == CMD18) send_cmd(CMD12, 0);	/* STOP_TRANSMISSION */
+ 919              		.loc 1 409 0
+ 920 004c 122E     		cmp	r6, #18
+ 921 004e 03D1     		bne	.L75
+ 922              		.loc 1 409 0 is_stmt 0 discriminator 1
+ 923 0050 0021     		movs	r1, #0
+ 924 0052 0C20     		movs	r0, #12
+ 925 0054 FFF7FEFF 		bl	send_cmd
+ 926              	.LVL116:
+ 927              	.L75:
+ 410:fatfs/sdcard.c **** 	}
+ 411:fatfs/sdcard.c **** 	deselect();
+ 928              		.loc 1 411 0 is_stmt 1
+ 929 0058 FFF7FEFF 		bl	deselect
+ 930              	.LVL117:
+ 412:fatfs/sdcard.c **** 
+ 413:fatfs/sdcard.c **** 	return count ? RES_ERROR : RES_OK;
+ 931              		.loc 1 413 0
+ 932 005c 601E     		subs	r0, r4, #1
+ 933 005e 8441     		sbcs	r4, r4, r0
+ 934              	.LVL118:
+ 935 0060 E0B2     		uxtb	r0, r4
+ 936 0062 00E0     		b	.L72
+ 937              	.LVL119:
+ 938              	.L78:
+ 400:fatfs/sdcard.c **** 	if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert LBA to byte address if needed */
+ 939              		.loc 1 400 0
+ 940 0064 0320     		movs	r0, #3
+ 941              	.LVL120:
+ 942              	.L72:
+ 414:fatfs/sdcard.c **** }
+ 943              		.loc 1 414 0
+ 944              		@ sp needed
+ 945              	.LVL121:
+ 946              	.LVL122:
+ 947 0066 F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 948              	.L81:
+ 949              		.align	2
+ 950              	.L80:
+ 951 0068 00000000 		.word	.LANCHOR1
+ 952              		.cfi_endproc
+ 953              	.LFE43:
+ 954              		.size	disk_read, .-disk_read
+ 955              		.section	.text.disk_write,"ax",%progbits
+ 956              		.align	2
+ 957              		.global	disk_write
+ 958              		.code	16
+ 959              		.thumb_func
+ 960              		.type	disk_write, %function
+ 961              	disk_write:
+ 962              	.LFB44:
+ 415:fatfs/sdcard.c **** 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 26
+
+
+ 416:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 417:fatfs/sdcard.c **** /* Write Sector(s)                                                       */
+ 418:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 419:fatfs/sdcard.c **** 
+ 420:fatfs/sdcard.c **** DRESULT disk_write (
+ 421:fatfs/sdcard.c **** 	BYTE drv,			/* Physical drive nmuber (0) */
+ 422:fatfs/sdcard.c **** 	const BYTE *buff,	/* Pointer to the data to be written */
+ 423:fatfs/sdcard.c **** 	DWORD sector,		/* Start sector number (LBA) */
+ 424:fatfs/sdcard.c **** 	UINT count			/* Sector count (1..128) */
+ 425:fatfs/sdcard.c **** )
+ 426:fatfs/sdcard.c **** {
+ 963              		.loc 1 426 0
+ 964              		.cfi_startproc
+ 965              		@ args = 0, pretend = 0, frame = 0
+ 966              		@ frame_needed = 0, uses_anonymous_args = 0
+ 967              	.LVL123:
+ 968 0000 70B5     		push	{r4, r5, r6, lr}
+ 969              		.cfi_def_cfa_offset 16
+ 970              		.cfi_offset 4, -16
+ 971              		.cfi_offset 5, -12
+ 972              		.cfi_offset 6, -8
+ 973              		.cfi_offset 14, -4
+ 974 0002 0D00     		movs	r5, r1
+ 975 0004 1600     		movs	r6, r2
+ 976 0006 1C00     		movs	r4, r3
+ 427:fatfs/sdcard.c **** 	if (disk_status(drv) & STA_NOINIT) return RES_NOTRDY;
+ 977              		.loc 1 427 0
+ 978 0008 FFF7FEFF 		bl	disk_status
+ 979              	.LVL124:
+ 980 000c C307     		lsls	r3, r0, #31
+ 981 000e 3DD4     		bmi	.L90
+ 428:fatfs/sdcard.c **** 	if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert LBA to byte address if needed */
+ 982              		.loc 1 428 0
+ 983 0010 1F4B     		ldr	r3, .L93
+ 984 0012 1B78     		ldrb	r3, [r3]
+ 985 0014 1A07     		lsls	r2, r3, #28
+ 986 0016 00D4     		bmi	.L84
+ 987              		.loc 1 428 0 is_stmt 0 discriminator 1
+ 988 0018 7602     		lsls	r6, r6, #9
+ 989              	.LVL125:
+ 990              	.L84:
+ 429:fatfs/sdcard.c **** 
+ 430:fatfs/sdcard.c **** 	if (count == 1) {	/* Single block write */
+ 991              		.loc 1 430 0 is_stmt 1
+ 992 001a 012C     		cmp	r4, #1
+ 993 001c 0CD1     		bne	.L85
+ 431:fatfs/sdcard.c **** 		if ((send_cmd(CMD24, sector) == 0)	/* WRITE_BLOCK */
+ 994              		.loc 1 431 0
+ 995 001e 3100     		movs	r1, r6
+ 996 0020 1820     		movs	r0, #24
+ 997 0022 FFF7FEFF 		bl	send_cmd
+ 998              	.LVL126:
+ 999 0026 0028     		cmp	r0, #0
+ 1000 0028 2AD1     		bne	.L86
+ 432:fatfs/sdcard.c **** 			&& xmit_datablock(buff, 0xFE))
+ 1001              		.loc 1 432 0
+ 1002 002a FE21     		movs	r1, #254
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 27
+
+
+ 1003 002c 2800     		movs	r0, r5
+ 1004 002e FFF7FEFF 		bl	xmit_datablock
+ 1005              	.LVL127:
+ 1006 0032 0028     		cmp	r0, #0
+ 1007 0034 21D1     		bne	.L91
+ 1008 0036 23E0     		b	.L86
+ 1009              	.L85:
+ 433:fatfs/sdcard.c **** 			count = 0;
+ 434:fatfs/sdcard.c **** 	}
+ 435:fatfs/sdcard.c **** 	else {				/* Multiple block write */
+ 436:fatfs/sdcard.c **** 		if (CardType & CT_SDC) send_cmd(ACMD23, count);
+ 1010              		.loc 1 436 0
+ 1011 0038 0622     		movs	r2, #6
+ 1012 003a 1A42     		tst	r2, r3
+ 1013 003c 03D0     		beq	.L87
+ 1014              		.loc 1 436 0 is_stmt 0 discriminator 1
+ 1015 003e 2100     		movs	r1, r4
+ 1016 0040 9720     		movs	r0, #151
+ 1017 0042 FFF7FEFF 		bl	send_cmd
+ 1018              	.LVL128:
+ 1019              	.L87:
+ 437:fatfs/sdcard.c **** 		if (send_cmd(CMD25, sector) == 0) {	/* WRITE_MULTIPLE_BLOCK */
+ 1020              		.loc 1 437 0 is_stmt 1
+ 1021 0046 3100     		movs	r1, r6
+ 1022 0048 1920     		movs	r0, #25
+ 1023 004a FFF7FEFF 		bl	send_cmd
+ 1024              	.LVL129:
+ 1025 004e 0028     		cmp	r0, #0
+ 1026 0050 16D1     		bne	.L86
+ 1027              	.L89:
+ 438:fatfs/sdcard.c **** 			do {
+ 439:fatfs/sdcard.c **** 				if (!xmit_datablock(buff, 0xFC)) break;
+ 1028              		.loc 1 439 0
+ 1029 0052 FC21     		movs	r1, #252
+ 1030 0054 2800     		movs	r0, r5
+ 1031 0056 FFF7FEFF 		bl	xmit_datablock
+ 1032              	.LVL130:
+ 1033 005a 0028     		cmp	r0, #0
+ 1034 005c 06D0     		beq	.L88
+ 440:fatfs/sdcard.c **** 				buff += 512;
+ 1035              		.loc 1 440 0
+ 1036 005e 8023     		movs	r3, #128
+ 1037 0060 9B00     		lsls	r3, r3, #2
+ 1038 0062 9C46     		mov	ip, r3
+ 1039 0064 6544     		add	r5, r5, ip
+ 1040              	.LVL131:
+ 441:fatfs/sdcard.c **** 			} while (--count);
+ 1041              		.loc 1 441 0
+ 1042 0066 013C     		subs	r4, r4, #1
+ 1043              	.LVL132:
+ 1044 0068 002C     		cmp	r4, #0
+ 1045 006a F2D1     		bne	.L89
+ 1046              	.L88:
+ 442:fatfs/sdcard.c **** 			if (!xmit_datablock(0, 0xFD))	/* STOP_TRAN token */
+ 1047              		.loc 1 442 0
+ 1048 006c FD21     		movs	r1, #253
+ 1049 006e 0020     		movs	r0, #0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 28
+
+
+ 1050 0070 FFF7FEFF 		bl	xmit_datablock
+ 1051              	.LVL133:
+ 1052 0074 0028     		cmp	r0, #0
+ 1053 0076 02D0     		beq	.L92
+ 1054 0078 02E0     		b	.L86
+ 1055              	.L91:
+ 433:fatfs/sdcard.c **** 	}
+ 1056              		.loc 1 433 0
+ 1057 007a 0024     		movs	r4, #0
+ 1058              	.LVL134:
+ 1059 007c 00E0     		b	.L86
+ 1060              	.LVL135:
+ 1061              	.L92:
+ 443:fatfs/sdcard.c **** 				count = 1;
+ 1062              		.loc 1 443 0
+ 1063 007e 0124     		movs	r4, #1
+ 1064              	.LVL136:
+ 1065              	.L86:
+ 444:fatfs/sdcard.c **** 		}
+ 445:fatfs/sdcard.c **** 	}
+ 446:fatfs/sdcard.c **** 	deselect();
+ 1066              		.loc 1 446 0
+ 1067 0080 FFF7FEFF 		bl	deselect
+ 1068              	.LVL137:
+ 447:fatfs/sdcard.c **** 
+ 448:fatfs/sdcard.c **** 	return count ? RES_ERROR : RES_OK;
+ 1069              		.loc 1 448 0
+ 1070 0084 601E     		subs	r0, r4, #1
+ 1071 0086 8441     		sbcs	r4, r4, r0
+ 1072              	.LVL138:
+ 1073 0088 E0B2     		uxtb	r0, r4
+ 1074 008a 00E0     		b	.L83
+ 1075              	.LVL139:
+ 1076              	.L90:
+ 427:fatfs/sdcard.c **** 	if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert LBA to byte address if needed */
+ 1077              		.loc 1 427 0
+ 1078 008c 0320     		movs	r0, #3
+ 1079              	.LVL140:
+ 1080              	.L83:
+ 449:fatfs/sdcard.c **** }
+ 1081              		.loc 1 449 0
+ 1082              		@ sp needed
+ 1083              	.LVL141:
+ 1084              	.LVL142:
+ 1085 008e 70BD     		pop	{r4, r5, r6, pc}
+ 1086              	.L94:
+ 1087              		.align	2
+ 1088              	.L93:
+ 1089 0090 00000000 		.word	.LANCHOR1
+ 1090              		.cfi_endproc
+ 1091              	.LFE44:
+ 1092              		.size	disk_write, .-disk_write
+ 1093              		.section	.text.disk_ioctl,"ax",%progbits
+ 1094              		.align	2
+ 1095              		.global	disk_ioctl
+ 1096              		.code	16
+ 1097              		.thumb_func
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 29
+
+
+ 1098              		.type	disk_ioctl, %function
+ 1099              	disk_ioctl:
+ 1100              	.LFB45:
+ 450:fatfs/sdcard.c **** 
+ 451:fatfs/sdcard.c **** 
+ 452:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 453:fatfs/sdcard.c **** /* Miscellaneous Functions                                               */
+ 454:fatfs/sdcard.c **** /*-----------------------------------------------------------------------*/
+ 455:fatfs/sdcard.c **** 
+ 456:fatfs/sdcard.c **** DRESULT disk_ioctl (
+ 457:fatfs/sdcard.c **** 	BYTE drv,		/* Physical drive nmuber (0) */
+ 458:fatfs/sdcard.c **** 	BYTE ctrl,		/* Control code */
+ 459:fatfs/sdcard.c **** 	void *buff		/* Buffer to send/receive control data */
+ 460:fatfs/sdcard.c **** )
+ 461:fatfs/sdcard.c **** {
+ 1101              		.loc 1 461 0
+ 1102              		.cfi_startproc
+ 1103              		@ args = 0, pretend = 0, frame = 16
+ 1104              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1105              	.LVL143:
+ 1106 0000 30B5     		push	{r4, r5, lr}
+ 1107              		.cfi_def_cfa_offset 12
+ 1108              		.cfi_offset 4, -12
+ 1109              		.cfi_offset 5, -8
+ 1110              		.cfi_offset 14, -4
+ 1111 0002 85B0     		sub	sp, sp, #20
+ 1112              		.cfi_def_cfa_offset 32
+ 1113 0004 0C00     		movs	r4, r1
+ 1114 0006 1500     		movs	r5, r2
+ 462:fatfs/sdcard.c **** 	DRESULT res;
+ 463:fatfs/sdcard.c **** 	BYTE n, csd[16];
+ 464:fatfs/sdcard.c **** 	DWORD cs;
+ 465:fatfs/sdcard.c **** 
+ 466:fatfs/sdcard.c **** 
+ 467:fatfs/sdcard.c **** 	if (disk_status(drv) & STA_NOINIT) return RES_NOTRDY;	/* Check if card is in the socket */
+ 1115              		.loc 1 467 0
+ 1116 0008 FFF7FEFF 		bl	disk_status
+ 1117              	.LVL144:
+ 1118 000c C307     		lsls	r3, r0, #31
+ 1119 000e 5ED4     		bmi	.L102
+ 1120              	.LVL145:
+ 468:fatfs/sdcard.c **** 
+ 469:fatfs/sdcard.c **** 	res = RES_ERROR;
+ 470:fatfs/sdcard.c **** 	switch (ctrl) {
+ 1121              		.loc 1 470 0
+ 1122 0010 012C     		cmp	r4, #1
+ 1123 0012 0AD0     		beq	.L98
+ 1124 0014 002C     		cmp	r4, #0
+ 1125 0016 02D0     		beq	.L99
+ 1126 0018 032C     		cmp	r4, #3
+ 1127 001a 49D0     		beq	.L100
+ 1128 001c 4CE0     		b	.L107
+ 1129              	.L99:
+ 471:fatfs/sdcard.c **** 		case CTRL_SYNC :		/* Make sure that no pending write process */
+ 472:fatfs/sdcard.c **** 			if (select()) res = RES_OK;
+ 1130              		.loc 1 472 0
+ 1131 001e FFF7FEFF 		bl	select
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 30
+
+
+ 1132              	.LVL146:
+ 1133 0022 0028     		cmp	r0, #0
+ 1134 0024 4AD1     		bne	.L104
+ 469:fatfs/sdcard.c **** 	switch (ctrl) {
+ 1135              		.loc 1 469 0
+ 1136 0026 0124     		movs	r4, #1
+ 1137 0028 4DE0     		b	.L97
+ 1138              	.L98:
+ 473:fatfs/sdcard.c **** 			break;
+ 474:fatfs/sdcard.c **** 
+ 475:fatfs/sdcard.c **** 		case GET_SECTOR_COUNT :	/* Get number of sectors on the disk (DWORD) */
+ 476:fatfs/sdcard.c **** 			if ((send_cmd(CMD9, 0) == 0) && rcvr_datablock(csd, 16)) {
+ 1139              		.loc 1 476 0
+ 1140 002a 0021     		movs	r1, #0
+ 1141 002c 0920     		movs	r0, #9
+ 1142 002e FFF7FEFF 		bl	send_cmd
+ 1143              	.LVL147:
+ 1144 0032 0028     		cmp	r0, #0
+ 1145 0034 44D1     		bne	.L105
+ 1146              		.loc 1 476 0 is_stmt 0 discriminator 1
+ 1147 0036 1021     		movs	r1, #16
+ 1148 0038 6846     		mov	r0, sp
+ 1149 003a FFF7FEFF 		bl	rcvr_datablock
+ 1150              	.LVL148:
+ 1151 003e 0028     		cmp	r0, #0
+ 1152 0040 40D0     		beq	.L106
+ 477:fatfs/sdcard.c **** 				if ((csd[0] >> 6) == 1) {	/* SDC ver 2.00 */
+ 1153              		.loc 1 477 0 is_stmt 1
+ 1154 0042 6B46     		mov	r3, sp
+ 1155 0044 1B78     		ldrb	r3, [r3]
+ 1156 0046 9B09     		lsrs	r3, r3, #6
+ 1157 0048 012B     		cmp	r3, #1
+ 1158 004a 10D1     		bne	.L101
+ 478:fatfs/sdcard.c **** 					cs = csd[9] + ((WORD)csd[8] << 8) + ((DWORD)(csd[7] & 63) << 16) + 1;
+ 1159              		.loc 1 478 0
+ 1160 004c 6B46     		mov	r3, sp
+ 1161 004e 5A7A     		ldrb	r2, [r3, #9]
+ 1162 0050 197A     		ldrb	r1, [r3, #8]
+ 1163 0052 0B02     		lsls	r3, r1, #8
+ 1164 0054 D118     		adds	r1, r2, r3
+ 1165 0056 6B46     		mov	r3, sp
+ 1166 0058 DB79     		ldrb	r3, [r3, #7]
+ 1167 005a 1B04     		lsls	r3, r3, #16
+ 1168 005c FC22     		movs	r2, #252
+ 1169 005e 9203     		lsls	r2, r2, #14
+ 1170 0060 1340     		ands	r3, r2
+ 1171 0062 CB18     		adds	r3, r1, r3
+ 1172 0064 0133     		adds	r3, r3, #1
+ 1173              	.LVL149:
+ 479:fatfs/sdcard.c **** 					*(DWORD*)buff = cs << 10;
+ 1174              		.loc 1 479 0
+ 1175 0066 9B02     		lsls	r3, r3, #10
+ 1176              	.LVL150:
+ 1177 0068 2B60     		str	r3, [r5]
+ 1178              	.LVL151:
+ 480:fatfs/sdcard.c **** 				} else {					/* SDC ver 1.XX or MMC */
+ 481:fatfs/sdcard.c **** 					n = (csd[5] & 15) + ((csd[10] & 128) >> 7) + ((csd[9] & 3) << 1) + 2;
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 31
+
+
+ 482:fatfs/sdcard.c **** 					cs = (csd[8] >> 6) + ((WORD)csd[7] << 2) + ((WORD)(csd[6] & 3) << 10) + 1;
+ 483:fatfs/sdcard.c **** 					*(DWORD*)buff = cs << (n - 9);
+ 484:fatfs/sdcard.c **** 				}
+ 485:fatfs/sdcard.c **** 				res = RES_OK;
+ 1179              		.loc 1 485 0
+ 1180 006a 0024     		movs	r4, #0
+ 1181 006c 2BE0     		b	.L97
+ 1182              	.L101:
+ 481:fatfs/sdcard.c **** 					cs = (csd[8] >> 6) + ((WORD)csd[7] << 2) + ((WORD)(csd[6] & 3) << 10) + 1;
+ 1183              		.loc 1 481 0
+ 1184 006e 6B46     		mov	r3, sp
+ 1185 0070 5879     		ldrb	r0, [r3, #5]
+ 1186 0072 997A     		ldrb	r1, [r3, #10]
+ 1187 0074 CC09     		lsrs	r4, r1, #7
+ 1188 0076 5A7A     		ldrb	r2, [r3, #9]
+ 1189 0078 5200     		lsls	r2, r2, #1
+ 1190 007a 0F23     		movs	r3, #15
+ 1191 007c 0340     		ands	r3, r0
+ 1192 007e E118     		adds	r1, r4, r3
+ 1193 0080 0623     		movs	r3, #6
+ 1194 0082 1340     		ands	r3, r2
+ 1195 0084 CB18     		adds	r3, r1, r3
+ 1196 0086 0233     		adds	r3, r3, #2
+ 1197 0088 DBB2     		uxtb	r3, r3
+ 1198              	.LVL152:
+ 482:fatfs/sdcard.c **** 					*(DWORD*)buff = cs << (n - 9);
+ 1199              		.loc 1 482 0
+ 1200 008a 6A46     		mov	r2, sp
+ 1201 008c 107A     		ldrb	r0, [r2, #8]
+ 1202 008e 8109     		lsrs	r1, r0, #6
+ 1203 0090 D079     		ldrb	r0, [r2, #7]
+ 1204 0092 8200     		lsls	r2, r0, #2
+ 1205 0094 8818     		adds	r0, r1, r2
+ 1206 0096 6A46     		mov	r2, sp
+ 1207 0098 9279     		ldrb	r2, [r2, #6]
+ 1208 009a 9202     		lsls	r2, r2, #10
+ 1209 009c C021     		movs	r1, #192
+ 1210 009e 0901     		lsls	r1, r1, #4
+ 1211 00a0 0A40     		ands	r2, r1
+ 1212 00a2 8218     		adds	r2, r0, r2
+ 1213 00a4 0132     		adds	r2, r2, #1
+ 1214              	.LVL153:
+ 483:fatfs/sdcard.c **** 				}
+ 1215              		.loc 1 483 0
+ 1216 00a6 093B     		subs	r3, r3, #9
+ 1217              	.LVL154:
+ 1218 00a8 9A40     		lsls	r2, r2, r3
+ 1219              	.LVL155:
+ 1220 00aa 2A60     		str	r2, [r5]
+ 1221              	.LVL156:
+ 1222              		.loc 1 485 0
+ 1223 00ac 0024     		movs	r4, #0
+ 1224 00ae 0AE0     		b	.L97
+ 1225              	.LVL157:
+ 1226              	.L100:
+ 486:fatfs/sdcard.c **** 			}
+ 487:fatfs/sdcard.c **** 			break;
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 32
+
+
+ 488:fatfs/sdcard.c **** 
+ 489:fatfs/sdcard.c **** 		case GET_BLOCK_SIZE :	/* Get erase block size in unit of sector (DWORD) */
+ 490:fatfs/sdcard.c **** 			*(DWORD*)buff = 128;
+ 1227              		.loc 1 490 0
+ 1228 00b0 8023     		movs	r3, #128
+ 1229 00b2 2B60     		str	r3, [r5]
+ 1230              	.LVL158:
+ 491:fatfs/sdcard.c **** 			res = RES_OK;
+ 1231              		.loc 1 491 0
+ 1232 00b4 0024     		movs	r4, #0
+ 492:fatfs/sdcard.c **** 			break;
+ 1233              		.loc 1 492 0
+ 1234 00b6 06E0     		b	.L97
+ 1235              	.LVL159:
+ 1236              	.L107:
+ 493:fatfs/sdcard.c **** 
+ 494:fatfs/sdcard.c **** 		default:
+ 495:fatfs/sdcard.c **** 			res = RES_PARERR;
+ 1237              		.loc 1 495 0
+ 1238 00b8 0424     		movs	r4, #4
+ 1239 00ba 04E0     		b	.L97
+ 1240              	.L104:
+ 472:fatfs/sdcard.c **** 			break;
+ 1241              		.loc 1 472 0
+ 1242 00bc 0024     		movs	r4, #0
+ 1243 00be 02E0     		b	.L97
+ 1244              	.L105:
+ 469:fatfs/sdcard.c **** 	switch (ctrl) {
+ 1245              		.loc 1 469 0
+ 1246 00c0 0124     		movs	r4, #1
+ 1247 00c2 00E0     		b	.L97
+ 1248              	.L106:
+ 1249 00c4 0124     		movs	r4, #1
+ 1250              	.LVL160:
+ 1251              	.L97:
+ 496:fatfs/sdcard.c **** 	}
+ 497:fatfs/sdcard.c **** 
+ 498:fatfs/sdcard.c **** 	deselect();
+ 1252              		.loc 1 498 0
+ 1253 00c6 FFF7FEFF 		bl	deselect
+ 1254              	.LVL161:
+ 499:fatfs/sdcard.c **** 
+ 500:fatfs/sdcard.c **** 	return res;
+ 1255              		.loc 1 500 0
+ 1256 00ca 2000     		movs	r0, r4
+ 1257 00cc 00E0     		b	.L96
+ 1258              	.LVL162:
+ 1259              	.L102:
+ 467:fatfs/sdcard.c **** 
+ 1260              		.loc 1 467 0
+ 1261 00ce 0320     		movs	r0, #3
+ 1262              	.L96:
+ 501:fatfs/sdcard.c **** }
+ 1263              		.loc 1 501 0
+ 1264 00d0 05B0     		add	sp, sp, #20
+ 1265              		@ sp needed
+ 1266              	.LVL163:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 33
+
+
+ 1267 00d2 30BD     		pop	{r4, r5, pc}
+ 1268              		.cfi_endproc
+ 1269              	.LFE45:
+ 1270              		.size	disk_ioctl, .-disk_ioctl
+ 1271              		.data
+ 1272              		.set	.LANCHOR0,. + 0
+ 1273              		.type	Stat, %object
+ 1274              		.size	Stat, 1
+ 1275              	Stat:
+ 1276 0000 01       		.byte	1
+ 1277              		.bss
+ 1278              		.set	.LANCHOR1,. + 0
+ 1279              		.type	CardType, %object
+ 1280              		.size	CardType, 1
+ 1281              	CardType:
+ 1282 0000 00       		.space	1
+ 1283              		.text
+ 1284              	.Letext0:
+ 1285              		.file 2 "fatfs\\integer.h"
+ 1286              		.file 3 "fatfs\\diskio.h"
+ 1287              		.file 4 "Generated_Source\\PSoC4/cytypes.h"
+ 1288              		.file 5 "Generated_Source\\PSoC4/SPI_SPI_UART.h"
+ 1289              		.file 6 "Generated_Source\\PSoC4/SPI_ss0_m.h"
+ 1290              		.file 7 "Generated_Source\\PSoC4/CyLib.h"
+ 1291              		.section	.debug_info,"",%progbits
+ 1292              	.Ldebug_info0:
+ 1293 0000 ED090000 		.4byte	0x9ed
+ 1294 0004 0400     		.2byte	0x4
+ 1295 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 1296 000a 04       		.byte	0x4
+ 1297 000b 01       		.uleb128 0x1
+ 1298 000c 8E000000 		.4byte	.LASF55
+ 1299 0010 0C       		.byte	0xc
+ 1300 0011 42030000 		.4byte	.LASF56
+ 1301 0015 29000000 		.4byte	.LASF57
+ 1302 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 1303 001d 00000000 		.4byte	0
+ 1304 0021 00000000 		.4byte	.Ldebug_line0
+ 1305 0025 02       		.uleb128 0x2
+ 1306 0026 84000000 		.4byte	.LASF2
+ 1307 002a 02       		.byte	0x2
+ 1308 002b 10       		.byte	0x10
+ 1309 002c 30000000 		.4byte	0x30
+ 1310 0030 03       		.uleb128 0x3
+ 1311 0031 01       		.byte	0x1
+ 1312 0032 08       		.byte	0x8
+ 1313 0033 06020000 		.4byte	.LASF0
+ 1314 0037 03       		.uleb128 0x3
+ 1315 0038 02       		.byte	0x2
+ 1316 0039 05       		.byte	0x5
+ 1317 003a 7A000000 		.4byte	.LASF1
+ 1318 003e 02       		.uleb128 0x2
+ 1319 003f 72010000 		.4byte	.LASF3
+ 1320 0043 02       		.byte	0x2
+ 1321 0044 14       		.byte	0x14
+ 1322 0045 49000000 		.4byte	0x49
+ 1323 0049 03       		.uleb128 0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 34
+
+
+ 1324 004a 02       		.byte	0x2
+ 1325 004b 07       		.byte	0x7
+ 1326 004c 84020000 		.4byte	.LASF4
+ 1327 0050 04       		.uleb128 0x4
+ 1328 0051 04       		.byte	0x4
+ 1329 0052 05       		.byte	0x5
+ 1330 0053 696E7400 		.ascii	"int\000"
+ 1331 0057 02       		.uleb128 0x2
+ 1332 0058 C7010000 		.4byte	.LASF5
+ 1333 005c 02       		.byte	0x2
+ 1334 005d 19       		.byte	0x19
+ 1335 005e 62000000 		.4byte	0x62
+ 1336 0062 03       		.uleb128 0x3
+ 1337 0063 04       		.byte	0x4
+ 1338 0064 07       		.byte	0x7
+ 1339 0065 66020000 		.4byte	.LASF6
+ 1340 0069 03       		.uleb128 0x3
+ 1341 006a 04       		.byte	0x4
+ 1342 006b 05       		.byte	0x5
+ 1343 006c 9B010000 		.4byte	.LASF7
+ 1344 0070 02       		.uleb128 0x2
+ 1345 0071 EA010000 		.4byte	.LASF8
+ 1346 0075 02       		.byte	0x2
+ 1347 0076 1D       		.byte	0x1d
+ 1348 0077 7B000000 		.4byte	0x7b
+ 1349 007b 03       		.uleb128 0x3
+ 1350 007c 04       		.byte	0x4
+ 1351 007d 07       		.byte	0x7
+ 1352 007e C8020000 		.4byte	.LASF9
+ 1353 0082 02       		.uleb128 0x2
+ 1354 0083 E2010000 		.4byte	.LASF10
+ 1355 0087 03       		.byte	0x3
+ 1356 0088 13       		.byte	0x13
+ 1357 0089 25000000 		.4byte	0x25
+ 1358 008d 05       		.uleb128 0x5
+ 1359 008e 01       		.byte	0x1
+ 1360 008f 30000000 		.4byte	0x30
+ 1361 0093 03       		.byte	0x3
+ 1362 0094 16       		.byte	0x16
+ 1363 0095 B8000000 		.4byte	0xb8
+ 1364 0099 06       		.uleb128 0x6
+ 1365 009a 73000000 		.4byte	.LASF11
+ 1366 009e 00       		.byte	0
+ 1367 009f 06       		.uleb128 0x6
+ 1368 00a0 0F000000 		.4byte	.LASF12
+ 1369 00a4 01       		.byte	0x1
+ 1370 00a5 06       		.uleb128 0x6
+ 1371 00a6 AD010000 		.4byte	.LASF13
+ 1372 00aa 02       		.byte	0x2
+ 1373 00ab 06       		.uleb128 0x6
+ 1374 00ac B6020000 		.4byte	.LASF14
+ 1375 00b0 03       		.byte	0x3
+ 1376 00b1 06       		.uleb128 0x6
+ 1377 00b2 37030000 		.4byte	.LASF15
+ 1378 00b6 04       		.byte	0x4
+ 1379 00b7 00       		.byte	0
+ 1380 00b8 02       		.uleb128 0x2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 35
+
+
+ 1381 00b9 1F030000 		.4byte	.LASF16
+ 1382 00bd 03       		.byte	0x3
+ 1383 00be 1C       		.byte	0x1c
+ 1384 00bf 8D000000 		.4byte	0x8d
+ 1385 00c3 03       		.uleb128 0x3
+ 1386 00c4 01       		.byte	0x1
+ 1387 00c5 06       		.byte	0x6
+ 1388 00c6 43020000 		.4byte	.LASF17
+ 1389 00ca 03       		.uleb128 0x3
+ 1390 00cb 08       		.byte	0x8
+ 1391 00cc 05       		.byte	0x5
+ 1392 00cd 8D010000 		.4byte	.LASF18
+ 1393 00d1 03       		.uleb128 0x3
+ 1394 00d2 08       		.byte	0x8
+ 1395 00d3 07       		.byte	0x7
+ 1396 00d4 4F020000 		.4byte	.LASF19
+ 1397 00d8 07       		.uleb128 0x7
+ 1398 00d9 C1020000 		.4byte	.LASF20
+ 1399 00dd 04       		.byte	0x4
+ 1400 00de E601     		.2byte	0x1e6
+ 1401 00e0 7B000000 		.4byte	0x7b
+ 1402 00e4 03       		.uleb128 0x3
+ 1403 00e5 04       		.byte	0x4
+ 1404 00e6 04       		.byte	0x4
+ 1405 00e7 87010000 		.4byte	.LASF21
+ 1406 00eb 03       		.uleb128 0x3
+ 1407 00ec 08       		.byte	0x8
+ 1408 00ed 04       		.byte	0x4
+ 1409 00ee 30030000 		.4byte	.LASF22
+ 1410 00f2 03       		.uleb128 0x3
+ 1411 00f3 01       		.byte	0x1
+ 1412 00f4 08       		.byte	0x8
+ 1413 00f5 A2020000 		.4byte	.LASF23
+ 1414 00f9 07       		.uleb128 0x7
+ 1415 00fa 7E020000 		.4byte	.LASF24
+ 1416 00fe 04       		.byte	0x4
+ 1417 00ff 9002     		.2byte	0x290
+ 1418 0101 05010000 		.4byte	0x105
+ 1419 0105 08       		.uleb128 0x8
+ 1420 0106 D8000000 		.4byte	0xd8
+ 1421 010a 03       		.uleb128 0x3
+ 1422 010b 08       		.byte	0x8
+ 1423 010c 04       		.byte	0x4
+ 1424 010d F0010000 		.4byte	.LASF25
+ 1425 0111 03       		.uleb128 0x3
+ 1426 0112 04       		.byte	0x4
+ 1427 0113 07       		.byte	0x7
+ 1428 0114 27030000 		.4byte	.LASF26
+ 1429 0118 09       		.uleb128 0x9
+ 1430 0119 04       		.byte	0x4
+ 1431 011a 0A       		.uleb128 0xa
+ 1432 011b 77010000 		.4byte	.LASF30
+ 1433 011f 01       		.byte	0x1
+ 1434 0120 98       		.byte	0x98
+ 1435 0121 00000000 		.4byte	.LFB34
+ 1436 0125 28000000 		.4byte	.LFE34-.LFB34
+ 1437 0129 01       		.uleb128 0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 36
+
+
+ 1438 012a 9C       		.byte	0x9c
+ 1439 012b 73010000 		.4byte	0x173
+ 1440 012f 0B       		.uleb128 0xb
+ 1441 0130 40010000 		.4byte	.LASF27
+ 1442 0134 01       		.byte	0x1
+ 1443 0135 98       		.byte	0x98
+ 1444 0136 73010000 		.4byte	0x173
+ 1445 013a 00000000 		.4byte	.LLST0
+ 1446 013e 0C       		.uleb128 0xc
+ 1447 013f 626300   		.ascii	"bc\000"
+ 1448 0142 01       		.byte	0x1
+ 1449 0143 98       		.byte	0x98
+ 1450 0144 57000000 		.4byte	0x57
+ 1451 0148 34000000 		.4byte	.LLST1
+ 1452 014c 0D       		.uleb128 0xd
+ 1453 014d 10000000 		.4byte	.LVL3
+ 1454 0151 92090000 		.4byte	0x992
+ 1455 0155 60010000 		.4byte	0x160
+ 1456 0159 0E       		.uleb128 0xe
+ 1457 015a 01       		.uleb128 0x1
+ 1458 015b 50       		.byte	0x50
+ 1459 015c 02       		.uleb128 0x2
+ 1460 015d 08       		.byte	0x8
+ 1461 015e FF       		.byte	0xff
+ 1462 015f 00       		.byte	0
+ 1463 0160 0F       		.uleb128 0xf
+ 1464 0161 14000000 		.4byte	.LVL4
+ 1465 0165 9E090000 		.4byte	0x99e
+ 1466 0169 0F       		.uleb128 0xf
+ 1467 016a 1E000000 		.4byte	.LVL6
+ 1468 016e AA090000 		.4byte	0x9aa
+ 1469 0172 00       		.byte	0
+ 1470 0173 10       		.uleb128 0x10
+ 1471 0174 04       		.byte	0x4
+ 1472 0175 25000000 		.4byte	0x25
+ 1473 0179 11       		.uleb128 0x11
+ 1474 017a 51030000 		.4byte	.LASF28
+ 1475 017e 01       		.byte	0x1
+ 1476 017f C3       		.byte	0xc3
+ 1477 0180 50000000 		.4byte	0x50
+ 1478 0184 00000000 		.4byte	.LFB35
+ 1479 0188 30000000 		.4byte	.LFE35-.LFB35
+ 1480 018c 01       		.uleb128 0x1
+ 1481 018d 9C       		.byte	0x9c
+ 1482 018e C3010000 		.4byte	0x1c3
+ 1483 0192 12       		.uleb128 0x12
+ 1484 0193 6400     		.ascii	"d\000"
+ 1485 0195 01       		.byte	0x1
+ 1486 0196 C5       		.byte	0xc5
+ 1487 0197 25000000 		.4byte	0x25
+ 1488 019b 02       		.uleb128 0x2
+ 1489 019c 91       		.byte	0x91
+ 1490 019d 6F       		.sleb128 -17
+ 1491 019e 13       		.uleb128 0x13
+ 1492 019f 746D7200 		.ascii	"tmr\000"
+ 1493 01a3 01       		.byte	0x1
+ 1494 01a4 C6       		.byte	0xc6
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 37
+
+
+ 1495 01a5 57000000 		.4byte	0x57
+ 1496 01a9 52000000 		.4byte	.LLST2
+ 1497 01ad 14       		.uleb128 0x14
+ 1498 01ae 14000000 		.4byte	.LVL12
+ 1499 01b2 1A010000 		.4byte	0x11a
+ 1500 01b6 0E       		.uleb128 0xe
+ 1501 01b7 01       		.uleb128 0x1
+ 1502 01b8 50       		.byte	0x50
+ 1503 01b9 02       		.uleb128 0x2
+ 1504 01ba 75       		.byte	0x75
+ 1505 01bb 00       		.sleb128 0
+ 1506 01bc 0E       		.uleb128 0xe
+ 1507 01bd 01       		.uleb128 0x1
+ 1508 01be 51       		.byte	0x51
+ 1509 01bf 01       		.uleb128 0x1
+ 1510 01c0 31       		.byte	0x31
+ 1511 01c1 00       		.byte	0
+ 1512 01c2 00       		.byte	0
+ 1513 01c3 11       		.uleb128 0x11
+ 1514 01c4 A7020000 		.4byte	.LASF29
+ 1515 01c8 01       		.byte	0x1
+ 1516 01c9 EC       		.byte	0xec
+ 1517 01ca 50000000 		.4byte	0x50
+ 1518 01ce 00000000 		.4byte	.LFB38
+ 1519 01d2 46000000 		.4byte	.LFE38-.LFB38
+ 1520 01d6 01       		.uleb128 0x1
+ 1521 01d7 9C       		.byte	0x9c
+ 1522 01d8 5E020000 		.4byte	0x25e
+ 1523 01dc 0B       		.uleb128 0xb
+ 1524 01dd 40010000 		.4byte	.LASF27
+ 1525 01e1 01       		.byte	0x1
+ 1526 01e2 EC       		.byte	0xec
+ 1527 01e3 73010000 		.4byte	0x173
+ 1528 01e7 73000000 		.4byte	.LLST3
+ 1529 01eb 0C       		.uleb128 0xc
+ 1530 01ec 62747200 		.ascii	"btr\000"
+ 1531 01f0 01       		.byte	0x1
+ 1532 01f1 EC       		.byte	0xec
+ 1533 01f2 57000000 		.4byte	0x57
+ 1534 01f6 9F000000 		.4byte	.LLST4
+ 1535 01fa 12       		.uleb128 0x12
+ 1536 01fb 6400     		.ascii	"d\000"
+ 1537 01fd 01       		.byte	0x1
+ 1538 01fe EE       		.byte	0xee
+ 1539 01ff 5E020000 		.4byte	0x25e
+ 1540 0203 02       		.uleb128 0x2
+ 1541 0204 91       		.byte	0x91
+ 1542 0205 64       		.sleb128 -28
+ 1543 0206 13       		.uleb128 0x13
+ 1544 0207 746D7200 		.ascii	"tmr\000"
+ 1545 020b 01       		.byte	0x1
+ 1546 020c EF       		.byte	0xef
+ 1547 020d 57000000 		.4byte	0x57
+ 1548 0211 CB000000 		.4byte	.LLST5
+ 1549 0215 0D       		.uleb128 0xd
+ 1550 0216 18000000 		.4byte	.LVL18
+ 1551 021a 1A010000 		.4byte	0x11a
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 38
+
+
+ 1552 021e 2E020000 		.4byte	0x22e
+ 1553 0222 0E       		.uleb128 0xe
+ 1554 0223 01       		.uleb128 0x1
+ 1555 0224 50       		.byte	0x50
+ 1556 0225 02       		.uleb128 0x2
+ 1557 0226 74       		.byte	0x74
+ 1558 0227 00       		.sleb128 0
+ 1559 0228 0E       		.uleb128 0xe
+ 1560 0229 01       		.uleb128 0x1
+ 1561 022a 51       		.byte	0x51
+ 1562 022b 01       		.uleb128 0x1
+ 1563 022c 31       		.byte	0x31
+ 1564 022d 00       		.byte	0
+ 1565 022e 0D       		.uleb128 0xd
+ 1566 022f 34000000 		.4byte	.LVL20
+ 1567 0233 1A010000 		.4byte	0x11a
+ 1568 0237 48020000 		.4byte	0x248
+ 1569 023b 0E       		.uleb128 0xe
+ 1570 023c 01       		.uleb128 0x1
+ 1571 023d 50       		.byte	0x50
+ 1572 023e 02       		.uleb128 0x2
+ 1573 023f 76       		.byte	0x76
+ 1574 0240 00       		.sleb128 0
+ 1575 0241 0E       		.uleb128 0xe
+ 1576 0242 01       		.uleb128 0x1
+ 1577 0243 51       		.byte	0x51
+ 1578 0244 02       		.uleb128 0x2
+ 1579 0245 77       		.byte	0x77
+ 1580 0246 00       		.sleb128 0
+ 1581 0247 00       		.byte	0
+ 1582 0248 14       		.uleb128 0x14
+ 1583 0249 3C000000 		.4byte	.LVL21
+ 1584 024d 1A010000 		.4byte	0x11a
+ 1585 0251 0E       		.uleb128 0xe
+ 1586 0252 01       		.uleb128 0x1
+ 1587 0253 50       		.byte	0x50
+ 1588 0254 02       		.uleb128 0x2
+ 1589 0255 91       		.byte	0x91
+ 1590 0256 64       		.sleb128 -28
+ 1591 0257 0E       		.uleb128 0xe
+ 1592 0258 01       		.uleb128 0x1
+ 1593 0259 51       		.byte	0x51
+ 1594 025a 01       		.uleb128 0x1
+ 1595 025b 32       		.byte	0x32
+ 1596 025c 00       		.byte	0
+ 1597 025d 00       		.byte	0
+ 1598 025e 15       		.uleb128 0x15
+ 1599 025f 25000000 		.4byte	0x25
+ 1600 0263 6E020000 		.4byte	0x26e
+ 1601 0267 16       		.uleb128 0x16
+ 1602 0268 11010000 		.4byte	0x111
+ 1603 026c 01       		.byte	0x1
+ 1604 026d 00       		.byte	0
+ 1605 026e 0A       		.uleb128 0xa
+ 1606 026f 69010000 		.4byte	.LASF31
+ 1607 0273 01       		.byte	0x1
+ 1608 0274 D5       		.byte	0xd5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 39
+
+
+ 1609 0275 00000000 		.4byte	.LFB36
+ 1610 0279 0A000000 		.4byte	.LFE36-.LFB36
+ 1611 027d 01       		.uleb128 0x1
+ 1612 027e 9C       		.byte	0x9c
+ 1613 027f 93020000 		.4byte	0x293
+ 1614 0283 14       		.uleb128 0x14
+ 1615 0284 08000000 		.4byte	.LVL25
+ 1616 0288 B6090000 		.4byte	0x9b6
+ 1617 028c 0E       		.uleb128 0xe
+ 1618 028d 01       		.uleb128 0x1
+ 1619 028e 50       		.byte	0x50
+ 1620 028f 01       		.uleb128 0x1
+ 1621 0290 31       		.byte	0x31
+ 1622 0291 00       		.byte	0
+ 1623 0292 00       		.byte	0
+ 1624 0293 11       		.uleb128 0x11
+ 1625 0294 20010000 		.4byte	.LASF32
+ 1626 0298 01       		.byte	0x1
+ 1627 0299 DE       		.byte	0xde
+ 1628 029a 50000000 		.4byte	0x50
+ 1629 029e 00000000 		.4byte	.LFB37
+ 1630 02a2 1C000000 		.4byte	.LFE37-.LFB37
+ 1631 02a6 01       		.uleb128 0x1
+ 1632 02a7 9C       		.byte	0x9c
+ 1633 02a8 D2020000 		.4byte	0x2d2
+ 1634 02ac 0D       		.uleb128 0xd
+ 1635 02ad 08000000 		.4byte	.LVL26
+ 1636 02b1 B6090000 		.4byte	0x9b6
+ 1637 02b5 BF020000 		.4byte	0x2bf
+ 1638 02b9 0E       		.uleb128 0xe
+ 1639 02ba 01       		.uleb128 0x1
+ 1640 02bb 50       		.byte	0x50
+ 1641 02bc 01       		.uleb128 0x1
+ 1642 02bd 30       		.byte	0x30
+ 1643 02be 00       		.byte	0
+ 1644 02bf 0F       		.uleb128 0xf
+ 1645 02c0 0C000000 		.4byte	.LVL27
+ 1646 02c4 79010000 		.4byte	0x179
+ 1647 02c8 0F       		.uleb128 0xf
+ 1648 02c9 14000000 		.4byte	.LVL28
+ 1649 02cd 6E020000 		.4byte	0x26e
+ 1650 02d1 00       		.byte	0
+ 1651 02d2 0A       		.uleb128 0xa
+ 1652 02d3 06000000 		.4byte	.LASF33
+ 1653 02d7 01       		.byte	0x1
+ 1654 02d8 78       		.byte	0x78
+ 1655 02d9 00000000 		.4byte	.LFB33
+ 1656 02dd 24000000 		.4byte	.LFE33-.LFB33
+ 1657 02e1 01       		.uleb128 0x1
+ 1658 02e2 9C       		.byte	0x9c
+ 1659 02e3 2D030000 		.4byte	0x32d
+ 1660 02e7 0B       		.uleb128 0xb
+ 1661 02e8 40010000 		.4byte	.LASF27
+ 1662 02ec 01       		.byte	0x1
+ 1663 02ed 78       		.byte	0x78
+ 1664 02ee 2D030000 		.4byte	0x32d
+ 1665 02f2 EC000000 		.4byte	.LLST6
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 40
+
+
+ 1666 02f6 0C       		.uleb128 0xc
+ 1667 02f7 626300   		.ascii	"bc\000"
+ 1668 02fa 01       		.byte	0x1
+ 1669 02fb 78       		.byte	0x78
+ 1670 02fc 57000000 		.4byte	0x57
+ 1671 0300 18010000 		.4byte	.LLST7
+ 1672 0304 0F       		.uleb128 0xf
+ 1673 0305 0A000000 		.4byte	.LVL30
+ 1674 0309 C1090000 		.4byte	0x9c1
+ 1675 030d 0F       		.uleb128 0xf
+ 1676 030e 0E000000 		.4byte	.LVL31
+ 1677 0312 CD090000 		.4byte	0x9cd
+ 1678 0316 14       		.uleb128 0x14
+ 1679 0317 16000000 		.4byte	.LVL32
+ 1680 031b D9090000 		.4byte	0x9d9
+ 1681 031f 0E       		.uleb128 0xe
+ 1682 0320 01       		.uleb128 0x1
+ 1683 0321 50       		.byte	0x50
+ 1684 0322 02       		.uleb128 0x2
+ 1685 0323 74       		.byte	0x74
+ 1686 0324 00       		.sleb128 0
+ 1687 0325 0E       		.uleb128 0xe
+ 1688 0326 01       		.uleb128 0x1
+ 1689 0327 51       		.byte	0x51
+ 1690 0328 02       		.uleb128 0x2
+ 1691 0329 75       		.byte	0x75
+ 1692 032a 00       		.sleb128 0
+ 1693 032b 00       		.byte	0
+ 1694 032c 00       		.byte	0
+ 1695 032d 10       		.uleb128 0x10
+ 1696 032e 04       		.byte	0x4
+ 1697 032f 33030000 		.4byte	0x333
+ 1698 0333 17       		.uleb128 0x17
+ 1699 0334 25000000 		.4byte	0x25
+ 1700 0338 18       		.uleb128 0x18
+ 1701 0339 A4010000 		.4byte	.LASF34
+ 1702 033d 01       		.byte	0x1
+ 1703 033e 1801     		.2byte	0x118
+ 1704 0340 25000000 		.4byte	0x25
+ 1705 0344 00000000 		.4byte	.LFB40
+ 1706 0348 94000000 		.4byte	.LFE40-.LFB40
+ 1707 034c 01       		.uleb128 0x1
+ 1708 034d 9C       		.byte	0x9c
+ 1709 034e 0F040000 		.4byte	0x40f
+ 1710 0352 19       		.uleb128 0x19
+ 1711 0353 636D6400 		.ascii	"cmd\000"
+ 1712 0357 01       		.byte	0x1
+ 1713 0358 1801     		.2byte	0x118
+ 1714 035a 25000000 		.4byte	0x25
+ 1715 035e 44010000 		.4byte	.LLST8
+ 1716 0362 19       		.uleb128 0x19
+ 1717 0363 61726700 		.ascii	"arg\000"
+ 1718 0367 01       		.byte	0x1
+ 1719 0368 1801     		.2byte	0x118
+ 1720 036a 70000000 		.4byte	0x70
+ 1721 036e 6D010000 		.4byte	.LLST9
+ 1722 0372 1A       		.uleb128 0x1a
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 41
+
+
+ 1723 0373 6E00     		.ascii	"n\000"
+ 1724 0375 01       		.byte	0x1
+ 1725 0376 1A01     		.2byte	0x11a
+ 1726 0378 25000000 		.4byte	0x25
+ 1727 037c B2010000 		.4byte	.LLST10
+ 1728 0380 1B       		.uleb128 0x1b
+ 1729 0381 6400     		.ascii	"d\000"
+ 1730 0383 01       		.byte	0x1
+ 1731 0384 1A01     		.2byte	0x11a
+ 1732 0386 25000000 		.4byte	0x25
+ 1733 038a 02       		.uleb128 0x2
+ 1734 038b 91       		.byte	0x91
+ 1735 038c 6F       		.sleb128 -17
+ 1736 038d 1B       		.uleb128 0x1b
+ 1737 038e 62756600 		.ascii	"buf\000"
+ 1738 0392 01       		.byte	0x1
+ 1739 0393 1A01     		.2byte	0x11a
+ 1740 0395 0F040000 		.4byte	0x40f
+ 1741 0399 02       		.uleb128 0x2
+ 1742 039a 91       		.byte	0x91
+ 1743 039b 68       		.sleb128 -24
+ 1744 039c 0D       		.uleb128 0xd
+ 1745 039d 1A000000 		.4byte	.LVL38
+ 1746 03a1 38030000 		.4byte	0x338
+ 1747 03a5 B5030000 		.4byte	0x3b5
+ 1748 03a9 0E       		.uleb128 0xe
+ 1749 03aa 01       		.uleb128 0x1
+ 1750 03ab 50       		.byte	0x50
+ 1751 03ac 02       		.uleb128 0x2
+ 1752 03ad 08       		.byte	0x8
+ 1753 03ae 37       		.byte	0x37
+ 1754 03af 0E       		.uleb128 0xe
+ 1755 03b0 01       		.uleb128 0x1
+ 1756 03b1 51       		.byte	0x51
+ 1757 03b2 01       		.uleb128 0x1
+ 1758 03b3 30       		.byte	0x30
+ 1759 03b4 00       		.byte	0
+ 1760 03b5 0F       		.uleb128 0xf
+ 1761 03b6 26000000 		.4byte	.LVL40
+ 1762 03ba 6E020000 		.4byte	0x26e
+ 1763 03be 0F       		.uleb128 0xf
+ 1764 03bf 2A000000 		.4byte	.LVL41
+ 1765 03c3 93020000 		.4byte	0x293
+ 1766 03c7 0D       		.uleb128 0xd
+ 1767 03c8 60000000 		.4byte	.LVL45
+ 1768 03cc D2020000 		.4byte	0x2d2
+ 1769 03d0 E0030000 		.4byte	0x3e0
+ 1770 03d4 0E       		.uleb128 0xe
+ 1771 03d5 01       		.uleb128 0x1
+ 1772 03d6 50       		.byte	0x50
+ 1773 03d7 02       		.uleb128 0x2
+ 1774 03d8 7D       		.byte	0x7d
+ 1775 03d9 00       		.sleb128 0
+ 1776 03da 0E       		.uleb128 0xe
+ 1777 03db 01       		.uleb128 0x1
+ 1778 03dc 51       		.byte	0x51
+ 1779 03dd 01       		.uleb128 0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 42
+
+
+ 1780 03de 36       		.byte	0x36
+ 1781 03df 00       		.byte	0
+ 1782 03e0 0D       		.uleb128 0xd
+ 1783 03e1 6E000000 		.4byte	.LVL46
+ 1784 03e5 1A010000 		.4byte	0x11a
+ 1785 03e9 F9030000 		.4byte	0x3f9
+ 1786 03ed 0E       		.uleb128 0xe
+ 1787 03ee 01       		.uleb128 0x1
+ 1788 03ef 50       		.byte	0x50
+ 1789 03f0 02       		.uleb128 0x2
+ 1790 03f1 7D       		.byte	0x7d
+ 1791 03f2 07       		.sleb128 7
+ 1792 03f3 0E       		.uleb128 0xe
+ 1793 03f4 01       		.uleb128 0x1
+ 1794 03f5 51       		.byte	0x51
+ 1795 03f6 01       		.uleb128 0x1
+ 1796 03f7 31       		.byte	0x31
+ 1797 03f8 00       		.byte	0
+ 1798 03f9 14       		.uleb128 0x14
+ 1799 03fa 7C000000 		.4byte	.LVL48
+ 1800 03fe 1A010000 		.4byte	0x11a
+ 1801 0402 0E       		.uleb128 0xe
+ 1802 0403 01       		.uleb128 0x1
+ 1803 0404 50       		.byte	0x50
+ 1804 0405 02       		.uleb128 0x2
+ 1805 0406 75       		.byte	0x75
+ 1806 0407 00       		.sleb128 0
+ 1807 0408 0E       		.uleb128 0xe
+ 1808 0409 01       		.uleb128 0x1
+ 1809 040a 51       		.byte	0x51
+ 1810 040b 01       		.uleb128 0x1
+ 1811 040c 31       		.byte	0x31
+ 1812 040d 00       		.byte	0
+ 1813 040e 00       		.byte	0
+ 1814 040f 15       		.uleb128 0x15
+ 1815 0410 25000000 		.4byte	0x25
+ 1816 0414 1F040000 		.4byte	0x41f
+ 1817 0418 16       		.uleb128 0x16
+ 1818 0419 11010000 		.4byte	0x111
+ 1819 041d 05       		.byte	0x5
+ 1820 041e 00       		.byte	0
+ 1821 041f 18       		.uleb128 0x18
+ 1822 0420 0A030000 		.4byte	.LASF35
+ 1823 0424 01       		.byte	0x1
+ 1824 0425 0101     		.2byte	0x101
+ 1825 0427 50000000 		.4byte	0x50
+ 1826 042b 00000000 		.4byte	.LFB39
+ 1827 042f 52000000 		.4byte	.LFE39-.LFB39
+ 1828 0433 01       		.uleb128 0x1
+ 1829 0434 9C       		.byte	0x9c
+ 1830 0435 D2040000 		.4byte	0x4d2
+ 1831 0439 1C       		.uleb128 0x1c
+ 1832 043a 40010000 		.4byte	.LASF27
+ 1833 043e 01       		.byte	0x1
+ 1834 043f 0101     		.2byte	0x101
+ 1835 0441 2D030000 		.4byte	0x32d
+ 1836 0445 F2010000 		.4byte	.LLST11
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 43
+
+
+ 1837 0449 1C       		.uleb128 0x1c
+ 1838 044a 00000000 		.4byte	.LASF36
+ 1839 044e 01       		.byte	0x1
+ 1840 044f 0101     		.2byte	0x101
+ 1841 0451 25000000 		.4byte	0x25
+ 1842 0455 1E020000 		.4byte	.LLST12
+ 1843 0459 1B       		.uleb128 0x1b
+ 1844 045a 6400     		.ascii	"d\000"
+ 1845 045c 01       		.byte	0x1
+ 1846 045d 0301     		.2byte	0x103
+ 1847 045f 5E020000 		.4byte	0x25e
+ 1848 0463 02       		.uleb128 0x2
+ 1849 0464 91       		.byte	0x91
+ 1850 0465 6C       		.sleb128 -20
+ 1851 0466 0F       		.uleb128 0xf
+ 1852 0467 0C000000 		.4byte	.LVL54
+ 1853 046b 79010000 		.4byte	0x179
+ 1854 046f 0D       		.uleb128 0xd
+ 1855 0470 1A000000 		.4byte	.LVL55
+ 1856 0474 D2020000 		.4byte	0x2d2
+ 1857 0478 88040000 		.4byte	0x488
+ 1858 047c 0E       		.uleb128 0xe
+ 1859 047d 01       		.uleb128 0x1
+ 1860 047e 50       		.byte	0x50
+ 1861 047f 02       		.uleb128 0x2
+ 1862 0480 91       		.byte	0x91
+ 1863 0481 6C       		.sleb128 -20
+ 1864 0482 0E       		.uleb128 0xe
+ 1865 0483 01       		.uleb128 0x1
+ 1866 0484 51       		.byte	0x51
+ 1867 0485 01       		.uleb128 0x1
+ 1868 0486 31       		.byte	0x31
+ 1869 0487 00       		.byte	0
+ 1870 0488 0D       		.uleb128 0xd
+ 1871 0489 28000000 		.4byte	.LVL56
+ 1872 048d D2020000 		.4byte	0x2d2
+ 1873 0491 A3040000 		.4byte	0x4a3
+ 1874 0495 0E       		.uleb128 0xe
+ 1875 0496 01       		.uleb128 0x1
+ 1876 0497 50       		.byte	0x50
+ 1877 0498 02       		.uleb128 0x2
+ 1878 0499 75       		.byte	0x75
+ 1879 049a 00       		.sleb128 0
+ 1880 049b 0E       		.uleb128 0xe
+ 1881 049c 01       		.uleb128 0x1
+ 1882 049d 51       		.byte	0x51
+ 1883 049e 03       		.uleb128 0x3
+ 1884 049f 0A       		.byte	0xa
+ 1885 04a0 0002     		.2byte	0x200
+ 1886 04a2 00       		.byte	0
+ 1887 04a3 0D       		.uleb128 0xd
+ 1888 04a4 32000000 		.4byte	.LVL57
+ 1889 04a8 1A010000 		.4byte	0x11a
+ 1890 04ac BC040000 		.4byte	0x4bc
+ 1891 04b0 0E       		.uleb128 0xe
+ 1892 04b1 01       		.uleb128 0x1
+ 1893 04b2 50       		.byte	0x50
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 44
+
+
+ 1894 04b3 02       		.uleb128 0x2
+ 1895 04b4 74       		.byte	0x74
+ 1896 04b5 00       		.sleb128 0
+ 1897 04b6 0E       		.uleb128 0xe
+ 1898 04b7 01       		.uleb128 0x1
+ 1899 04b8 51       		.byte	0x51
+ 1900 04b9 01       		.uleb128 0x1
+ 1901 04ba 32       		.byte	0x32
+ 1902 04bb 00       		.byte	0
+ 1903 04bc 14       		.uleb128 0x14
+ 1904 04bd 3A000000 		.4byte	.LVL58
+ 1905 04c1 1A010000 		.4byte	0x11a
+ 1906 04c5 0E       		.uleb128 0xe
+ 1907 04c6 01       		.uleb128 0x1
+ 1908 04c7 50       		.byte	0x50
+ 1909 04c8 02       		.uleb128 0x2
+ 1910 04c9 74       		.byte	0x74
+ 1911 04ca 00       		.sleb128 0
+ 1912 04cb 0E       		.uleb128 0xe
+ 1913 04cc 01       		.uleb128 0x1
+ 1914 04cd 51       		.byte	0x51
+ 1915 04ce 01       		.uleb128 0x1
+ 1916 04cf 31       		.byte	0x31
+ 1917 04d0 00       		.byte	0
+ 1918 04d1 00       		.byte	0
+ 1919 04d2 1D       		.uleb128 0x1d
+ 1920 04d3 CC010000 		.4byte	.LASF37
+ 1921 04d7 01       		.byte	0x1
+ 1922 04d8 4C01     		.2byte	0x14c
+ 1923 04da 82000000 		.4byte	0x82
+ 1924 04de 00000000 		.4byte	.LFB41
+ 1925 04e2 14000000 		.4byte	.LFE41-.LFB41
+ 1926 04e6 01       		.uleb128 0x1
+ 1927 04e7 9C       		.byte	0x9c
+ 1928 04e8 FD040000 		.4byte	0x4fd
+ 1929 04ec 19       		.uleb128 0x19
+ 1930 04ed 64727600 		.ascii	"drv\000"
+ 1931 04f1 01       		.byte	0x1
+ 1932 04f2 4C01     		.2byte	0x14c
+ 1933 04f4 25000000 		.4byte	0x25
+ 1934 04f8 3F020000 		.4byte	.LLST13
+ 1935 04fc 00       		.byte	0
+ 1936 04fd 1D       		.uleb128 0x1d
+ 1937 04fe B7010000 		.4byte	.LASF38
+ 1938 0502 01       		.byte	0x1
+ 1939 0503 5701     		.2byte	0x157
+ 1940 0505 82000000 		.4byte	0x82
+ 1941 0509 00000000 		.4byte	.LFB42
+ 1942 050d 24010000 		.4byte	.LFE42-.LFB42
+ 1943 0511 01       		.uleb128 0x1
+ 1944 0512 9C       		.byte	0x9c
+ 1945 0513 AD060000 		.4byte	0x6ad
+ 1946 0517 19       		.uleb128 0x19
+ 1947 0518 64727600 		.ascii	"drv\000"
+ 1948 051c 01       		.byte	0x1
+ 1949 051d 5701     		.2byte	0x157
+ 1950 051f 25000000 		.4byte	0x25
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 45
+
+
+ 1951 0523 79020000 		.4byte	.LLST14
+ 1952 0527 1A       		.uleb128 0x1a
+ 1953 0528 6E00     		.ascii	"n\000"
+ 1954 052a 01       		.byte	0x1
+ 1955 052b 5901     		.2byte	0x159
+ 1956 052d 25000000 		.4byte	0x25
+ 1957 0531 B3020000 		.4byte	.LLST15
+ 1958 0535 1A       		.uleb128 0x1a
+ 1959 0536 747900   		.ascii	"ty\000"
+ 1960 0539 01       		.byte	0x1
+ 1961 053a 5901     		.2byte	0x159
+ 1962 053c 25000000 		.4byte	0x25
+ 1963 0540 F2020000 		.4byte	.LLST16
+ 1964 0544 1A       		.uleb128 0x1a
+ 1965 0545 636D6400 		.ascii	"cmd\000"
+ 1966 0549 01       		.byte	0x1
+ 1967 054a 5901     		.2byte	0x159
+ 1968 054c 25000000 		.4byte	0x25
+ 1969 0550 42030000 		.4byte	.LLST17
+ 1970 0554 1B       		.uleb128 0x1b
+ 1971 0555 62756600 		.ascii	"buf\000"
+ 1972 0559 01       		.byte	0x1
+ 1973 055a 5901     		.2byte	0x159
+ 1974 055c AD060000 		.4byte	0x6ad
+ 1975 0560 02       		.uleb128 0x2
+ 1976 0561 91       		.byte	0x91
+ 1977 0562 6C       		.sleb128 -20
+ 1978 0563 1A       		.uleb128 0x1a
+ 1979 0564 746D7200 		.ascii	"tmr\000"
+ 1980 0568 01       		.byte	0x1
+ 1981 0569 5A01     		.2byte	0x15a
+ 1982 056b 57000000 		.4byte	0x57
+ 1983 056f 60030000 		.4byte	.LLST18
+ 1984 0573 1A       		.uleb128 0x1a
+ 1985 0574 7300     		.ascii	"s\000"
+ 1986 0576 01       		.byte	0x1
+ 1987 0577 5B01     		.2byte	0x15b
+ 1988 0579 82000000 		.4byte	0x82
+ 1989 057d B8030000 		.4byte	.LLST19
+ 1990 0581 0D       		.uleb128 0xd
+ 1991 0582 16000000 		.4byte	.LVL66
+ 1992 0586 1A010000 		.4byte	0x11a
+ 1993 058a 9A050000 		.4byte	0x59a
+ 1994 058e 0E       		.uleb128 0xe
+ 1995 058f 01       		.uleb128 0x1
+ 1996 0590 50       		.byte	0x50
+ 1997 0591 02       		.uleb128 0x2
+ 1998 0592 91       		.byte	0x91
+ 1999 0593 6C       		.sleb128 -20
+ 2000 0594 0E       		.uleb128 0xe
+ 2001 0595 01       		.uleb128 0x1
+ 2002 0596 51       		.byte	0x51
+ 2003 0597 01       		.uleb128 0x1
+ 2004 0598 31       		.byte	0x31
+ 2005 0599 00       		.byte	0
+ 2006 059a 0D       		.uleb128 0xd
+ 2007 059b 26000000 		.4byte	.LVL70
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 46
+
+
+ 2008 059f 38030000 		.4byte	0x338
+ 2009 05a3 B2050000 		.4byte	0x5b2
+ 2010 05a7 0E       		.uleb128 0xe
+ 2011 05a8 01       		.uleb128 0x1
+ 2012 05a9 50       		.byte	0x50
+ 2013 05aa 01       		.uleb128 0x1
+ 2014 05ab 30       		.byte	0x30
+ 2015 05ac 0E       		.uleb128 0xe
+ 2016 05ad 01       		.uleb128 0x1
+ 2017 05ae 51       		.byte	0x51
+ 2018 05af 01       		.uleb128 0x1
+ 2019 05b0 30       		.byte	0x30
+ 2020 05b1 00       		.byte	0
+ 2021 05b2 0D       		.uleb128 0xd
+ 2022 05b3 34000000 		.4byte	.LVL71
+ 2023 05b7 38030000 		.4byte	0x338
+ 2024 05bb C7050000 		.4byte	0x5c7
+ 2025 05bf 0E       		.uleb128 0xe
+ 2026 05c0 01       		.uleb128 0x1
+ 2027 05c1 51       		.byte	0x51
+ 2028 05c2 03       		.uleb128 0x3
+ 2029 05c3 0A       		.byte	0xa
+ 2030 05c4 AA01     		.2byte	0x1aa
+ 2031 05c6 00       		.byte	0
+ 2032 05c7 0D       		.uleb128 0xd
+ 2033 05c8 42000000 		.4byte	.LVL73
+ 2034 05cc 1A010000 		.4byte	0x11a
+ 2035 05d0 E0050000 		.4byte	0x5e0
+ 2036 05d4 0E       		.uleb128 0xe
+ 2037 05d5 01       		.uleb128 0x1
+ 2038 05d6 50       		.byte	0x50
+ 2039 05d7 02       		.uleb128 0x2
+ 2040 05d8 74       		.byte	0x74
+ 2041 05d9 00       		.sleb128 0
+ 2042 05da 0E       		.uleb128 0xe
+ 2043 05db 01       		.uleb128 0x1
+ 2044 05dc 51       		.byte	0x51
+ 2045 05dd 01       		.uleb128 0x1
+ 2046 05de 34       		.byte	0x34
+ 2047 05df 00       		.byte	0
+ 2048 05e0 0D       		.uleb128 0xd
+ 2049 05e1 5E000000 		.4byte	.LVL75
+ 2050 05e5 38030000 		.4byte	0x338
+ 2051 05e9 FB050000 		.4byte	0x5fb
+ 2052 05ed 0E       		.uleb128 0xe
+ 2053 05ee 01       		.uleb128 0x1
+ 2054 05ef 50       		.byte	0x50
+ 2055 05f0 02       		.uleb128 0x2
+ 2056 05f1 09       		.byte	0x9
+ 2057 05f2 A9       		.byte	0xa9
+ 2058 05f3 0E       		.uleb128 0xe
+ 2059 05f4 01       		.uleb128 0x1
+ 2060 05f5 51       		.byte	0x51
+ 2061 05f6 03       		.uleb128 0x3
+ 2062 05f7 40       		.byte	0x40
+ 2063 05f8 4A       		.byte	0x4a
+ 2064 05f9 24       		.byte	0x24
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 47
+
+
+ 2065 05fa 00       		.byte	0
+ 2066 05fb 0D       		.uleb128 0xd
+ 2067 05fc 6A000000 		.4byte	.LVL76
+ 2068 0600 E5090000 		.4byte	0x9e5
+ 2069 0604 10060000 		.4byte	0x610
+ 2070 0608 0E       		.uleb128 0xe
+ 2071 0609 01       		.uleb128 0x1
+ 2072 060a 50       		.byte	0x50
+ 2073 060b 03       		.uleb128 0x3
+ 2074 060c 0A       		.byte	0xa
+ 2075 060d E803     		.2byte	0x3e8
+ 2076 060f 00       		.byte	0
+ 2077 0610 0D       		.uleb128 0xd
+ 2078 0611 82000000 		.4byte	.LVL80
+ 2079 0615 38030000 		.4byte	0x338
+ 2080 0619 29060000 		.4byte	0x629
+ 2081 061d 0E       		.uleb128 0xe
+ 2082 061e 01       		.uleb128 0x1
+ 2083 061f 50       		.byte	0x50
+ 2084 0620 02       		.uleb128 0x2
+ 2085 0621 08       		.byte	0x8
+ 2086 0622 3A       		.byte	0x3a
+ 2087 0623 0E       		.uleb128 0xe
+ 2088 0624 01       		.uleb128 0x1
+ 2089 0625 51       		.byte	0x51
+ 2090 0626 01       		.uleb128 0x1
+ 2091 0627 30       		.byte	0x30
+ 2092 0628 00       		.byte	0
+ 2093 0629 0D       		.uleb128 0xd
+ 2094 062a 90000000 		.4byte	.LVL82
+ 2095 062e 1A010000 		.4byte	0x11a
+ 2096 0632 42060000 		.4byte	0x642
+ 2097 0636 0E       		.uleb128 0xe
+ 2098 0637 01       		.uleb128 0x1
+ 2099 0638 50       		.byte	0x50
+ 2100 0639 02       		.uleb128 0x2
+ 2101 063a 74       		.byte	0x74
+ 2102 063b 00       		.sleb128 0
+ 2103 063c 0E       		.uleb128 0xe
+ 2104 063d 01       		.uleb128 0x1
+ 2105 063e 51       		.byte	0x51
+ 2106 063f 01       		.uleb128 0x1
+ 2107 0640 34       		.byte	0x34
+ 2108 0641 00       		.byte	0
+ 2109 0642 0D       		.uleb128 0xd
+ 2110 0643 A2000000 		.4byte	.LVL84
+ 2111 0647 38030000 		.4byte	0x338
+ 2112 064b 5B060000 		.4byte	0x65b
+ 2113 064f 0E       		.uleb128 0xe
+ 2114 0650 01       		.uleb128 0x1
+ 2115 0651 50       		.byte	0x50
+ 2116 0652 02       		.uleb128 0x2
+ 2117 0653 09       		.byte	0x9
+ 2118 0654 A9       		.byte	0xa9
+ 2119 0655 0E       		.uleb128 0xe
+ 2120 0656 01       		.uleb128 0x1
+ 2121 0657 51       		.byte	0x51
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 48
+
+
+ 2122 0658 01       		.uleb128 0x1
+ 2123 0659 30       		.byte	0x30
+ 2124 065a 00       		.byte	0
+ 2125 065b 0D       		.uleb128 0xd
+ 2126 065c BE000000 		.4byte	.LVL89
+ 2127 0660 38030000 		.4byte	0x338
+ 2128 0664 74060000 		.4byte	0x674
+ 2129 0668 0E       		.uleb128 0xe
+ 2130 0669 01       		.uleb128 0x1
+ 2131 066a 50       		.byte	0x50
+ 2132 066b 02       		.uleb128 0x2
+ 2133 066c 76       		.byte	0x76
+ 2134 066d 00       		.sleb128 0
+ 2135 066e 0E       		.uleb128 0xe
+ 2136 066f 01       		.uleb128 0x1
+ 2137 0670 51       		.byte	0x51
+ 2138 0671 01       		.uleb128 0x1
+ 2139 0672 30       		.byte	0x30
+ 2140 0673 00       		.byte	0
+ 2141 0674 0D       		.uleb128 0xd
+ 2142 0675 CA000000 		.4byte	.LVL90
+ 2143 0679 E5090000 		.4byte	0x9e5
+ 2144 067d 89060000 		.4byte	0x689
+ 2145 0681 0E       		.uleb128 0xe
+ 2146 0682 01       		.uleb128 0x1
+ 2147 0683 50       		.byte	0x50
+ 2148 0684 03       		.uleb128 0x3
+ 2149 0685 0A       		.byte	0xa
+ 2150 0686 E803     		.2byte	0x3e8
+ 2151 0688 00       		.byte	0
+ 2152 0689 0D       		.uleb128 0xd
+ 2153 068a DE000000 		.4byte	.LVL92
+ 2154 068e 38030000 		.4byte	0x338
+ 2155 0692 A3060000 		.4byte	0x6a3
+ 2156 0696 0E       		.uleb128 0xe
+ 2157 0697 01       		.uleb128 0x1
+ 2158 0698 50       		.byte	0x50
+ 2159 0699 01       		.uleb128 0x1
+ 2160 069a 40       		.byte	0x40
+ 2161 069b 0E       		.uleb128 0xe
+ 2162 069c 01       		.uleb128 0x1
+ 2163 069d 51       		.byte	0x51
+ 2164 069e 03       		.uleb128 0x3
+ 2165 069f 0A       		.byte	0xa
+ 2166 06a0 0002     		.2byte	0x200
+ 2167 06a2 00       		.byte	0
+ 2168 06a3 0F       		.uleb128 0xf
+ 2169 06a4 10010000 		.4byte	.LVL105
+ 2170 06a8 6E020000 		.4byte	0x26e
+ 2171 06ac 00       		.byte	0
+ 2172 06ad 15       		.uleb128 0x15
+ 2173 06ae 25000000 		.4byte	0x25
+ 2174 06b2 BD060000 		.4byte	0x6bd
+ 2175 06b6 16       		.uleb128 0x16
+ 2176 06b7 11010000 		.4byte	0x111
+ 2177 06bb 03       		.byte	0x3
+ 2178 06bc 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 49
+
+
+ 2179 06bd 1D       		.uleb128 0x1d
+ 2180 06be D8010000 		.4byte	.LASF39
+ 2181 06c2 01       		.byte	0x1
+ 2182 06c3 8C01     		.2byte	0x18c
+ 2183 06c5 B8000000 		.4byte	0xb8
+ 2184 06c9 00000000 		.4byte	.LFB43
+ 2185 06cd 6C000000 		.4byte	.LFE43-.LFB43
+ 2186 06d1 01       		.uleb128 0x1
+ 2187 06d2 9C       		.byte	0x9c
+ 2188 06d3 87070000 		.4byte	0x787
+ 2189 06d7 19       		.uleb128 0x19
+ 2190 06d8 64727600 		.ascii	"drv\000"
+ 2191 06dc 01       		.byte	0x1
+ 2192 06dd 8C01     		.2byte	0x18c
+ 2193 06df 25000000 		.4byte	0x25
+ 2194 06e3 CB030000 		.4byte	.LLST20
+ 2195 06e7 1C       		.uleb128 0x1c
+ 2196 06e8 40010000 		.4byte	.LASF27
+ 2197 06ec 01       		.byte	0x1
+ 2198 06ed 8C01     		.2byte	0x18c
+ 2199 06ef 73010000 		.4byte	0x173
+ 2200 06f3 EC030000 		.4byte	.LLST21
+ 2201 06f7 1C       		.uleb128 0x1c
+ 2202 06f8 80010000 		.4byte	.LASF40
+ 2203 06fc 01       		.byte	0x1
+ 2204 06fd 8C01     		.2byte	0x18c
+ 2205 06ff 70000000 		.4byte	0x70
+ 2206 0703 0A040000 		.4byte	.LLST22
+ 2207 0707 1C       		.uleb128 0x1c
+ 2208 0708 19030000 		.4byte	.LASF41
+ 2209 070c 01       		.byte	0x1
+ 2210 070d 8C01     		.2byte	0x18c
+ 2211 070f 57000000 		.4byte	0x57
+ 2212 0713 28040000 		.4byte	.LLST23
+ 2213 0717 1A       		.uleb128 0x1a
+ 2214 0718 636D6400 		.ascii	"cmd\000"
+ 2215 071c 01       		.byte	0x1
+ 2216 071d 8E01     		.2byte	0x18e
+ 2217 071f 25000000 		.4byte	0x25
+ 2218 0723 51040000 		.4byte	.LLST24
+ 2219 0727 0F       		.uleb128 0xf
+ 2220 0728 0C000000 		.4byte	.LVL109
+ 2221 072c D2040000 		.4byte	0x4d2
+ 2222 0730 0D       		.uleb128 0xd
+ 2223 0731 2C000000 		.4byte	.LVL112
+ 2224 0735 38030000 		.4byte	0x338
+ 2225 0739 4A070000 		.4byte	0x74a
+ 2226 073d 0E       		.uleb128 0xe
+ 2227 073e 01       		.uleb128 0x1
+ 2228 073f 50       		.byte	0x50
+ 2229 0740 02       		.uleb128 0x2
+ 2230 0741 76       		.byte	0x76
+ 2231 0742 00       		.sleb128 0
+ 2232 0743 0E       		.uleb128 0xe
+ 2233 0744 01       		.uleb128 0x1
+ 2234 0745 51       		.byte	0x51
+ 2235 0746 02       		.uleb128 0x2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 50
+
+
+ 2236 0747 77       		.byte	0x77
+ 2237 0748 00       		.sleb128 0
+ 2238 0749 00       		.byte	0
+ 2239 074a 0D       		.uleb128 0xd
+ 2240 074b 3A000000 		.4byte	.LVL113
+ 2241 074f C3010000 		.4byte	0x1c3
+ 2242 0753 65070000 		.4byte	0x765
+ 2243 0757 0E       		.uleb128 0xe
+ 2244 0758 01       		.uleb128 0x1
+ 2245 0759 50       		.byte	0x50
+ 2246 075a 02       		.uleb128 0x2
+ 2247 075b 75       		.byte	0x75
+ 2248 075c 00       		.sleb128 0
+ 2249 075d 0E       		.uleb128 0xe
+ 2250 075e 01       		.uleb128 0x1
+ 2251 075f 51       		.byte	0x51
+ 2252 0760 03       		.uleb128 0x3
+ 2253 0761 0A       		.byte	0xa
+ 2254 0762 0002     		.2byte	0x200
+ 2255 0764 00       		.byte	0
+ 2256 0765 0D       		.uleb128 0xd
+ 2257 0766 58000000 		.4byte	.LVL116
+ 2258 076a 38030000 		.4byte	0x338
+ 2259 076e 7D070000 		.4byte	0x77d
+ 2260 0772 0E       		.uleb128 0xe
+ 2261 0773 01       		.uleb128 0x1
+ 2262 0774 50       		.byte	0x50
+ 2263 0775 01       		.uleb128 0x1
+ 2264 0776 3C       		.byte	0x3c
+ 2265 0777 0E       		.uleb128 0xe
+ 2266 0778 01       		.uleb128 0x1
+ 2267 0779 51       		.byte	0x51
+ 2268 077a 01       		.uleb128 0x1
+ 2269 077b 30       		.byte	0x30
+ 2270 077c 00       		.byte	0
+ 2271 077d 0F       		.uleb128 0xf
+ 2272 077e 5C000000 		.4byte	.LVL117
+ 2273 0782 6E020000 		.4byte	0x26e
+ 2274 0786 00       		.byte	0
+ 2275 0787 1D       		.uleb128 0x1d
+ 2276 0788 73020000 		.4byte	.LASF42
+ 2277 078c 01       		.byte	0x1
+ 2278 078d A401     		.2byte	0x1a4
+ 2279 078f B8000000 		.4byte	0xb8
+ 2280 0793 00000000 		.4byte	.LFB44
+ 2281 0797 94000000 		.4byte	.LFE44-.LFB44
+ 2282 079b 01       		.uleb128 0x1
+ 2283 079c 9C       		.byte	0x9c
+ 2284 079d 8D080000 		.4byte	0x88d
+ 2285 07a1 19       		.uleb128 0x19
+ 2286 07a2 64727600 		.ascii	"drv\000"
+ 2287 07a6 01       		.byte	0x1
+ 2288 07a7 A501     		.2byte	0x1a5
+ 2289 07a9 25000000 		.4byte	0x25
+ 2290 07ad 64040000 		.4byte	.LLST25
+ 2291 07b1 1C       		.uleb128 0x1c
+ 2292 07b2 40010000 		.4byte	.LASF27
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 51
+
+
+ 2293 07b6 01       		.byte	0x1
+ 2294 07b7 A601     		.2byte	0x1a6
+ 2295 07b9 2D030000 		.4byte	0x32d
+ 2296 07bd 85040000 		.4byte	.LLST26
+ 2297 07c1 1C       		.uleb128 0x1c
+ 2298 07c2 80010000 		.4byte	.LASF40
+ 2299 07c6 01       		.byte	0x1
+ 2300 07c7 A701     		.2byte	0x1a7
+ 2301 07c9 70000000 		.4byte	0x70
+ 2302 07cd A3040000 		.4byte	.LLST27
+ 2303 07d1 1C       		.uleb128 0x1c
+ 2304 07d2 19030000 		.4byte	.LASF41
+ 2305 07d6 01       		.byte	0x1
+ 2306 07d7 A801     		.2byte	0x1a8
+ 2307 07d9 57000000 		.4byte	0x57
+ 2308 07dd C1040000 		.4byte	.LLST28
+ 2309 07e1 0F       		.uleb128 0xf
+ 2310 07e2 0C000000 		.4byte	.LVL124
+ 2311 07e6 D2040000 		.4byte	0x4d2
+ 2312 07ea 0D       		.uleb128 0xd
+ 2313 07eb 26000000 		.4byte	.LVL126
+ 2314 07ef 38030000 		.4byte	0x338
+ 2315 07f3 03080000 		.4byte	0x803
+ 2316 07f7 0E       		.uleb128 0xe
+ 2317 07f8 01       		.uleb128 0x1
+ 2318 07f9 50       		.byte	0x50
+ 2319 07fa 01       		.uleb128 0x1
+ 2320 07fb 48       		.byte	0x48
+ 2321 07fc 0E       		.uleb128 0xe
+ 2322 07fd 01       		.uleb128 0x1
+ 2323 07fe 51       		.byte	0x51
+ 2324 07ff 02       		.uleb128 0x2
+ 2325 0800 76       		.byte	0x76
+ 2326 0801 00       		.sleb128 0
+ 2327 0802 00       		.byte	0
+ 2328 0803 0D       		.uleb128 0xd
+ 2329 0804 32000000 		.4byte	.LVL127
+ 2330 0808 1F040000 		.4byte	0x41f
+ 2331 080c 1D080000 		.4byte	0x81d
+ 2332 0810 0E       		.uleb128 0xe
+ 2333 0811 01       		.uleb128 0x1
+ 2334 0812 50       		.byte	0x50
+ 2335 0813 02       		.uleb128 0x2
+ 2336 0814 75       		.byte	0x75
+ 2337 0815 00       		.sleb128 0
+ 2338 0816 0E       		.uleb128 0xe
+ 2339 0817 01       		.uleb128 0x1
+ 2340 0818 51       		.byte	0x51
+ 2341 0819 02       		.uleb128 0x2
+ 2342 081a 09       		.byte	0x9
+ 2343 081b FE       		.byte	0xfe
+ 2344 081c 00       		.byte	0
+ 2345 081d 0D       		.uleb128 0xd
+ 2346 081e 46000000 		.4byte	.LVL128
+ 2347 0822 38030000 		.4byte	0x338
+ 2348 0826 37080000 		.4byte	0x837
+ 2349 082a 0E       		.uleb128 0xe
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 52
+
+
+ 2350 082b 01       		.uleb128 0x1
+ 2351 082c 50       		.byte	0x50
+ 2352 082d 02       		.uleb128 0x2
+ 2353 082e 09       		.byte	0x9
+ 2354 082f 97       		.byte	0x97
+ 2355 0830 0E       		.uleb128 0xe
+ 2356 0831 01       		.uleb128 0x1
+ 2357 0832 51       		.byte	0x51
+ 2358 0833 02       		.uleb128 0x2
+ 2359 0834 74       		.byte	0x74
+ 2360 0835 00       		.sleb128 0
+ 2361 0836 00       		.byte	0
+ 2362 0837 0D       		.uleb128 0xd
+ 2363 0838 4E000000 		.4byte	.LVL129
+ 2364 083c 38030000 		.4byte	0x338
+ 2365 0840 50080000 		.4byte	0x850
+ 2366 0844 0E       		.uleb128 0xe
+ 2367 0845 01       		.uleb128 0x1
+ 2368 0846 50       		.byte	0x50
+ 2369 0847 01       		.uleb128 0x1
+ 2370 0848 49       		.byte	0x49
+ 2371 0849 0E       		.uleb128 0xe
+ 2372 084a 01       		.uleb128 0x1
+ 2373 084b 51       		.byte	0x51
+ 2374 084c 02       		.uleb128 0x2
+ 2375 084d 76       		.byte	0x76
+ 2376 084e 00       		.sleb128 0
+ 2377 084f 00       		.byte	0
+ 2378 0850 0D       		.uleb128 0xd
+ 2379 0851 5A000000 		.4byte	.LVL130
+ 2380 0855 1F040000 		.4byte	0x41f
+ 2381 0859 6A080000 		.4byte	0x86a
+ 2382 085d 0E       		.uleb128 0xe
+ 2383 085e 01       		.uleb128 0x1
+ 2384 085f 50       		.byte	0x50
+ 2385 0860 02       		.uleb128 0x2
+ 2386 0861 75       		.byte	0x75
+ 2387 0862 00       		.sleb128 0
+ 2388 0863 0E       		.uleb128 0xe
+ 2389 0864 01       		.uleb128 0x1
+ 2390 0865 51       		.byte	0x51
+ 2391 0866 02       		.uleb128 0x2
+ 2392 0867 09       		.byte	0x9
+ 2393 0868 FC       		.byte	0xfc
+ 2394 0869 00       		.byte	0
+ 2395 086a 0D       		.uleb128 0xd
+ 2396 086b 74000000 		.4byte	.LVL133
+ 2397 086f 1F040000 		.4byte	0x41f
+ 2398 0873 83080000 		.4byte	0x883
+ 2399 0877 0E       		.uleb128 0xe
+ 2400 0878 01       		.uleb128 0x1
+ 2401 0879 50       		.byte	0x50
+ 2402 087a 01       		.uleb128 0x1
+ 2403 087b 30       		.byte	0x30
+ 2404 087c 0E       		.uleb128 0xe
+ 2405 087d 01       		.uleb128 0x1
+ 2406 087e 51       		.byte	0x51
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 53
+
+
+ 2407 087f 02       		.uleb128 0x2
+ 2408 0880 09       		.byte	0x9
+ 2409 0881 FD       		.byte	0xfd
+ 2410 0882 00       		.byte	0
+ 2411 0883 0F       		.uleb128 0xf
+ 2412 0884 84000000 		.4byte	.LVL137
+ 2413 0888 6E020000 		.4byte	0x26e
+ 2414 088c 00       		.byte	0
+ 2415 088d 1D       		.uleb128 0x1d
+ 2416 088e 97020000 		.4byte	.LASF43
+ 2417 0892 01       		.byte	0x1
+ 2418 0893 C801     		.2byte	0x1c8
+ 2419 0895 B8000000 		.4byte	0xb8
+ 2420 0899 00000000 		.4byte	.LFB45
+ 2421 089d D4000000 		.4byte	.LFE45-.LFB45
+ 2422 08a1 01       		.uleb128 0x1
+ 2423 08a2 9C       		.byte	0x9c
+ 2424 08a3 60090000 		.4byte	0x960
+ 2425 08a7 19       		.uleb128 0x19
+ 2426 08a8 64727600 		.ascii	"drv\000"
+ 2427 08ac 01       		.byte	0x1
+ 2428 08ad C901     		.2byte	0x1c9
+ 2429 08af 25000000 		.4byte	0x25
+ 2430 08b3 03050000 		.4byte	.LLST29
+ 2431 08b7 1C       		.uleb128 0x1c
+ 2432 08b8 DA020000 		.4byte	.LASF44
+ 2433 08bc 01       		.byte	0x1
+ 2434 08bd CA01     		.2byte	0x1ca
+ 2435 08bf 25000000 		.4byte	0x25
+ 2436 08c3 24050000 		.4byte	.LLST30
+ 2437 08c7 1C       		.uleb128 0x1c
+ 2438 08c8 40010000 		.4byte	.LASF27
+ 2439 08cc 01       		.byte	0x1
+ 2440 08cd CB01     		.2byte	0x1cb
+ 2441 08cf 18010000 		.4byte	0x118
+ 2442 08d3 45050000 		.4byte	.LLST31
+ 2443 08d7 1A       		.uleb128 0x1a
+ 2444 08d8 72657300 		.ascii	"res\000"
+ 2445 08dc 01       		.byte	0x1
+ 2446 08dd CE01     		.2byte	0x1ce
+ 2447 08df B8000000 		.4byte	0xb8
+ 2448 08e3 71050000 		.4byte	.LLST32
+ 2449 08e7 1A       		.uleb128 0x1a
+ 2450 08e8 6E00     		.ascii	"n\000"
+ 2451 08ea 01       		.byte	0x1
+ 2452 08eb CF01     		.2byte	0x1cf
+ 2453 08ed 25000000 		.4byte	0x25
+ 2454 08f1 A8050000 		.4byte	.LLST33
+ 2455 08f5 1B       		.uleb128 0x1b
+ 2456 08f6 63736400 		.ascii	"csd\000"
+ 2457 08fa 01       		.byte	0x1
+ 2458 08fb CF01     		.2byte	0x1cf
+ 2459 08fd 60090000 		.4byte	0x960
+ 2460 0901 02       		.uleb128 0x2
+ 2461 0902 91       		.byte	0x91
+ 2462 0903 60       		.sleb128 -32
+ 2463 0904 1A       		.uleb128 0x1a
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 54
+
+
+ 2464 0905 637300   		.ascii	"cs\000"
+ 2465 0908 01       		.byte	0x1
+ 2466 0909 D001     		.2byte	0x1d0
+ 2467 090b 70000000 		.4byte	0x70
+ 2468 090f C8050000 		.4byte	.LLST34
+ 2469 0913 0F       		.uleb128 0xf
+ 2470 0914 0C000000 		.4byte	.LVL144
+ 2471 0918 D2040000 		.4byte	0x4d2
+ 2472 091c 0F       		.uleb128 0xf
+ 2473 091d 22000000 		.4byte	.LVL146
+ 2474 0921 93020000 		.4byte	0x293
+ 2475 0925 0D       		.uleb128 0xd
+ 2476 0926 32000000 		.4byte	.LVL147
+ 2477 092a 38030000 		.4byte	0x338
+ 2478 092e 3D090000 		.4byte	0x93d
+ 2479 0932 0E       		.uleb128 0xe
+ 2480 0933 01       		.uleb128 0x1
+ 2481 0934 50       		.byte	0x50
+ 2482 0935 01       		.uleb128 0x1
+ 2483 0936 39       		.byte	0x39
+ 2484 0937 0E       		.uleb128 0xe
+ 2485 0938 01       		.uleb128 0x1
+ 2486 0939 51       		.byte	0x51
+ 2487 093a 01       		.uleb128 0x1
+ 2488 093b 30       		.byte	0x30
+ 2489 093c 00       		.byte	0
+ 2490 093d 0D       		.uleb128 0xd
+ 2491 093e 3E000000 		.4byte	.LVL148
+ 2492 0942 C3010000 		.4byte	0x1c3
+ 2493 0946 56090000 		.4byte	0x956
+ 2494 094a 0E       		.uleb128 0xe
+ 2495 094b 01       		.uleb128 0x1
+ 2496 094c 50       		.byte	0x50
+ 2497 094d 02       		.uleb128 0x2
+ 2498 094e 7D       		.byte	0x7d
+ 2499 094f 00       		.sleb128 0
+ 2500 0950 0E       		.uleb128 0xe
+ 2501 0951 01       		.uleb128 0x1
+ 2502 0952 51       		.byte	0x51
+ 2503 0953 01       		.uleb128 0x1
+ 2504 0954 40       		.byte	0x40
+ 2505 0955 00       		.byte	0
+ 2506 0956 0F       		.uleb128 0xf
+ 2507 0957 CA000000 		.4byte	.LVL161
+ 2508 095b 6E020000 		.4byte	0x26e
+ 2509 095f 00       		.byte	0
+ 2510 0960 15       		.uleb128 0x15
+ 2511 0961 25000000 		.4byte	0x25
+ 2512 0965 70090000 		.4byte	0x970
+ 2513 0969 16       		.uleb128 0x16
+ 2514 096a 11010000 		.4byte	0x111
+ 2515 096e 0F       		.byte	0xf
+ 2516 096f 00       		.byte	0
+ 2517 0970 1E       		.uleb128 0x1e
+ 2518 0971 89000000 		.4byte	.LASF45
+ 2519 0975 01       		.byte	0x1
+ 2520 0976 70       		.byte	0x70
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 55
+
+
+ 2521 0977 82000000 		.4byte	0x82
+ 2522 097b 05       		.uleb128 0x5
+ 2523 097c 03       		.byte	0x3
+ 2524 097d 00000000 		.4byte	Stat
+ 2525 0981 1E       		.uleb128 0x1e
+ 2526 0982 60010000 		.4byte	.LASF46
+ 2527 0986 01       		.byte	0x1
+ 2528 0987 72       		.byte	0x72
+ 2529 0988 25000000 		.4byte	0x25
+ 2530 098c 05       		.uleb128 0x5
+ 2531 098d 03       		.byte	0x3
+ 2532 098e 00000000 		.4byte	CardType
+ 2533 0992 1F       		.uleb128 0x1f
+ 2534 0993 DF020000 		.4byte	.LASF47
+ 2535 0997 DF020000 		.4byte	.LASF47
+ 2536 099b 05       		.byte	0x5
+ 2537 099c 4403     		.2byte	0x344
+ 2538 099e 1F       		.uleb128 0x1f
+ 2539 099f 45010000 		.4byte	.LASF48
+ 2540 09a3 45010000 		.4byte	.LASF48
+ 2541 09a7 05       		.byte	0x5
+ 2542 09a8 3E03     		.2byte	0x33e
+ 2543 09aa 1F       		.uleb128 0x1f
+ 2544 09ab 2D020000 		.4byte	.LASF49
+ 2545 09af 2D020000 		.4byte	.LASF49
+ 2546 09b3 05       		.byte	0x5
+ 2547 09b4 3D03     		.2byte	0x33d
+ 2548 09b6 20       		.uleb128 0x20
+ 2549 09b7 19000000 		.4byte	.LASF50
+ 2550 09bb 19000000 		.4byte	.LASF50
+ 2551 09bf 06       		.byte	0x6
+ 2552 09c0 33       		.byte	0x33
+ 2553 09c1 1F       		.uleb128 0x1f
+ 2554 09c2 27010000 		.4byte	.LASF51
+ 2555 09c6 27010000 		.4byte	.LASF51
+ 2556 09ca 05       		.byte	0x5
+ 2557 09cb 4703     		.2byte	0x347
+ 2558 09cd 1F       		.uleb128 0x1f
+ 2559 09ce 14020000 		.4byte	.LASF52
+ 2560 09d2 14020000 		.4byte	.LASF52
+ 2561 09d6 05       		.byte	0x5
+ 2562 09d7 3F03     		.2byte	0x33f
+ 2563 09d9 1F       		.uleb128 0x1f
+ 2564 09da F6020000 		.4byte	.LASF53
+ 2565 09de F6020000 		.4byte	.LASF53
+ 2566 09e2 05       		.byte	0x5
+ 2567 09e3 4503     		.2byte	0x345
+ 2568 09e5 20       		.uleb128 0x20
+ 2569 09e6 FC010000 		.4byte	.LASF54
+ 2570 09ea FC010000 		.4byte	.LASF54
+ 2571 09ee 07       		.byte	0x7
+ 2572 09ef DA       		.byte	0xda
+ 2573 09f0 00       		.byte	0
+ 2574              		.section	.debug_abbrev,"",%progbits
+ 2575              	.Ldebug_abbrev0:
+ 2576 0000 01       		.uleb128 0x1
+ 2577 0001 11       		.uleb128 0x11
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 56
+
+
+ 2578 0002 01       		.byte	0x1
+ 2579 0003 25       		.uleb128 0x25
+ 2580 0004 0E       		.uleb128 0xe
+ 2581 0005 13       		.uleb128 0x13
+ 2582 0006 0B       		.uleb128 0xb
+ 2583 0007 03       		.uleb128 0x3
+ 2584 0008 0E       		.uleb128 0xe
+ 2585 0009 1B       		.uleb128 0x1b
+ 2586 000a 0E       		.uleb128 0xe
+ 2587 000b 55       		.uleb128 0x55
+ 2588 000c 17       		.uleb128 0x17
+ 2589 000d 11       		.uleb128 0x11
+ 2590 000e 01       		.uleb128 0x1
+ 2591 000f 10       		.uleb128 0x10
+ 2592 0010 17       		.uleb128 0x17
+ 2593 0011 00       		.byte	0
+ 2594 0012 00       		.byte	0
+ 2595 0013 02       		.uleb128 0x2
+ 2596 0014 16       		.uleb128 0x16
+ 2597 0015 00       		.byte	0
+ 2598 0016 03       		.uleb128 0x3
+ 2599 0017 0E       		.uleb128 0xe
+ 2600 0018 3A       		.uleb128 0x3a
+ 2601 0019 0B       		.uleb128 0xb
+ 2602 001a 3B       		.uleb128 0x3b
+ 2603 001b 0B       		.uleb128 0xb
+ 2604 001c 49       		.uleb128 0x49
+ 2605 001d 13       		.uleb128 0x13
+ 2606 001e 00       		.byte	0
+ 2607 001f 00       		.byte	0
+ 2608 0020 03       		.uleb128 0x3
+ 2609 0021 24       		.uleb128 0x24
+ 2610 0022 00       		.byte	0
+ 2611 0023 0B       		.uleb128 0xb
+ 2612 0024 0B       		.uleb128 0xb
+ 2613 0025 3E       		.uleb128 0x3e
+ 2614 0026 0B       		.uleb128 0xb
+ 2615 0027 03       		.uleb128 0x3
+ 2616 0028 0E       		.uleb128 0xe
+ 2617 0029 00       		.byte	0
+ 2618 002a 00       		.byte	0
+ 2619 002b 04       		.uleb128 0x4
+ 2620 002c 24       		.uleb128 0x24
+ 2621 002d 00       		.byte	0
+ 2622 002e 0B       		.uleb128 0xb
+ 2623 002f 0B       		.uleb128 0xb
+ 2624 0030 3E       		.uleb128 0x3e
+ 2625 0031 0B       		.uleb128 0xb
+ 2626 0032 03       		.uleb128 0x3
+ 2627 0033 08       		.uleb128 0x8
+ 2628 0034 00       		.byte	0
+ 2629 0035 00       		.byte	0
+ 2630 0036 05       		.uleb128 0x5
+ 2631 0037 04       		.uleb128 0x4
+ 2632 0038 01       		.byte	0x1
+ 2633 0039 0B       		.uleb128 0xb
+ 2634 003a 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 57
+
+
+ 2635 003b 49       		.uleb128 0x49
+ 2636 003c 13       		.uleb128 0x13
+ 2637 003d 3A       		.uleb128 0x3a
+ 2638 003e 0B       		.uleb128 0xb
+ 2639 003f 3B       		.uleb128 0x3b
+ 2640 0040 0B       		.uleb128 0xb
+ 2641 0041 01       		.uleb128 0x1
+ 2642 0042 13       		.uleb128 0x13
+ 2643 0043 00       		.byte	0
+ 2644 0044 00       		.byte	0
+ 2645 0045 06       		.uleb128 0x6
+ 2646 0046 28       		.uleb128 0x28
+ 2647 0047 00       		.byte	0
+ 2648 0048 03       		.uleb128 0x3
+ 2649 0049 0E       		.uleb128 0xe
+ 2650 004a 1C       		.uleb128 0x1c
+ 2651 004b 0B       		.uleb128 0xb
+ 2652 004c 00       		.byte	0
+ 2653 004d 00       		.byte	0
+ 2654 004e 07       		.uleb128 0x7
+ 2655 004f 16       		.uleb128 0x16
+ 2656 0050 00       		.byte	0
+ 2657 0051 03       		.uleb128 0x3
+ 2658 0052 0E       		.uleb128 0xe
+ 2659 0053 3A       		.uleb128 0x3a
+ 2660 0054 0B       		.uleb128 0xb
+ 2661 0055 3B       		.uleb128 0x3b
+ 2662 0056 05       		.uleb128 0x5
+ 2663 0057 49       		.uleb128 0x49
+ 2664 0058 13       		.uleb128 0x13
+ 2665 0059 00       		.byte	0
+ 2666 005a 00       		.byte	0
+ 2667 005b 08       		.uleb128 0x8
+ 2668 005c 35       		.uleb128 0x35
+ 2669 005d 00       		.byte	0
+ 2670 005e 49       		.uleb128 0x49
+ 2671 005f 13       		.uleb128 0x13
+ 2672 0060 00       		.byte	0
+ 2673 0061 00       		.byte	0
+ 2674 0062 09       		.uleb128 0x9
+ 2675 0063 0F       		.uleb128 0xf
+ 2676 0064 00       		.byte	0
+ 2677 0065 0B       		.uleb128 0xb
+ 2678 0066 0B       		.uleb128 0xb
+ 2679 0067 00       		.byte	0
+ 2680 0068 00       		.byte	0
+ 2681 0069 0A       		.uleb128 0xa
+ 2682 006a 2E       		.uleb128 0x2e
+ 2683 006b 01       		.byte	0x1
+ 2684 006c 03       		.uleb128 0x3
+ 2685 006d 0E       		.uleb128 0xe
+ 2686 006e 3A       		.uleb128 0x3a
+ 2687 006f 0B       		.uleb128 0xb
+ 2688 0070 3B       		.uleb128 0x3b
+ 2689 0071 0B       		.uleb128 0xb
+ 2690 0072 27       		.uleb128 0x27
+ 2691 0073 19       		.uleb128 0x19
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 58
+
+
+ 2692 0074 11       		.uleb128 0x11
+ 2693 0075 01       		.uleb128 0x1
+ 2694 0076 12       		.uleb128 0x12
+ 2695 0077 06       		.uleb128 0x6
+ 2696 0078 40       		.uleb128 0x40
+ 2697 0079 18       		.uleb128 0x18
+ 2698 007a 9742     		.uleb128 0x2117
+ 2699 007c 19       		.uleb128 0x19
+ 2700 007d 01       		.uleb128 0x1
+ 2701 007e 13       		.uleb128 0x13
+ 2702 007f 00       		.byte	0
+ 2703 0080 00       		.byte	0
+ 2704 0081 0B       		.uleb128 0xb
+ 2705 0082 05       		.uleb128 0x5
+ 2706 0083 00       		.byte	0
+ 2707 0084 03       		.uleb128 0x3
+ 2708 0085 0E       		.uleb128 0xe
+ 2709 0086 3A       		.uleb128 0x3a
+ 2710 0087 0B       		.uleb128 0xb
+ 2711 0088 3B       		.uleb128 0x3b
+ 2712 0089 0B       		.uleb128 0xb
+ 2713 008a 49       		.uleb128 0x49
+ 2714 008b 13       		.uleb128 0x13
+ 2715 008c 02       		.uleb128 0x2
+ 2716 008d 17       		.uleb128 0x17
+ 2717 008e 00       		.byte	0
+ 2718 008f 00       		.byte	0
+ 2719 0090 0C       		.uleb128 0xc
+ 2720 0091 05       		.uleb128 0x5
+ 2721 0092 00       		.byte	0
+ 2722 0093 03       		.uleb128 0x3
+ 2723 0094 08       		.uleb128 0x8
+ 2724 0095 3A       		.uleb128 0x3a
+ 2725 0096 0B       		.uleb128 0xb
+ 2726 0097 3B       		.uleb128 0x3b
+ 2727 0098 0B       		.uleb128 0xb
+ 2728 0099 49       		.uleb128 0x49
+ 2729 009a 13       		.uleb128 0x13
+ 2730 009b 02       		.uleb128 0x2
+ 2731 009c 17       		.uleb128 0x17
+ 2732 009d 00       		.byte	0
+ 2733 009e 00       		.byte	0
+ 2734 009f 0D       		.uleb128 0xd
+ 2735 00a0 898201   		.uleb128 0x4109
+ 2736 00a3 01       		.byte	0x1
+ 2737 00a4 11       		.uleb128 0x11
+ 2738 00a5 01       		.uleb128 0x1
+ 2739 00a6 31       		.uleb128 0x31
+ 2740 00a7 13       		.uleb128 0x13
+ 2741 00a8 01       		.uleb128 0x1
+ 2742 00a9 13       		.uleb128 0x13
+ 2743 00aa 00       		.byte	0
+ 2744 00ab 00       		.byte	0
+ 2745 00ac 0E       		.uleb128 0xe
+ 2746 00ad 8A8201   		.uleb128 0x410a
+ 2747 00b0 00       		.byte	0
+ 2748 00b1 02       		.uleb128 0x2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 59
+
+
+ 2749 00b2 18       		.uleb128 0x18
+ 2750 00b3 9142     		.uleb128 0x2111
+ 2751 00b5 18       		.uleb128 0x18
+ 2752 00b6 00       		.byte	0
+ 2753 00b7 00       		.byte	0
+ 2754 00b8 0F       		.uleb128 0xf
+ 2755 00b9 898201   		.uleb128 0x4109
+ 2756 00bc 00       		.byte	0
+ 2757 00bd 11       		.uleb128 0x11
+ 2758 00be 01       		.uleb128 0x1
+ 2759 00bf 31       		.uleb128 0x31
+ 2760 00c0 13       		.uleb128 0x13
+ 2761 00c1 00       		.byte	0
+ 2762 00c2 00       		.byte	0
+ 2763 00c3 10       		.uleb128 0x10
+ 2764 00c4 0F       		.uleb128 0xf
+ 2765 00c5 00       		.byte	0
+ 2766 00c6 0B       		.uleb128 0xb
+ 2767 00c7 0B       		.uleb128 0xb
+ 2768 00c8 49       		.uleb128 0x49
+ 2769 00c9 13       		.uleb128 0x13
+ 2770 00ca 00       		.byte	0
+ 2771 00cb 00       		.byte	0
+ 2772 00cc 11       		.uleb128 0x11
+ 2773 00cd 2E       		.uleb128 0x2e
+ 2774 00ce 01       		.byte	0x1
+ 2775 00cf 03       		.uleb128 0x3
+ 2776 00d0 0E       		.uleb128 0xe
+ 2777 00d1 3A       		.uleb128 0x3a
+ 2778 00d2 0B       		.uleb128 0xb
+ 2779 00d3 3B       		.uleb128 0x3b
+ 2780 00d4 0B       		.uleb128 0xb
+ 2781 00d5 27       		.uleb128 0x27
+ 2782 00d6 19       		.uleb128 0x19
+ 2783 00d7 49       		.uleb128 0x49
+ 2784 00d8 13       		.uleb128 0x13
+ 2785 00d9 11       		.uleb128 0x11
+ 2786 00da 01       		.uleb128 0x1
+ 2787 00db 12       		.uleb128 0x12
+ 2788 00dc 06       		.uleb128 0x6
+ 2789 00dd 40       		.uleb128 0x40
+ 2790 00de 18       		.uleb128 0x18
+ 2791 00df 9742     		.uleb128 0x2117
+ 2792 00e1 19       		.uleb128 0x19
+ 2793 00e2 01       		.uleb128 0x1
+ 2794 00e3 13       		.uleb128 0x13
+ 2795 00e4 00       		.byte	0
+ 2796 00e5 00       		.byte	0
+ 2797 00e6 12       		.uleb128 0x12
+ 2798 00e7 34       		.uleb128 0x34
+ 2799 00e8 00       		.byte	0
+ 2800 00e9 03       		.uleb128 0x3
+ 2801 00ea 08       		.uleb128 0x8
+ 2802 00eb 3A       		.uleb128 0x3a
+ 2803 00ec 0B       		.uleb128 0xb
+ 2804 00ed 3B       		.uleb128 0x3b
+ 2805 00ee 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 60
+
+
+ 2806 00ef 49       		.uleb128 0x49
+ 2807 00f0 13       		.uleb128 0x13
+ 2808 00f1 02       		.uleb128 0x2
+ 2809 00f2 18       		.uleb128 0x18
+ 2810 00f3 00       		.byte	0
+ 2811 00f4 00       		.byte	0
+ 2812 00f5 13       		.uleb128 0x13
+ 2813 00f6 34       		.uleb128 0x34
+ 2814 00f7 00       		.byte	0
+ 2815 00f8 03       		.uleb128 0x3
+ 2816 00f9 08       		.uleb128 0x8
+ 2817 00fa 3A       		.uleb128 0x3a
+ 2818 00fb 0B       		.uleb128 0xb
+ 2819 00fc 3B       		.uleb128 0x3b
+ 2820 00fd 0B       		.uleb128 0xb
+ 2821 00fe 49       		.uleb128 0x49
+ 2822 00ff 13       		.uleb128 0x13
+ 2823 0100 02       		.uleb128 0x2
+ 2824 0101 17       		.uleb128 0x17
+ 2825 0102 00       		.byte	0
+ 2826 0103 00       		.byte	0
+ 2827 0104 14       		.uleb128 0x14
+ 2828 0105 898201   		.uleb128 0x4109
+ 2829 0108 01       		.byte	0x1
+ 2830 0109 11       		.uleb128 0x11
+ 2831 010a 01       		.uleb128 0x1
+ 2832 010b 31       		.uleb128 0x31
+ 2833 010c 13       		.uleb128 0x13
+ 2834 010d 00       		.byte	0
+ 2835 010e 00       		.byte	0
+ 2836 010f 15       		.uleb128 0x15
+ 2837 0110 01       		.uleb128 0x1
+ 2838 0111 01       		.byte	0x1
+ 2839 0112 49       		.uleb128 0x49
+ 2840 0113 13       		.uleb128 0x13
+ 2841 0114 01       		.uleb128 0x1
+ 2842 0115 13       		.uleb128 0x13
+ 2843 0116 00       		.byte	0
+ 2844 0117 00       		.byte	0
+ 2845 0118 16       		.uleb128 0x16
+ 2846 0119 21       		.uleb128 0x21
+ 2847 011a 00       		.byte	0
+ 2848 011b 49       		.uleb128 0x49
+ 2849 011c 13       		.uleb128 0x13
+ 2850 011d 2F       		.uleb128 0x2f
+ 2851 011e 0B       		.uleb128 0xb
+ 2852 011f 00       		.byte	0
+ 2853 0120 00       		.byte	0
+ 2854 0121 17       		.uleb128 0x17
+ 2855 0122 26       		.uleb128 0x26
+ 2856 0123 00       		.byte	0
+ 2857 0124 49       		.uleb128 0x49
+ 2858 0125 13       		.uleb128 0x13
+ 2859 0126 00       		.byte	0
+ 2860 0127 00       		.byte	0
+ 2861 0128 18       		.uleb128 0x18
+ 2862 0129 2E       		.uleb128 0x2e
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 61
+
+
+ 2863 012a 01       		.byte	0x1
+ 2864 012b 03       		.uleb128 0x3
+ 2865 012c 0E       		.uleb128 0xe
+ 2866 012d 3A       		.uleb128 0x3a
+ 2867 012e 0B       		.uleb128 0xb
+ 2868 012f 3B       		.uleb128 0x3b
+ 2869 0130 05       		.uleb128 0x5
+ 2870 0131 27       		.uleb128 0x27
+ 2871 0132 19       		.uleb128 0x19
+ 2872 0133 49       		.uleb128 0x49
+ 2873 0134 13       		.uleb128 0x13
+ 2874 0135 11       		.uleb128 0x11
+ 2875 0136 01       		.uleb128 0x1
+ 2876 0137 12       		.uleb128 0x12
+ 2877 0138 06       		.uleb128 0x6
+ 2878 0139 40       		.uleb128 0x40
+ 2879 013a 18       		.uleb128 0x18
+ 2880 013b 9742     		.uleb128 0x2117
+ 2881 013d 19       		.uleb128 0x19
+ 2882 013e 01       		.uleb128 0x1
+ 2883 013f 13       		.uleb128 0x13
+ 2884 0140 00       		.byte	0
+ 2885 0141 00       		.byte	0
+ 2886 0142 19       		.uleb128 0x19
+ 2887 0143 05       		.uleb128 0x5
+ 2888 0144 00       		.byte	0
+ 2889 0145 03       		.uleb128 0x3
+ 2890 0146 08       		.uleb128 0x8
+ 2891 0147 3A       		.uleb128 0x3a
+ 2892 0148 0B       		.uleb128 0xb
+ 2893 0149 3B       		.uleb128 0x3b
+ 2894 014a 05       		.uleb128 0x5
+ 2895 014b 49       		.uleb128 0x49
+ 2896 014c 13       		.uleb128 0x13
+ 2897 014d 02       		.uleb128 0x2
+ 2898 014e 17       		.uleb128 0x17
+ 2899 014f 00       		.byte	0
+ 2900 0150 00       		.byte	0
+ 2901 0151 1A       		.uleb128 0x1a
+ 2902 0152 34       		.uleb128 0x34
+ 2903 0153 00       		.byte	0
+ 2904 0154 03       		.uleb128 0x3
+ 2905 0155 08       		.uleb128 0x8
+ 2906 0156 3A       		.uleb128 0x3a
+ 2907 0157 0B       		.uleb128 0xb
+ 2908 0158 3B       		.uleb128 0x3b
+ 2909 0159 05       		.uleb128 0x5
+ 2910 015a 49       		.uleb128 0x49
+ 2911 015b 13       		.uleb128 0x13
+ 2912 015c 02       		.uleb128 0x2
+ 2913 015d 17       		.uleb128 0x17
+ 2914 015e 00       		.byte	0
+ 2915 015f 00       		.byte	0
+ 2916 0160 1B       		.uleb128 0x1b
+ 2917 0161 34       		.uleb128 0x34
+ 2918 0162 00       		.byte	0
+ 2919 0163 03       		.uleb128 0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 62
+
+
+ 2920 0164 08       		.uleb128 0x8
+ 2921 0165 3A       		.uleb128 0x3a
+ 2922 0166 0B       		.uleb128 0xb
+ 2923 0167 3B       		.uleb128 0x3b
+ 2924 0168 05       		.uleb128 0x5
+ 2925 0169 49       		.uleb128 0x49
+ 2926 016a 13       		.uleb128 0x13
+ 2927 016b 02       		.uleb128 0x2
+ 2928 016c 18       		.uleb128 0x18
+ 2929 016d 00       		.byte	0
+ 2930 016e 00       		.byte	0
+ 2931 016f 1C       		.uleb128 0x1c
+ 2932 0170 05       		.uleb128 0x5
+ 2933 0171 00       		.byte	0
+ 2934 0172 03       		.uleb128 0x3
+ 2935 0173 0E       		.uleb128 0xe
+ 2936 0174 3A       		.uleb128 0x3a
+ 2937 0175 0B       		.uleb128 0xb
+ 2938 0176 3B       		.uleb128 0x3b
+ 2939 0177 05       		.uleb128 0x5
+ 2940 0178 49       		.uleb128 0x49
+ 2941 0179 13       		.uleb128 0x13
+ 2942 017a 02       		.uleb128 0x2
+ 2943 017b 17       		.uleb128 0x17
+ 2944 017c 00       		.byte	0
+ 2945 017d 00       		.byte	0
+ 2946 017e 1D       		.uleb128 0x1d
+ 2947 017f 2E       		.uleb128 0x2e
+ 2948 0180 01       		.byte	0x1
+ 2949 0181 3F       		.uleb128 0x3f
+ 2950 0182 19       		.uleb128 0x19
+ 2951 0183 03       		.uleb128 0x3
+ 2952 0184 0E       		.uleb128 0xe
+ 2953 0185 3A       		.uleb128 0x3a
+ 2954 0186 0B       		.uleb128 0xb
+ 2955 0187 3B       		.uleb128 0x3b
+ 2956 0188 05       		.uleb128 0x5
+ 2957 0189 27       		.uleb128 0x27
+ 2958 018a 19       		.uleb128 0x19
+ 2959 018b 49       		.uleb128 0x49
+ 2960 018c 13       		.uleb128 0x13
+ 2961 018d 11       		.uleb128 0x11
+ 2962 018e 01       		.uleb128 0x1
+ 2963 018f 12       		.uleb128 0x12
+ 2964 0190 06       		.uleb128 0x6
+ 2965 0191 40       		.uleb128 0x40
+ 2966 0192 18       		.uleb128 0x18
+ 2967 0193 9742     		.uleb128 0x2117
+ 2968 0195 19       		.uleb128 0x19
+ 2969 0196 01       		.uleb128 0x1
+ 2970 0197 13       		.uleb128 0x13
+ 2971 0198 00       		.byte	0
+ 2972 0199 00       		.byte	0
+ 2973 019a 1E       		.uleb128 0x1e
+ 2974 019b 34       		.uleb128 0x34
+ 2975 019c 00       		.byte	0
+ 2976 019d 03       		.uleb128 0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 63
+
+
+ 2977 019e 0E       		.uleb128 0xe
+ 2978 019f 3A       		.uleb128 0x3a
+ 2979 01a0 0B       		.uleb128 0xb
+ 2980 01a1 3B       		.uleb128 0x3b
+ 2981 01a2 0B       		.uleb128 0xb
+ 2982 01a3 49       		.uleb128 0x49
+ 2983 01a4 13       		.uleb128 0x13
+ 2984 01a5 02       		.uleb128 0x2
+ 2985 01a6 18       		.uleb128 0x18
+ 2986 01a7 00       		.byte	0
+ 2987 01a8 00       		.byte	0
+ 2988 01a9 1F       		.uleb128 0x1f
+ 2989 01aa 2E       		.uleb128 0x2e
+ 2990 01ab 00       		.byte	0
+ 2991 01ac 3F       		.uleb128 0x3f
+ 2992 01ad 19       		.uleb128 0x19
+ 2993 01ae 3C       		.uleb128 0x3c
+ 2994 01af 19       		.uleb128 0x19
+ 2995 01b0 6E       		.uleb128 0x6e
+ 2996 01b1 0E       		.uleb128 0xe
+ 2997 01b2 03       		.uleb128 0x3
+ 2998 01b3 0E       		.uleb128 0xe
+ 2999 01b4 3A       		.uleb128 0x3a
+ 3000 01b5 0B       		.uleb128 0xb
+ 3001 01b6 3B       		.uleb128 0x3b
+ 3002 01b7 05       		.uleb128 0x5
+ 3003 01b8 00       		.byte	0
+ 3004 01b9 00       		.byte	0
+ 3005 01ba 20       		.uleb128 0x20
+ 3006 01bb 2E       		.uleb128 0x2e
+ 3007 01bc 00       		.byte	0
+ 3008 01bd 3F       		.uleb128 0x3f
+ 3009 01be 19       		.uleb128 0x19
+ 3010 01bf 3C       		.uleb128 0x3c
+ 3011 01c0 19       		.uleb128 0x19
+ 3012 01c1 6E       		.uleb128 0x6e
+ 3013 01c2 0E       		.uleb128 0xe
+ 3014 01c3 03       		.uleb128 0x3
+ 3015 01c4 0E       		.uleb128 0xe
+ 3016 01c5 3A       		.uleb128 0x3a
+ 3017 01c6 0B       		.uleb128 0xb
+ 3018 01c7 3B       		.uleb128 0x3b
+ 3019 01c8 0B       		.uleb128 0xb
+ 3020 01c9 00       		.byte	0
+ 3021 01ca 00       		.byte	0
+ 3022 01cb 00       		.byte	0
+ 3023              		.section	.debug_loc,"",%progbits
+ 3024              	.Ldebug_loc0:
+ 3025              	.LLST0:
+ 3026 0000 00000000 		.4byte	.LVL0
+ 3027 0004 08000000 		.4byte	.LVL1
+ 3028 0008 0100     		.2byte	0x1
+ 3029 000a 50       		.byte	0x50
+ 3030 000b 08000000 		.4byte	.LVL1
+ 3031 000f 0A000000 		.4byte	.LVL2
+ 3032 0013 0100     		.2byte	0x1
+ 3033 0015 56       		.byte	0x56
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 64
+
+
+ 3034 0016 0A000000 		.4byte	.LVL2
+ 3035 001a 1A000000 		.4byte	.LVL5
+ 3036 001e 0100     		.2byte	0x1
+ 3037 0020 55       		.byte	0x55
+ 3038 0021 1A000000 		.4byte	.LVL5
+ 3039 0025 26000000 		.4byte	.LVL9
+ 3040 0029 0100     		.2byte	0x1
+ 3041 002b 56       		.byte	0x56
+ 3042 002c 00000000 		.4byte	0
+ 3043 0030 00000000 		.4byte	0
+ 3044              	.LLST1:
+ 3045 0034 00000000 		.4byte	.LVL0
+ 3046 0038 08000000 		.4byte	.LVL1
+ 3047 003c 0100     		.2byte	0x1
+ 3048 003e 51       		.byte	0x51
+ 3049 003f 08000000 		.4byte	.LVL1
+ 3050 0043 26000000 		.4byte	.LVL8
+ 3051 0047 0100     		.2byte	0x1
+ 3052 0049 54       		.byte	0x54
+ 3053 004a 00000000 		.4byte	0
+ 3054 004e 00000000 		.4byte	0
+ 3055              	.LLST2:
+ 3056 0052 04000000 		.4byte	.LVL10
+ 3057 0056 08000000 		.4byte	.LVL11
+ 3058 005a 0400     		.2byte	0x4
+ 3059 005c 0A       		.byte	0xa
+ 3060 005d 8813     		.2byte	0x1388
+ 3061 005f 9F       		.byte	0x9f
+ 3062 0060 08000000 		.4byte	.LVL11
+ 3063 0064 24000000 		.4byte	.LVL14
+ 3064 0068 0100     		.2byte	0x1
+ 3065 006a 54       		.byte	0x54
+ 3066 006b 00000000 		.4byte	0
+ 3067 006f 00000000 		.4byte	0
+ 3068              	.LLST3:
+ 3069 0073 00000000 		.4byte	.LVL15
+ 3070 0077 0E000000 		.4byte	.LVL17
+ 3071 007b 0100     		.2byte	0x1
+ 3072 007d 50       		.byte	0x50
+ 3073 007e 0E000000 		.4byte	.LVL17
+ 3074 0082 44000000 		.4byte	.LVL23
+ 3075 0086 0100     		.2byte	0x1
+ 3076 0088 56       		.byte	0x56
+ 3077 0089 44000000 		.4byte	.LVL23
+ 3078 008d 46000000 		.4byte	.LFE38
+ 3079 0091 0400     		.2byte	0x4
+ 3080 0093 F3       		.byte	0xf3
+ 3081 0094 01       		.uleb128 0x1
+ 3082 0095 50       		.byte	0x50
+ 3083 0096 9F       		.byte	0x9f
+ 3084 0097 00000000 		.4byte	0
+ 3085 009b 00000000 		.4byte	0
+ 3086              	.LLST4:
+ 3087 009f 00000000 		.4byte	.LVL15
+ 3088 00a3 0E000000 		.4byte	.LVL17
+ 3089 00a7 0100     		.2byte	0x1
+ 3090 00a9 51       		.byte	0x51
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 65
+
+
+ 3091 00aa 0E000000 		.4byte	.LVL17
+ 3092 00ae 44000000 		.4byte	.LVL24
+ 3093 00b2 0100     		.2byte	0x1
+ 3094 00b4 57       		.byte	0x57
+ 3095 00b5 44000000 		.4byte	.LVL24
+ 3096 00b9 46000000 		.4byte	.LFE38
+ 3097 00bd 0400     		.2byte	0x4
+ 3098 00bf F3       		.byte	0xf3
+ 3099 00c0 01       		.uleb128 0x1
+ 3100 00c1 51       		.byte	0x51
+ 3101 00c2 9F       		.byte	0x9f
+ 3102 00c3 00000000 		.4byte	0
+ 3103 00c7 00000000 		.4byte	0
+ 3104              	.LLST5:
+ 3105 00cb 08000000 		.4byte	.LVL16
+ 3106 00cf 0E000000 		.4byte	.LVL17
+ 3107 00d3 0400     		.2byte	0x4
+ 3108 00d5 0A       		.byte	0xa
+ 3109 00d6 E803     		.2byte	0x3e8
+ 3110 00d8 9F       		.byte	0x9f
+ 3111 00d9 0E000000 		.4byte	.LVL17
+ 3112 00dd 44000000 		.4byte	.LVL22
+ 3113 00e1 0100     		.2byte	0x1
+ 3114 00e3 55       		.byte	0x55
+ 3115 00e4 00000000 		.4byte	0
+ 3116 00e8 00000000 		.4byte	0
+ 3117              	.LLST6:
+ 3118 00ec 00000000 		.4byte	.LVL29
+ 3119 00f0 09000000 		.4byte	.LVL30-1
+ 3120 00f4 0100     		.2byte	0x1
+ 3121 00f6 50       		.byte	0x50
+ 3122 00f7 09000000 		.4byte	.LVL30-1
+ 3123 00fb 1E000000 		.4byte	.LVL33
+ 3124 00ff 0100     		.2byte	0x1
+ 3125 0101 54       		.byte	0x54
+ 3126 0102 1E000000 		.4byte	.LVL33
+ 3127 0106 24000000 		.4byte	.LFE33
+ 3128 010a 0400     		.2byte	0x4
+ 3129 010c F3       		.byte	0xf3
+ 3130 010d 01       		.uleb128 0x1
+ 3131 010e 50       		.byte	0x50
+ 3132 010f 9F       		.byte	0x9f
+ 3133 0110 00000000 		.4byte	0
+ 3134 0114 00000000 		.4byte	0
+ 3135              	.LLST7:
+ 3136 0118 00000000 		.4byte	.LVL29
+ 3137 011c 09000000 		.4byte	.LVL30-1
+ 3138 0120 0100     		.2byte	0x1
+ 3139 0122 51       		.byte	0x51
+ 3140 0123 09000000 		.4byte	.LVL30-1
+ 3141 0127 1E000000 		.4byte	.LVL34
+ 3142 012b 0100     		.2byte	0x1
+ 3143 012d 55       		.byte	0x55
+ 3144 012e 1E000000 		.4byte	.LVL34
+ 3145 0132 24000000 		.4byte	.LFE33
+ 3146 0136 0400     		.2byte	0x4
+ 3147 0138 F3       		.byte	0xf3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 66
+
+
+ 3148 0139 01       		.uleb128 0x1
+ 3149 013a 51       		.byte	0x51
+ 3150 013b 9F       		.byte	0x9f
+ 3151 013c 00000000 		.4byte	0
+ 3152 0140 00000000 		.4byte	0
+ 3153              	.LLST8:
+ 3154 0144 00000000 		.4byte	.LVL35
+ 3155 0148 12000000 		.4byte	.LVL36
+ 3156 014c 0100     		.2byte	0x1
+ 3157 014e 50       		.byte	0x50
+ 3158 014f 12000000 		.4byte	.LVL36
+ 3159 0153 70000000 		.4byte	.LVL47
+ 3160 0157 0100     		.2byte	0x1
+ 3161 0159 54       		.byte	0x54
+ 3162 015a 8E000000 		.4byte	.LVL51
+ 3163 015e 90000000 		.4byte	.LVL52
+ 3164 0162 0100     		.2byte	0x1
+ 3165 0164 54       		.byte	0x54
+ 3166 0165 00000000 		.4byte	0
+ 3167 0169 00000000 		.4byte	0
+ 3168              	.LLST9:
+ 3169 016d 00000000 		.4byte	.LVL35
+ 3170 0171 14000000 		.4byte	.LVL37
+ 3171 0175 0100     		.2byte	0x1
+ 3172 0177 51       		.byte	0x51
+ 3173 0178 14000000 		.4byte	.LVL37
+ 3174 017c 70000000 		.4byte	.LVL47
+ 3175 0180 0100     		.2byte	0x1
+ 3176 0182 55       		.byte	0x55
+ 3177 0183 70000000 		.4byte	.LVL47
+ 3178 0187 8E000000 		.4byte	.LVL51
+ 3179 018b 0400     		.2byte	0x4
+ 3180 018d F3       		.byte	0xf3
+ 3181 018e 01       		.uleb128 0x1
+ 3182 018f 51       		.byte	0x51
+ 3183 0190 9F       		.byte	0x9f
+ 3184 0191 8E000000 		.4byte	.LVL51
+ 3185 0195 90000000 		.4byte	.LVL52
+ 3186 0199 0100     		.2byte	0x1
+ 3187 019b 55       		.byte	0x55
+ 3188 019c 90000000 		.4byte	.LVL52
+ 3189 01a0 94000000 		.4byte	.LFE40
+ 3190 01a4 0400     		.2byte	0x4
+ 3191 01a6 F3       		.byte	0xf3
+ 3192 01a7 01       		.uleb128 0x1
+ 3193 01a8 51       		.byte	0x51
+ 3194 01a9 9F       		.byte	0x9f
+ 3195 01aa 00000000 		.4byte	0
+ 3196 01ae 00000000 		.4byte	0
+ 3197              	.LLST10:
+ 3198 01b2 1A000000 		.4byte	.LVL38
+ 3199 01b6 1E000000 		.4byte	.LVL39
+ 3200 01ba 0100     		.2byte	0x1
+ 3201 01bc 50       		.byte	0x50
+ 3202 01bd 44000000 		.4byte	.LVL42
+ 3203 01c1 4E000000 		.4byte	.LVL43
+ 3204 01c5 0200     		.2byte	0x2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 67
+
+
+ 3205 01c7 31       		.byte	0x31
+ 3206 01c8 9F       		.byte	0x9f
+ 3207 01c9 4E000000 		.4byte	.LVL43
+ 3208 01cd 5F000000 		.4byte	.LVL45-1
+ 3209 01d1 0100     		.2byte	0x1
+ 3210 01d3 53       		.byte	0x53
+ 3211 01d4 70000000 		.4byte	.LVL47
+ 3212 01d8 86000000 		.4byte	.LVL49
+ 3213 01dc 0100     		.2byte	0x1
+ 3214 01de 54       		.byte	0x54
+ 3215 01df 88000000 		.4byte	.LVL50
+ 3216 01e3 8E000000 		.4byte	.LVL51
+ 3217 01e7 0100     		.2byte	0x1
+ 3218 01e9 54       		.byte	0x54
+ 3219 01ea 00000000 		.4byte	0
+ 3220 01ee 00000000 		.4byte	0
+ 3221              	.LLST11:
+ 3222 01f2 00000000 		.4byte	.LVL53
+ 3223 01f6 0B000000 		.4byte	.LVL54-1
+ 3224 01fa 0100     		.2byte	0x1
+ 3225 01fc 50       		.byte	0x50
+ 3226 01fd 0B000000 		.4byte	.LVL54-1
+ 3227 0201 50000000 		.4byte	.LVL59
+ 3228 0205 0100     		.2byte	0x1
+ 3229 0207 55       		.byte	0x55
+ 3230 0208 50000000 		.4byte	.LVL59
+ 3231 020c 52000000 		.4byte	.LFE39
+ 3232 0210 0400     		.2byte	0x4
+ 3233 0212 F3       		.byte	0xf3
+ 3234 0213 01       		.uleb128 0x1
+ 3235 0214 50       		.byte	0x50
+ 3236 0215 9F       		.byte	0x9f
+ 3237 0216 00000000 		.4byte	0
+ 3238 021a 00000000 		.4byte	0
+ 3239              	.LLST12:
+ 3240 021e 00000000 		.4byte	.LVL53
+ 3241 0222 0B000000 		.4byte	.LVL54-1
+ 3242 0226 0100     		.2byte	0x1
+ 3243 0228 51       		.byte	0x51
+ 3244 0229 0B000000 		.4byte	.LVL54-1
+ 3245 022d 52000000 		.4byte	.LFE39
+ 3246 0231 0400     		.2byte	0x4
+ 3247 0233 F3       		.byte	0xf3
+ 3248 0234 01       		.uleb128 0x1
+ 3249 0235 51       		.byte	0x51
+ 3250 0236 9F       		.byte	0x9f
+ 3251 0237 00000000 		.4byte	0
+ 3252 023b 00000000 		.4byte	0
+ 3253              	.LLST13:
+ 3254 023f 00000000 		.4byte	.LVL60
+ 3255 0243 08000000 		.4byte	.LVL61
+ 3256 0247 0100     		.2byte	0x1
+ 3257 0249 50       		.byte	0x50
+ 3258 024a 08000000 		.4byte	.LVL61
+ 3259 024e 0A000000 		.4byte	.LVL62
+ 3260 0252 0400     		.2byte	0x4
+ 3261 0254 F3       		.byte	0xf3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 68
+
+
+ 3262 0255 01       		.uleb128 0x1
+ 3263 0256 50       		.byte	0x50
+ 3264 0257 9F       		.byte	0x9f
+ 3265 0258 0A000000 		.4byte	.LVL62
+ 3266 025c 0C000000 		.4byte	.LVL63
+ 3267 0260 0100     		.2byte	0x1
+ 3268 0262 50       		.byte	0x50
+ 3269 0263 0C000000 		.4byte	.LVL63
+ 3270 0267 14000000 		.4byte	.LFE41
+ 3271 026b 0400     		.2byte	0x4
+ 3272 026d F3       		.byte	0xf3
+ 3273 026e 01       		.uleb128 0x1
+ 3274 026f 50       		.byte	0x50
+ 3275 0270 9F       		.byte	0x9f
+ 3276 0271 00000000 		.4byte	0
+ 3277 0275 00000000 		.4byte	0
+ 3278              	.LLST14:
+ 3279 0279 00000000 		.4byte	.LVL64
+ 3280 027d 0E000000 		.4byte	.LVL65
+ 3281 0281 0100     		.2byte	0x1
+ 3282 0283 50       		.byte	0x50
+ 3283 0284 0E000000 		.4byte	.LVL65
+ 3284 0288 14010000 		.4byte	.LVL106
+ 3285 028c 0400     		.2byte	0x4
+ 3286 028e F3       		.byte	0xf3
+ 3287 028f 01       		.uleb128 0x1
+ 3288 0290 50       		.byte	0x50
+ 3289 0291 9F       		.byte	0x9f
+ 3290 0292 14010000 		.4byte	.LVL106
+ 3291 0296 16010000 		.4byte	.LVL107
+ 3292 029a 0100     		.2byte	0x1
+ 3293 029c 50       		.byte	0x50
+ 3294 029d 16010000 		.4byte	.LVL107
+ 3295 02a1 24010000 		.4byte	.LFE42
+ 3296 02a5 0400     		.2byte	0x4
+ 3297 02a7 F3       		.byte	0xf3
+ 3298 02a8 01       		.uleb128 0x1
+ 3299 02a9 50       		.byte	0x50
+ 3300 02aa 9F       		.byte	0x9f
+ 3301 02ab 00000000 		.4byte	0
+ 3302 02af 00000000 		.4byte	0
+ 3303              	.LLST15:
+ 3304 02b3 0E000000 		.4byte	.LVL65
+ 3305 02b7 18000000 		.4byte	.LVL67
+ 3306 02bb 0100     		.2byte	0x1
+ 3307 02bd 54       		.byte	0x54
+ 3308 02be 1A000000 		.4byte	.LVL68
+ 3309 02c2 3A000000 		.4byte	.LVL72
+ 3310 02c6 0100     		.2byte	0x1
+ 3311 02c8 54       		.byte	0x54
+ 3312 02c9 9A000000 		.4byte	.LVL83
+ 3313 02cd AA000000 		.4byte	.LVL85
+ 3314 02d1 0100     		.2byte	0x1
+ 3315 02d3 54       		.byte	0x54
+ 3316 02d4 AC000000 		.4byte	.LVL86
+ 3317 02d8 B0000000 		.4byte	.LVL87
+ 3318 02dc 0100     		.2byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 69
+
+
+ 3319 02de 54       		.byte	0x54
+ 3320 02df E4000000 		.4byte	.LVL93
+ 3321 02e3 E6000000 		.4byte	.LVL94
+ 3322 02e7 0100     		.2byte	0x1
+ 3323 02e9 54       		.byte	0x54
+ 3324 02ea 00000000 		.4byte	0
+ 3325 02ee 00000000 		.4byte	0
+ 3326              	.LLST16:
+ 3327 02f2 1E000000 		.4byte	.LVL69
+ 3328 02f6 B0000000 		.4byte	.LVL87
+ 3329 02fa 0200     		.2byte	0x2
+ 3330 02fc 30       		.byte	0x30
+ 3331 02fd 9F       		.byte	0x9f
+ 3332 02fe B0000000 		.4byte	.LVL87
+ 3333 0302 E4000000 		.4byte	.LVL93
+ 3334 0306 0100     		.2byte	0x1
+ 3335 0308 54       		.byte	0x54
+ 3336 0309 E4000000 		.4byte	.LVL93
+ 3337 030d F8000000 		.4byte	.LVL99
+ 3338 0311 0200     		.2byte	0x2
+ 3339 0313 30       		.byte	0x30
+ 3340 0314 9F       		.byte	0x9f
+ 3341 0315 F8000000 		.4byte	.LVL99
+ 3342 0319 FA000000 		.4byte	.LVL100
+ 3343 031d 0100     		.2byte	0x1
+ 3344 031f 54       		.byte	0x54
+ 3345 0320 FC000000 		.4byte	.LVL101
+ 3346 0324 06010000 		.4byte	.LVL103
+ 3347 0328 0100     		.2byte	0x1
+ 3348 032a 54       		.byte	0x54
+ 3349 032b 06010000 		.4byte	.LVL103
+ 3350 032f 0F010000 		.4byte	.LVL105-1
+ 3351 0333 0500     		.2byte	0x5
+ 3352 0335 03       		.byte	0x3
+ 3353 0336 00000000 		.4byte	CardType
+ 3354 033a 00000000 		.4byte	0
+ 3355 033e 00000000 		.4byte	0
+ 3356              	.LLST17:
+ 3357 0342 B0000000 		.4byte	.LVL87
+ 3358 0346 E4000000 		.4byte	.LVL93
+ 3359 034a 0100     		.2byte	0x1
+ 3360 034c 56       		.byte	0x56
+ 3361 034d F8000000 		.4byte	.LVL99
+ 3362 0351 FE000000 		.4byte	.LVL102
+ 3363 0355 0100     		.2byte	0x1
+ 3364 0357 56       		.byte	0x56
+ 3365 0358 00000000 		.4byte	0
+ 3366 035c 00000000 		.4byte	0
+ 3367              	.LLST18:
+ 3368 0360 54000000 		.4byte	.LVL74
+ 3369 0364 6E000000 		.4byte	.LVL78
+ 3370 0368 0100     		.2byte	0x1
+ 3371 036a 54       		.byte	0x54
+ 3372 036b 72000000 		.4byte	.LVL79
+ 3373 036f 88000000 		.4byte	.LVL81
+ 3374 0373 0100     		.2byte	0x1
+ 3375 0375 54       		.byte	0x54
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 70
+
+
+ 3376 0376 B0000000 		.4byte	.LVL87
+ 3377 037a B6000000 		.4byte	.LVL88
+ 3378 037e 0400     		.2byte	0x4
+ 3379 0380 0A       		.byte	0xa
+ 3380 0381 E803     		.2byte	0x3e8
+ 3381 0383 9F       		.byte	0x9f
+ 3382 0384 B6000000 		.4byte	.LVL88
+ 3383 0388 E4000000 		.4byte	.LVL93
+ 3384 038c 0100     		.2byte	0x1
+ 3385 038e 55       		.byte	0x55
+ 3386 038f EC000000 		.4byte	.LVL95
+ 3387 0393 EE000000 		.4byte	.LVL96
+ 3388 0397 0100     		.2byte	0x1
+ 3389 0399 54       		.byte	0x54
+ 3390 039a F0000000 		.4byte	.LVL97
+ 3391 039e F2000000 		.4byte	.LVL98
+ 3392 03a2 0100     		.2byte	0x1
+ 3393 03a4 54       		.byte	0x54
+ 3394 03a5 F8000000 		.4byte	.LVL99
+ 3395 03a9 FE000000 		.4byte	.LVL102
+ 3396 03ad 0100     		.2byte	0x1
+ 3397 03af 55       		.byte	0x55
+ 3398 03b0 00000000 		.4byte	0
+ 3399 03b4 00000000 		.4byte	0
+ 3400              	.LLST19:
+ 3401 03b8 08010000 		.4byte	.LVL104
+ 3402 03bc 14010000 		.4byte	.LVL106
+ 3403 03c0 0100     		.2byte	0x1
+ 3404 03c2 54       		.byte	0x54
+ 3405 03c3 00000000 		.4byte	0
+ 3406 03c7 00000000 		.4byte	0
+ 3407              	.LLST20:
+ 3408 03cb 00000000 		.4byte	.LVL108
+ 3409 03cf 0B000000 		.4byte	.LVL109-1
+ 3410 03d3 0100     		.2byte	0x1
+ 3411 03d5 50       		.byte	0x50
+ 3412 03d6 0B000000 		.4byte	.LVL109-1
+ 3413 03da 6C000000 		.4byte	.LFE43
+ 3414 03de 0400     		.2byte	0x4
+ 3415 03e0 F3       		.byte	0xf3
+ 3416 03e1 01       		.uleb128 0x1
+ 3417 03e2 50       		.byte	0x50
+ 3418 03e3 9F       		.byte	0x9f
+ 3419 03e4 00000000 		.4byte	0
+ 3420 03e8 00000000 		.4byte	0
+ 3421              	.LLST21:
+ 3422 03ec 00000000 		.4byte	.LVL108
+ 3423 03f0 0B000000 		.4byte	.LVL109-1
+ 3424 03f4 0100     		.2byte	0x1
+ 3425 03f6 51       		.byte	0x51
+ 3426 03f7 0B000000 		.4byte	.LVL109-1
+ 3427 03fb 66000000 		.4byte	.LVL121
+ 3428 03ff 0100     		.2byte	0x1
+ 3429 0401 55       		.byte	0x55
+ 3430 0402 00000000 		.4byte	0
+ 3431 0406 00000000 		.4byte	0
+ 3432              	.LLST22:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 71
+
+
+ 3433 040a 00000000 		.4byte	.LVL108
+ 3434 040e 0B000000 		.4byte	.LVL109-1
+ 3435 0412 0100     		.2byte	0x1
+ 3436 0414 52       		.byte	0x52
+ 3437 0415 0B000000 		.4byte	.LVL109-1
+ 3438 0419 66000000 		.4byte	.LVL122
+ 3439 041d 0100     		.2byte	0x1
+ 3440 041f 57       		.byte	0x57
+ 3441 0420 00000000 		.4byte	0
+ 3442 0424 00000000 		.4byte	0
+ 3443              	.LLST23:
+ 3444 0428 00000000 		.4byte	.LVL108
+ 3445 042c 0B000000 		.4byte	.LVL109-1
+ 3446 0430 0100     		.2byte	0x1
+ 3447 0432 53       		.byte	0x53
+ 3448 0433 0B000000 		.4byte	.LVL109-1
+ 3449 0437 60000000 		.4byte	.LVL118
+ 3450 043b 0100     		.2byte	0x1
+ 3451 043d 54       		.byte	0x54
+ 3452 043e 64000000 		.4byte	.LVL119
+ 3453 0442 66000000 		.4byte	.LVL120
+ 3454 0446 0100     		.2byte	0x1
+ 3455 0448 54       		.byte	0x54
+ 3456 0449 00000000 		.4byte	0
+ 3457 044d 00000000 		.4byte	0
+ 3458              	.LLST24:
+ 3459 0451 24000000 		.4byte	.LVL111
+ 3460 0455 64000000 		.4byte	.LVL119
+ 3461 0459 0100     		.2byte	0x1
+ 3462 045b 56       		.byte	0x56
+ 3463 045c 00000000 		.4byte	0
+ 3464 0460 00000000 		.4byte	0
+ 3465              	.LLST25:
+ 3466 0464 00000000 		.4byte	.LVL123
+ 3467 0468 0B000000 		.4byte	.LVL124-1
+ 3468 046c 0100     		.2byte	0x1
+ 3469 046e 50       		.byte	0x50
+ 3470 046f 0B000000 		.4byte	.LVL124-1
+ 3471 0473 94000000 		.4byte	.LFE44
+ 3472 0477 0400     		.2byte	0x4
+ 3473 0479 F3       		.byte	0xf3
+ 3474 047a 01       		.uleb128 0x1
+ 3475 047b 50       		.byte	0x50
+ 3476 047c 9F       		.byte	0x9f
+ 3477 047d 00000000 		.4byte	0
+ 3478 0481 00000000 		.4byte	0
+ 3479              	.LLST26:
+ 3480 0485 00000000 		.4byte	.LVL123
+ 3481 0489 0B000000 		.4byte	.LVL124-1
+ 3482 048d 0100     		.2byte	0x1
+ 3483 048f 51       		.byte	0x51
+ 3484 0490 0B000000 		.4byte	.LVL124-1
+ 3485 0494 8E000000 		.4byte	.LVL141
+ 3486 0498 0100     		.2byte	0x1
+ 3487 049a 55       		.byte	0x55
+ 3488 049b 00000000 		.4byte	0
+ 3489 049f 00000000 		.4byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 72
+
+
+ 3490              	.LLST27:
+ 3491 04a3 00000000 		.4byte	.LVL123
+ 3492 04a7 0B000000 		.4byte	.LVL124-1
+ 3493 04ab 0100     		.2byte	0x1
+ 3494 04ad 52       		.byte	0x52
+ 3495 04ae 0B000000 		.4byte	.LVL124-1
+ 3496 04b2 8E000000 		.4byte	.LVL142
+ 3497 04b6 0100     		.2byte	0x1
+ 3498 04b8 56       		.byte	0x56
+ 3499 04b9 00000000 		.4byte	0
+ 3500 04bd 00000000 		.4byte	0
+ 3501              	.LLST28:
+ 3502 04c1 00000000 		.4byte	.LVL123
+ 3503 04c5 0B000000 		.4byte	.LVL124-1
+ 3504 04c9 0100     		.2byte	0x1
+ 3505 04cb 53       		.byte	0x53
+ 3506 04cc 0B000000 		.4byte	.LVL124-1
+ 3507 04d0 7C000000 		.4byte	.LVL134
+ 3508 04d4 0100     		.2byte	0x1
+ 3509 04d6 54       		.byte	0x54
+ 3510 04d7 7C000000 		.4byte	.LVL134
+ 3511 04db 7E000000 		.4byte	.LVL135
+ 3512 04df 0400     		.2byte	0x4
+ 3513 04e1 F3       		.byte	0xf3
+ 3514 04e2 01       		.uleb128 0x1
+ 3515 04e3 53       		.byte	0x53
+ 3516 04e4 9F       		.byte	0x9f
+ 3517 04e5 7E000000 		.4byte	.LVL135
+ 3518 04e9 88000000 		.4byte	.LVL138
+ 3519 04ed 0100     		.2byte	0x1
+ 3520 04ef 54       		.byte	0x54
+ 3521 04f0 8C000000 		.4byte	.LVL139
+ 3522 04f4 8E000000 		.4byte	.LVL140
+ 3523 04f8 0100     		.2byte	0x1
+ 3524 04fa 54       		.byte	0x54
+ 3525 04fb 00000000 		.4byte	0
+ 3526 04ff 00000000 		.4byte	0
+ 3527              	.LLST29:
+ 3528 0503 00000000 		.4byte	.LVL143
+ 3529 0507 0B000000 		.4byte	.LVL144-1
+ 3530 050b 0100     		.2byte	0x1
+ 3531 050d 50       		.byte	0x50
+ 3532 050e 0B000000 		.4byte	.LVL144-1
+ 3533 0512 D4000000 		.4byte	.LFE45
+ 3534 0516 0400     		.2byte	0x4
+ 3535 0518 F3       		.byte	0xf3
+ 3536 0519 01       		.uleb128 0x1
+ 3537 051a 50       		.byte	0x50
+ 3538 051b 9F       		.byte	0x9f
+ 3539 051c 00000000 		.4byte	0
+ 3540 0520 00000000 		.4byte	0
+ 3541              	.LLST30:
+ 3542 0524 00000000 		.4byte	.LVL143
+ 3543 0528 0B000000 		.4byte	.LVL144-1
+ 3544 052c 0100     		.2byte	0x1
+ 3545 052e 51       		.byte	0x51
+ 3546 052f 0B000000 		.4byte	.LVL144-1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 73
+
+
+ 3547 0533 D4000000 		.4byte	.LFE45
+ 3548 0537 0400     		.2byte	0x4
+ 3549 0539 F3       		.byte	0xf3
+ 3550 053a 01       		.uleb128 0x1
+ 3551 053b 51       		.byte	0x51
+ 3552 053c 9F       		.byte	0x9f
+ 3553 053d 00000000 		.4byte	0
+ 3554 0541 00000000 		.4byte	0
+ 3555              	.LLST31:
+ 3556 0545 00000000 		.4byte	.LVL143
+ 3557 0549 0B000000 		.4byte	.LVL144-1
+ 3558 054d 0100     		.2byte	0x1
+ 3559 054f 52       		.byte	0x52
+ 3560 0550 0B000000 		.4byte	.LVL144-1
+ 3561 0554 D2000000 		.4byte	.LVL163
+ 3562 0558 0100     		.2byte	0x1
+ 3563 055a 55       		.byte	0x55
+ 3564 055b D2000000 		.4byte	.LVL163
+ 3565 055f D4000000 		.4byte	.LFE45
+ 3566 0563 0400     		.2byte	0x4
+ 3567 0565 F3       		.byte	0xf3
+ 3568 0566 01       		.uleb128 0x1
+ 3569 0567 52       		.byte	0x52
+ 3570 0568 9F       		.byte	0x9f
+ 3571 0569 00000000 		.4byte	0
+ 3572 056d 00000000 		.4byte	0
+ 3573              	.LLST32:
+ 3574 0571 10000000 		.4byte	.LVL145
+ 3575 0575 B4000000 		.4byte	.LVL158
+ 3576 0579 0200     		.2byte	0x2
+ 3577 057b 31       		.byte	0x31
+ 3578 057c 9F       		.byte	0x9f
+ 3579 057d B4000000 		.4byte	.LVL158
+ 3580 0581 B8000000 		.4byte	.LVL159
+ 3581 0585 0200     		.2byte	0x2
+ 3582 0587 30       		.byte	0x30
+ 3583 0588 9F       		.byte	0x9f
+ 3584 0589 B8000000 		.4byte	.LVL159
+ 3585 058d C6000000 		.4byte	.LVL160
+ 3586 0591 0200     		.2byte	0x2
+ 3587 0593 31       		.byte	0x31
+ 3588 0594 9F       		.byte	0x9f
+ 3589 0595 C6000000 		.4byte	.LVL160
+ 3590 0599 CE000000 		.4byte	.LVL162
+ 3591 059d 0100     		.2byte	0x1
+ 3592 059f 54       		.byte	0x54
+ 3593 05a0 00000000 		.4byte	0
+ 3594 05a4 00000000 		.4byte	0
+ 3595              	.LLST33:
+ 3596 05a8 8A000000 		.4byte	.LVL152
+ 3597 05ac A8000000 		.4byte	.LVL154
+ 3598 05b0 0100     		.2byte	0x1
+ 3599 05b2 53       		.byte	0x53
+ 3600 05b3 A8000000 		.4byte	.LVL154
+ 3601 05b7 B0000000 		.4byte	.LVL157
+ 3602 05bb 0300     		.2byte	0x3
+ 3603 05bd 73       		.byte	0x73
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 74
+
+
+ 3604 05be 09       		.sleb128 9
+ 3605 05bf 9F       		.byte	0x9f
+ 3606 05c0 00000000 		.4byte	0
+ 3607 05c4 00000000 		.4byte	0
+ 3608              	.LLST34:
+ 3609 05c8 66000000 		.4byte	.LVL149
+ 3610 05cc 68000000 		.4byte	.LVL150
+ 3611 05d0 0100     		.2byte	0x1
+ 3612 05d2 53       		.byte	0x53
+ 3613 05d3 68000000 		.4byte	.LVL150
+ 3614 05d7 6A000000 		.4byte	.LVL151
+ 3615 05db 1200     		.2byte	0x12
+ 3616 05dd 7D       		.byte	0x7d
+ 3617 05de 07       		.sleb128 7
+ 3618 05df 94       		.byte	0x94
+ 3619 05e0 01       		.byte	0x1
+ 3620 05e1 08       		.byte	0x8
+ 3621 05e2 FF       		.byte	0xff
+ 3622 05e3 1A       		.byte	0x1a
+ 3623 05e4 40       		.byte	0x40
+ 3624 05e5 24       		.byte	0x24
+ 3625 05e6 72       		.byte	0x72
+ 3626 05e7 00       		.sleb128 0
+ 3627 05e8 1A       		.byte	0x1a
+ 3628 05e9 71       		.byte	0x71
+ 3629 05ea 00       		.sleb128 0
+ 3630 05eb 22       		.byte	0x22
+ 3631 05ec 23       		.byte	0x23
+ 3632 05ed 01       		.uleb128 0x1
+ 3633 05ee 9F       		.byte	0x9f
+ 3634 05ef A6000000 		.4byte	.LVL153
+ 3635 05f3 AA000000 		.4byte	.LVL155
+ 3636 05f7 0100     		.2byte	0x1
+ 3637 05f9 52       		.byte	0x52
+ 3638 05fa AA000000 		.4byte	.LVL155
+ 3639 05fe AC000000 		.4byte	.LVL156
+ 3640 0602 1200     		.2byte	0x12
+ 3641 0604 7D       		.byte	0x7d
+ 3642 0605 06       		.sleb128 6
+ 3643 0606 94       		.byte	0x94
+ 3644 0607 01       		.byte	0x1
+ 3645 0608 08       		.byte	0x8
+ 3646 0609 FF       		.byte	0xff
+ 3647 060a 1A       		.byte	0x1a
+ 3648 060b 3A       		.byte	0x3a
+ 3649 060c 24       		.byte	0x24
+ 3650 060d 71       		.byte	0x71
+ 3651 060e 00       		.sleb128 0
+ 3652 060f 1A       		.byte	0x1a
+ 3653 0610 70       		.byte	0x70
+ 3654 0611 00       		.sleb128 0
+ 3655 0612 22       		.byte	0x22
+ 3656 0613 23       		.byte	0x23
+ 3657 0614 01       		.uleb128 0x1
+ 3658 0615 9F       		.byte	0x9f
+ 3659 0616 00000000 		.4byte	0
+ 3660 061a 00000000 		.4byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 75
+
+
+ 3661              		.section	.debug_aranges,"",%progbits
+ 3662 0000 7C000000 		.4byte	0x7c
+ 3663 0004 0200     		.2byte	0x2
+ 3664 0006 00000000 		.4byte	.Ldebug_info0
+ 3665 000a 04       		.byte	0x4
+ 3666 000b 00       		.byte	0
+ 3667 000c 0000     		.2byte	0
+ 3668 000e 0000     		.2byte	0
+ 3669 0010 00000000 		.4byte	.LFB34
+ 3670 0014 28000000 		.4byte	.LFE34-.LFB34
+ 3671 0018 00000000 		.4byte	.LFB35
+ 3672 001c 30000000 		.4byte	.LFE35-.LFB35
+ 3673 0020 00000000 		.4byte	.LFB38
+ 3674 0024 46000000 		.4byte	.LFE38-.LFB38
+ 3675 0028 00000000 		.4byte	.LFB36
+ 3676 002c 0A000000 		.4byte	.LFE36-.LFB36
+ 3677 0030 00000000 		.4byte	.LFB37
+ 3678 0034 1C000000 		.4byte	.LFE37-.LFB37
+ 3679 0038 00000000 		.4byte	.LFB33
+ 3680 003c 24000000 		.4byte	.LFE33-.LFB33
+ 3681 0040 00000000 		.4byte	.LFB40
+ 3682 0044 94000000 		.4byte	.LFE40-.LFB40
+ 3683 0048 00000000 		.4byte	.LFB39
+ 3684 004c 52000000 		.4byte	.LFE39-.LFB39
+ 3685 0050 00000000 		.4byte	.LFB41
+ 3686 0054 14000000 		.4byte	.LFE41-.LFB41
+ 3687 0058 00000000 		.4byte	.LFB42
+ 3688 005c 24010000 		.4byte	.LFE42-.LFB42
+ 3689 0060 00000000 		.4byte	.LFB43
+ 3690 0064 6C000000 		.4byte	.LFE43-.LFB43
+ 3691 0068 00000000 		.4byte	.LFB44
+ 3692 006c 94000000 		.4byte	.LFE44-.LFB44
+ 3693 0070 00000000 		.4byte	.LFB45
+ 3694 0074 D4000000 		.4byte	.LFE45-.LFB45
+ 3695 0078 00000000 		.4byte	0
+ 3696 007c 00000000 		.4byte	0
+ 3697              		.section	.debug_ranges,"",%progbits
+ 3698              	.Ldebug_ranges0:
+ 3699 0000 00000000 		.4byte	.LFB34
+ 3700 0004 28000000 		.4byte	.LFE34
+ 3701 0008 00000000 		.4byte	.LFB35
+ 3702 000c 30000000 		.4byte	.LFE35
+ 3703 0010 00000000 		.4byte	.LFB38
+ 3704 0014 46000000 		.4byte	.LFE38
+ 3705 0018 00000000 		.4byte	.LFB36
+ 3706 001c 0A000000 		.4byte	.LFE36
+ 3707 0020 00000000 		.4byte	.LFB37
+ 3708 0024 1C000000 		.4byte	.LFE37
+ 3709 0028 00000000 		.4byte	.LFB33
+ 3710 002c 24000000 		.4byte	.LFE33
+ 3711 0030 00000000 		.4byte	.LFB40
+ 3712 0034 94000000 		.4byte	.LFE40
+ 3713 0038 00000000 		.4byte	.LFB39
+ 3714 003c 52000000 		.4byte	.LFE39
+ 3715 0040 00000000 		.4byte	.LFB41
+ 3716 0044 14000000 		.4byte	.LFE41
+ 3717 0048 00000000 		.4byte	.LFB42
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 76
+
+
+ 3718 004c 24010000 		.4byte	.LFE42
+ 3719 0050 00000000 		.4byte	.LFB43
+ 3720 0054 6C000000 		.4byte	.LFE43
+ 3721 0058 00000000 		.4byte	.LFB44
+ 3722 005c 94000000 		.4byte	.LFE44
+ 3723 0060 00000000 		.4byte	.LFB45
+ 3724 0064 D4000000 		.4byte	.LFE45
+ 3725 0068 00000000 		.4byte	0
+ 3726 006c 00000000 		.4byte	0
+ 3727              		.section	.debug_line,"",%progbits
+ 3728              	.Ldebug_line0:
+ 3729 0000 CA020000 		.section	.debug_str,"MS",%progbits,1
+ 3729      02008E00 
+ 3729      00000201 
+ 3729      FB0E0D00 
+ 3729      01010101 
+ 3730              	.LASF36:
+ 3731 0000 746F6B65 		.ascii	"token\000"
+ 3731      6E00
+ 3732              	.LASF33:
+ 3733 0006 786D6974 		.ascii	"xmit_mmc\000"
+ 3733      5F6D6D63 
+ 3733      00
+ 3734              	.LASF12:
+ 3735 000f 5245535F 		.ascii	"RES_ERROR\000"
+ 3735      4552524F 
+ 3735      5200
+ 3736              	.LASF50:
+ 3737 0019 5350495F 		.ascii	"SPI_ss0_m_Write\000"
+ 3737      7373305F 
+ 3737      6D5F5772 
+ 3737      69746500 
+ 3738              	.LASF57:
+ 3739 0029 433A5C55 		.ascii	"C:\\Users\\dmytro.fedorchenko\\Documents\\PSoC Crea"
+ 3739      73657273 
+ 3739      5C646D79 
+ 3739      74726F2E 
+ 3739      6665646F 
+ 3740 0058 746F725C 		.ascii	"tor\\PWM01\\midiPlayer.cydsn\000"
+ 3740      50574D30 
+ 3740      315C6D69 
+ 3740      6469506C 
+ 3740      61796572 
+ 3741              	.LASF11:
+ 3742 0073 5245535F 		.ascii	"RES_OK\000"
+ 3742      4F4B00
+ 3743              	.LASF1:
+ 3744 007a 73686F72 		.ascii	"short int\000"
+ 3744      7420696E 
+ 3744      7400
+ 3745              	.LASF2:
+ 3746 0084 42595445 		.ascii	"BYTE\000"
+ 3746      00
+ 3747              	.LASF45:
+ 3748 0089 53746174 		.ascii	"Stat\000"
+ 3748      00
+ 3749              	.LASF55:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 77
+
+
+ 3750 008e 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 3750      43313120 
+ 3750      352E342E 
+ 3750      31203230 
+ 3750      31363036 
+ 3751 00c1 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0plus -mthumb -"
+ 3751      20726576 
+ 3751      6973696F 
+ 3751      6E203233 
+ 3751      37373135 
+ 3752 00f4 67202D4F 		.ascii	"g -Og -ffunction-sections -ffat-lto-objects\000"
+ 3752      67202D66 
+ 3752      66756E63 
+ 3752      74696F6E 
+ 3752      2D736563 
+ 3753              	.LASF32:
+ 3754 0120 73656C65 		.ascii	"select\000"
+ 3754      637400
+ 3755              	.LASF51:
+ 3756 0127 5350495F 		.ascii	"SPI_SpiUartClearTxBuffer\000"
+ 3756      53706955 
+ 3756      61727443 
+ 3756      6C656172 
+ 3756      54784275 
+ 3757              	.LASF27:
+ 3758 0140 62756666 		.ascii	"buff\000"
+ 3758      00
+ 3759              	.LASF48:
+ 3760 0145 5350495F 		.ascii	"SPI_SpiUartGetRxBufferSize\000"
+ 3760      53706955 
+ 3760      61727447 
+ 3760      65745278 
+ 3760      42756666 
+ 3761              	.LASF46:
+ 3762 0160 43617264 		.ascii	"CardType\000"
+ 3762      54797065 
+ 3762      00
+ 3763              	.LASF31:
+ 3764 0169 64657365 		.ascii	"deselect\000"
+ 3764      6C656374 
+ 3764      00
+ 3765              	.LASF3:
+ 3766 0172 574F5244 		.ascii	"WORD\000"
+ 3766      00
+ 3767              	.LASF30:
+ 3768 0177 72637672 		.ascii	"rcvr_mmc\000"
+ 3768      5F6D6D63 
+ 3768      00
+ 3769              	.LASF40:
+ 3770 0180 73656374 		.ascii	"sector\000"
+ 3770      6F7200
+ 3771              	.LASF21:
+ 3772 0187 666C6F61 		.ascii	"float\000"
+ 3772      7400
+ 3773              	.LASF18:
+ 3774 018d 6C6F6E67 		.ascii	"long long int\000"
+ 3774      206C6F6E 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 78
+
+
+ 3774      6720696E 
+ 3774      7400
+ 3775              	.LASF7:
+ 3776 019b 6C6F6E67 		.ascii	"long int\000"
+ 3776      20696E74 
+ 3776      00
+ 3777              	.LASF34:
+ 3778 01a4 73656E64 		.ascii	"send_cmd\000"
+ 3778      5F636D64 
+ 3778      00
+ 3779              	.LASF13:
+ 3780 01ad 5245535F 		.ascii	"RES_WRPRT\000"
+ 3780      57525052 
+ 3780      5400
+ 3781              	.LASF38:
+ 3782 01b7 6469736B 		.ascii	"disk_initialize\000"
+ 3782      5F696E69 
+ 3782      7469616C 
+ 3782      697A6500 
+ 3783              	.LASF5:
+ 3784 01c7 55494E54 		.ascii	"UINT\000"
+ 3784      00
+ 3785              	.LASF37:
+ 3786 01cc 6469736B 		.ascii	"disk_status\000"
+ 3786      5F737461 
+ 3786      74757300 
+ 3787              	.LASF39:
+ 3788 01d8 6469736B 		.ascii	"disk_read\000"
+ 3788      5F726561 
+ 3788      6400
+ 3789              	.LASF10:
+ 3790 01e2 44535441 		.ascii	"DSTATUS\000"
+ 3790      54555300 
+ 3791              	.LASF8:
+ 3792 01ea 44574F52 		.ascii	"DWORD\000"
+ 3792      4400
+ 3793              	.LASF25:
+ 3794 01f0 6C6F6E67 		.ascii	"long double\000"
+ 3794      20646F75 
+ 3794      626C6500 
+ 3795              	.LASF54:
+ 3796 01fc 43794465 		.ascii	"CyDelayUs\000"
+ 3796      6C617955 
+ 3796      7300
+ 3797              	.LASF0:
+ 3798 0206 756E7369 		.ascii	"unsigned char\000"
+ 3798      676E6564 
+ 3798      20636861 
+ 3798      7200
+ 3799              	.LASF52:
+ 3800 0214 5350495F 		.ascii	"SPI_SpiUartClearRxBuffer\000"
+ 3800      53706955 
+ 3800      61727443 
+ 3800      6C656172 
+ 3800      52784275 
+ 3801              	.LASF49:
+ 3802 022d 5350495F 		.ascii	"SPI_SpiUartReadRxData\000"
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 79
+
+
+ 3802      53706955 
+ 3802      61727452 
+ 3802      65616452 
+ 3802      78446174 
+ 3803              	.LASF17:
+ 3804 0243 7369676E 		.ascii	"signed char\000"
+ 3804      65642063 
+ 3804      68617200 
+ 3805              	.LASF19:
+ 3806 024f 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 3806      206C6F6E 
+ 3806      6720756E 
+ 3806      7369676E 
+ 3806      65642069 
+ 3807              	.LASF6:
+ 3808 0266 756E7369 		.ascii	"unsigned int\000"
+ 3808      676E6564 
+ 3808      20696E74 
+ 3808      00
+ 3809              	.LASF42:
+ 3810 0273 6469736B 		.ascii	"disk_write\000"
+ 3810      5F777269 
+ 3810      746500
+ 3811              	.LASF24:
+ 3812 027e 72656733 		.ascii	"reg32\000"
+ 3812      3200
+ 3813              	.LASF4:
+ 3814 0284 73686F72 		.ascii	"short unsigned int\000"
+ 3814      7420756E 
+ 3814      7369676E 
+ 3814      65642069 
+ 3814      6E7400
+ 3815              	.LASF43:
+ 3816 0297 6469736B 		.ascii	"disk_ioctl\000"
+ 3816      5F696F63 
+ 3816      746C00
+ 3817              	.LASF23:
+ 3818 02a2 63686172 		.ascii	"char\000"
+ 3818      00
+ 3819              	.LASF29:
+ 3820 02a7 72637672 		.ascii	"rcvr_datablock\000"
+ 3820      5F646174 
+ 3820      61626C6F 
+ 3820      636B00
+ 3821              	.LASF14:
+ 3822 02b6 5245535F 		.ascii	"RES_NOTRDY\000"
+ 3822      4E4F5452 
+ 3822      445900
+ 3823              	.LASF20:
+ 3824 02c1 75696E74 		.ascii	"uint32\000"
+ 3824      333200
+ 3825              	.LASF9:
+ 3826 02c8 6C6F6E67 		.ascii	"long unsigned int\000"
+ 3826      20756E73 
+ 3826      69676E65 
+ 3826      6420696E 
+ 3826      7400
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\cctdc708.s 			page 80
+
+
+ 3827              	.LASF44:
+ 3828 02da 6374726C 		.ascii	"ctrl\000"
+ 3828      00
+ 3829              	.LASF47:
+ 3830 02df 5350495F 		.ascii	"SPI_SpiUartWriteTxData\000"
+ 3830      53706955 
+ 3830      61727457 
+ 3830      72697465 
+ 3830      54784461 
+ 3831              	.LASF53:
+ 3832 02f6 5350495F 		.ascii	"SPI_SpiUartPutArray\000"
+ 3832      53706955 
+ 3832      61727450 
+ 3832      75744172 
+ 3832      72617900 
+ 3833              	.LASF35:
+ 3834 030a 786D6974 		.ascii	"xmit_datablock\000"
+ 3834      5F646174 
+ 3834      61626C6F 
+ 3834      636B00
+ 3835              	.LASF41:
+ 3836 0319 636F756E 		.ascii	"count\000"
+ 3836      7400
+ 3837              	.LASF16:
+ 3838 031f 44524553 		.ascii	"DRESULT\000"
+ 3838      554C5400 
+ 3839              	.LASF26:
+ 3840 0327 73697A65 		.ascii	"sizetype\000"
+ 3840      74797065 
+ 3840      00
+ 3841              	.LASF22:
+ 3842 0330 646F7562 		.ascii	"double\000"
+ 3842      6C6500
+ 3843              	.LASF15:
+ 3844 0337 5245535F 		.ascii	"RES_PARERR\000"
+ 3844      50415245 
+ 3844      525200
+ 3845              	.LASF56:
+ 3846 0342 66617466 		.ascii	"fatfs\\sdcard.c\000"
+ 3846      735C7364 
+ 3846      63617264 
+ 3846      2E6300
+ 3847              	.LASF28:
+ 3848 0351 77616974 		.ascii	"wait_ready\000"
+ 3848      5F726561 
+ 3848      647900
+ 3849              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

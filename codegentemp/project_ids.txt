@@ -1,0 +1,10 @@
+C:\Users\dmytro.fedorchenko\Documents\PSoC Creator\PWM01\TCPWM_P4_Periodic_Interrupt01.cydsn\TCPWM_P4_Periodic_Interrupt01.cyprj|44b577a0-c813-4e6f-adad-5d9c56b79b8e
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|2ab5d82b-5955-4134-a77c-52522dd03e7f
+C:\Users\dmytro.fedorchenko\Documents\PSoC Creator\4.2\Downloads ( 4.2).cylib\Downloads ( 4.2).cyprj|b1e00898-cf96-4ab1-bb81-ab5f34a06671
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|e4f60813-5b07-4bea-84fa-ed94ebbdf1b5
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|c156c070-1f2e-4f9d-9eb3-d17d4ab86ada
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|a90f263a-6fe9-4cf4-97f6-d2b0c6527ec4
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\default\CyReferenceLibrary\CyReferenceLibrary.cylib\CyReferenceLibrary.cyprj|4626e72f-a526-46e6-919a-09bb496e2a50
+C:\Users\dmytro.fedorchenko\Documents\PSoC Creator\PWM01\PWMExample01.cydsn\PWMExample01.cyprj|99a2bc95-7949-4bdd-ada9-f8ab48b1061b
+C:\Users\dmytro.fedorchenko\Documents\PSoC Creator\PWM01\PWM02.cydsn\PWM02.cyprj|c8ec0597-e6ca-4ecf-bac1-de4a259ee0a9
+C:\Users\dmytro.fedorchenko\Documents\PSoC Creator\PWM01\midiPlayer.cydsn\midiPlayer.cyprj|28f573e3-0e79-4a89-8b37-ddb615b2dbee

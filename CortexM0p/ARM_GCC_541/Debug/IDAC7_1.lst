@@ -1,0 +1,1509 @@
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0plus
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"IDAC7_1.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.IDAC7_1_Enable,"ax",%progbits
+  20              		.align	2
+  21              		.global	IDAC7_1_Enable
+  22              		.code	16
+  23              		.thumb_func
+  24              		.type	IDAC7_1_Enable, %function
+  25              	IDAC7_1_Enable:
+  26              	.LFB2:
+  27              		.file 1 "Generated_Source\\PSoC4\\IDAC7_1.c"
+   1:Generated_Source\PSoC4/IDAC7_1.c **** /***************************************************************************//**
+   2:Generated_Source\PSoC4/IDAC7_1.c **** * \file IDAC7_1.c
+   3:Generated_Source\PSoC4/IDAC7_1.c **** * \version 1.10
+   4:Generated_Source\PSoC4/IDAC7_1.c **** *
+   5:Generated_Source\PSoC4/IDAC7_1.c **** * \brief
+   6:Generated_Source\PSoC4/IDAC7_1.c **** *  This file provides the source code of APIs for the IDAC7 component.
+   7:Generated_Source\PSoC4/IDAC7_1.c **** *
+   8:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************
+   9:Generated_Source\PSoC4/IDAC7_1.c **** * \copyright
+  10:Generated_Source\PSoC4/IDAC7_1.c **** * Copyright 2017, Cypress Semiconductor Corporation.  All rights reserved.
+  11:Generated_Source\PSoC4/IDAC7_1.c **** * You may use this file only in accordance with the license, terms, conditions,
+  12:Generated_Source\PSoC4/IDAC7_1.c **** * disclaimers, and limitations in the end user license agreement accompanying
+  13:Generated_Source\PSoC4/IDAC7_1.c **** * the software package with which this file was provided.
+  14:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************/
+  15:Generated_Source\PSoC4/IDAC7_1.c **** 
+  16:Generated_Source\PSoC4/IDAC7_1.c **** #include "IDAC7_1.h"
+  17:Generated_Source\PSoC4/IDAC7_1.c **** 
+  18:Generated_Source\PSoC4/IDAC7_1.c **** uint32 IDAC7_1_initVar = 0u;
+  19:Generated_Source\PSoC4/IDAC7_1.c **** 
+  20:Generated_Source\PSoC4/IDAC7_1.c **** 
+  21:Generated_Source\PSoC4/IDAC7_1.c **** /*******************************************************************************
+  22:Generated_Source\PSoC4/IDAC7_1.c **** * Function Name: IDAC7_1_Init
+  23:Generated_Source\PSoC4/IDAC7_1.c **** ****************************************************************************//**
+  24:Generated_Source\PSoC4/IDAC7_1.c **** *
+  25:Generated_Source\PSoC4/IDAC7_1.c **** *  Initializes all initial parameters and operating modes.
+  26:Generated_Source\PSoC4/IDAC7_1.c **** *
+  27:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************/
+  28:Generated_Source\PSoC4/IDAC7_1.c **** void IDAC7_1_Init(void)
+  29:Generated_Source\PSoC4/IDAC7_1.c **** {
+  30:Generated_Source\PSoC4/IDAC7_1.c ****     uint8 interruptState;
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 2
+
+
+  31:Generated_Source\PSoC4/IDAC7_1.c **** 
+  32:Generated_Source\PSoC4/IDAC7_1.c ****     /* Set IDAC default values */
+  33:Generated_Source\PSoC4/IDAC7_1.c ****     interruptState = CyEnterCriticalSection();
+  34:Generated_Source\PSoC4/IDAC7_1.c **** 
+  35:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_IDAC_CONTROL_REG &= (~IDAC7_1_POLY_DYN  &
+  36:Generated_Source\PSoC4/IDAC7_1.c ****                                           ~IDAC7_1_LEG1_MODE_MASK &
+  37:Generated_Source\PSoC4/IDAC7_1.c ****                                           ~IDAC7_1_LEG2_MODE_MASK &
+  38:Generated_Source\PSoC4/IDAC7_1.c ****                                           ~IDAC7_1_DSI_CTRL_EN);
+  39:Generated_Source\PSoC4/IDAC7_1.c **** 
+  40:Generated_Source\PSoC4/IDAC7_1.c ****     CyExitCriticalSection(interruptState);
+  41:Generated_Source\PSoC4/IDAC7_1.c **** 
+  42:Generated_Source\PSoC4/IDAC7_1.c ****     /* Set initial configuration */
+  43:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_SetValue(IDAC7_1_CURRENT_VALUE);
+  44:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_SetPolarity(IDAC7_1_CURRENT_POLARITY);
+  45:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_SetRange(IDAC7_1_CURRENT_RANGE);
+  46:Generated_Source\PSoC4/IDAC7_1.c **** }
+  47:Generated_Source\PSoC4/IDAC7_1.c **** 
+  48:Generated_Source\PSoC4/IDAC7_1.c **** 
+  49:Generated_Source\PSoC4/IDAC7_1.c **** /*******************************************************************************
+  50:Generated_Source\PSoC4/IDAC7_1.c **** * Function Name: IDAC7_1_Enable
+  51:Generated_Source\PSoC4/IDAC7_1.c **** ****************************************************************************//**
+  52:Generated_Source\PSoC4/IDAC7_1.c **** *
+  53:Generated_Source\PSoC4/IDAC7_1.c **** *  Enables the IDAC for operation.
+  54:Generated_Source\PSoC4/IDAC7_1.c **** *
+  55:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************/
+  56:Generated_Source\PSoC4/IDAC7_1.c **** void IDAC7_1_Enable(void)
+  57:Generated_Source\PSoC4/IDAC7_1.c **** {
+  28              		.loc 1 57 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 10B5     		push	{r4, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 4, -8
+  35              		.cfi_offset 14, -4
+  58:Generated_Source\PSoC4/IDAC7_1.c ****     uint8 interruptState;
+  59:Generated_Source\PSoC4/IDAC7_1.c **** 
+  60:Generated_Source\PSoC4/IDAC7_1.c ****     interruptState = CyEnterCriticalSection();
+  36              		.loc 1 60 0
+  37 0002 FFF7FEFF 		bl	CyEnterCriticalSection
+  38              	.LVL0:
+  61:Generated_Source\PSoC4/IDAC7_1.c **** 
+  62:Generated_Source\PSoC4/IDAC7_1.c ****     /* Enable CSD */
+  63:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_CSD_CONTROL_REG |= IDAC7_1_IDAC_EN_CONFIG;
+  39              		.loc 1 63 0
+  40 0006 044A     		ldr	r2, .L2
+  41 0008 1368     		ldr	r3, [r2]
+  42 000a 0449     		ldr	r1, .L2+4
+  43 000c 0B43     		orrs	r3, r1
+  44 000e 1360     		str	r3, [r2]
+  64:Generated_Source\PSoC4/IDAC7_1.c **** 
+  65:Generated_Source\PSoC4/IDAC7_1.c ****     CyExitCriticalSection(interruptState);
+  45              		.loc 1 65 0
+  46 0010 FFF7FEFF 		bl	CyExitCriticalSection
+  47              	.LVL1:
+  66:Generated_Source\PSoC4/IDAC7_1.c **** }
+  48              		.loc 1 66 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 3
+
+
+  49              		@ sp needed
+  50 0014 10BD     		pop	{r4, pc}
+  51              	.L3:
+  52 0016 C046     		.align	2
+  53              	.L2:
+  54 0018 00000B40 		.word	1074462720
+  55 001c 00100080 		.word	-2147479552
+  56              		.cfi_endproc
+  57              	.LFE2:
+  58              		.size	IDAC7_1_Enable, .-IDAC7_1_Enable
+  59              		.section	.text.IDAC7_1_Stop,"ax",%progbits
+  60              		.align	2
+  61              		.global	IDAC7_1_Stop
+  62              		.code	16
+  63              		.thumb_func
+  64              		.type	IDAC7_1_Stop, %function
+  65              	IDAC7_1_Stop:
+  66              	.LFB4:
+  67:Generated_Source\PSoC4/IDAC7_1.c **** 
+  68:Generated_Source\PSoC4/IDAC7_1.c **** 
+  69:Generated_Source\PSoC4/IDAC7_1.c **** /*******************************************************************************
+  70:Generated_Source\PSoC4/IDAC7_1.c **** * Function Name: IDAC7_1_Start
+  71:Generated_Source\PSoC4/IDAC7_1.c **** ****************************************************************************//**
+  72:Generated_Source\PSoC4/IDAC7_1.c **** *
+  73:Generated_Source\PSoC4/IDAC7_1.c **** *  Initializes all the parameters required to setup the component as defined
+  74:Generated_Source\PSoC4/IDAC7_1.c **** *  in the customizer.
+  75:Generated_Source\PSoC4/IDAC7_1.c **** *
+  76:Generated_Source\PSoC4/IDAC7_1.c **** *  This component does not stop the CSD IP block. One possible way to turn off 
+  77:Generated_Source\PSoC4/IDAC7_1.c **** *  the entire CSD block is to use a specific define (IDAC7_1_CSD_CONFIG_ENABLE) 
+  78:Generated_Source\PSoC4/IDAC7_1.c **** *  for the m0s8csdv2 IP block control register (IDAC7_1_CSD_CONTROL_REG): 
+  79:Generated_Source\PSoC4/IDAC7_1.c **** *  IDAC7_1_CSD_CONTROL_REG &= ~IDAC7_1_CSD_CONFIG_ENABLE
+  80:Generated_Source\PSoC4/IDAC7_1.c **** *
+  81:Generated_Source\PSoC4/IDAC7_1.c **** * \globalvars
+  82:Generated_Source\PSoC4/IDAC7_1.c **** *  \ref IDAC7_1_initVar - this variable is used to indicate the initial
+  83:Generated_Source\PSoC4/IDAC7_1.c **** *  configuration of this component. The variable is initialized to zero and
+  84:Generated_Source\PSoC4/IDAC7_1.c **** *  set to 1 the first time IDAC7_1_Start() is called. This allows
+  85:Generated_Source\PSoC4/IDAC7_1.c **** *  the component initialization without re-initialization in all subsequent
+  86:Generated_Source\PSoC4/IDAC7_1.c **** *  calls to the IDAC7_1_Start() routine.
+  87:Generated_Source\PSoC4/IDAC7_1.c **** *
+  88:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************/
+  89:Generated_Source\PSoC4/IDAC7_1.c **** void IDAC7_1_Start(void)
+  90:Generated_Source\PSoC4/IDAC7_1.c **** {
+  91:Generated_Source\PSoC4/IDAC7_1.c ****     if(0u == IDAC7_1_initVar)
+  92:Generated_Source\PSoC4/IDAC7_1.c ****     {
+  93:Generated_Source\PSoC4/IDAC7_1.c ****         IDAC7_1_Init();
+  94:Generated_Source\PSoC4/IDAC7_1.c ****         IDAC7_1_initVar = 1u;
+  95:Generated_Source\PSoC4/IDAC7_1.c ****     }
+  96:Generated_Source\PSoC4/IDAC7_1.c **** 
+  97:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_Enable();
+  98:Generated_Source\PSoC4/IDAC7_1.c **** }
+  99:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 100:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 101:Generated_Source\PSoC4/IDAC7_1.c **** /*******************************************************************************
+ 102:Generated_Source\PSoC4/IDAC7_1.c **** * Function Name: IDAC7_1_Stop
+ 103:Generated_Source\PSoC4/IDAC7_1.c **** ****************************************************************************//**
+ 104:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 105:Generated_Source\PSoC4/IDAC7_1.c **** *  The Stop is not required.
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 4
+
+
+ 106:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 107:Generated_Source\PSoC4/IDAC7_1.c **** *  This component does not stop the CSD IP block. One possible way to turn off 
+ 108:Generated_Source\PSoC4/IDAC7_1.c **** *  the entire CSD block is to use a specific define (IDAC7_1_CSD_CONFIG_ENABLE) 
+ 109:Generated_Source\PSoC4/IDAC7_1.c **** *  for the m0s8csdv2 IP block control register (IDAC7_1_CSD_CONTROL_REG): 
+ 110:Generated_Source\PSoC4/IDAC7_1.c **** *  IDAC7_1_CSD_CONTROL_REG &= ~IDAC7_1_CSD_CONFIG_ENABLE
+ 111:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 112:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************/
+ 113:Generated_Source\PSoC4/IDAC7_1.c **** void IDAC7_1_Stop(void)
+ 114:Generated_Source\PSoC4/IDAC7_1.c **** {
+  67              		.loc 1 114 0
+  68              		.cfi_startproc
+  69              		@ args = 0, pretend = 0, frame = 0
+  70              		@ frame_needed = 0, uses_anonymous_args = 0
+  71              		@ link register save eliminated.
+ 115:Generated_Source\PSoC4/IDAC7_1.c ****     /* Do nothing */
+ 116:Generated_Source\PSoC4/IDAC7_1.c **** }
+  72              		.loc 1 116 0
+  73              		@ sp needed
+  74 0000 7047     		bx	lr
+  75              		.cfi_endproc
+  76              	.LFE4:
+  77              		.size	IDAC7_1_Stop, .-IDAC7_1_Stop
+  78 0002 C046     		.section	.text.IDAC7_1_SetValue,"ax",%progbits
+  79              		.align	2
+  80              		.global	IDAC7_1_SetValue
+  81              		.code	16
+  82              		.thumb_func
+  83              		.type	IDAC7_1_SetValue, %function
+  84              	IDAC7_1_SetValue:
+  85              	.LFB5:
+ 117:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 118:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 119:Generated_Source\PSoC4/IDAC7_1.c **** /*******************************************************************************
+ 120:Generated_Source\PSoC4/IDAC7_1.c **** * Function Name: IDAC7_1_SetValue
+ 121:Generated_Source\PSoC4/IDAC7_1.c **** ****************************************************************************//**
+ 122:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 123:Generated_Source\PSoC4/IDAC7_1.c **** *  Sets the IDAC current to the new value.
+ 124:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 125:Generated_Source\PSoC4/IDAC7_1.c **** *  \param uint32 current: The current value
+ 126:Generated_Source\PSoC4/IDAC7_1.c **** *  * Valid range    : [0 - 127]
+ 127:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 128:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************/
+ 129:Generated_Source\PSoC4/IDAC7_1.c **** void IDAC7_1_SetValue(uint32 current)
+ 130:Generated_Source\PSoC4/IDAC7_1.c **** {
+  86              		.loc 1 130 0
+  87              		.cfi_startproc
+  88              		@ args = 0, pretend = 0, frame = 0
+  89              		@ frame_needed = 0, uses_anonymous_args = 0
+  90              	.LVL2:
+  91 0000 10B5     		push	{r4, lr}
+  92              		.cfi_def_cfa_offset 8
+  93              		.cfi_offset 4, -8
+  94              		.cfi_offset 14, -4
+  95 0002 0400     		movs	r4, r0
+ 131:Generated_Source\PSoC4/IDAC7_1.c ****     uint8 interruptState;
+ 132:Generated_Source\PSoC4/IDAC7_1.c ****     uint32 newRegisterValue;
+ 133:Generated_Source\PSoC4/IDAC7_1.c **** 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 5
+
+
+ 134:Generated_Source\PSoC4/IDAC7_1.c ****     interruptState = CyEnterCriticalSection();
+  96              		.loc 1 134 0
+  97 0004 FFF7FEFF 		bl	CyEnterCriticalSection
+  98              	.LVL3:
+ 135:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 136:Generated_Source\PSoC4/IDAC7_1.c ****     newRegisterValue = IDAC7_1_IDAC_CONTROL_REG & ~IDAC7_1_CURRENT_VALUE_MASK;
+  99              		.loc 1 136 0
+ 100 0008 044A     		ldr	r2, .L6
+ 101 000a 1368     		ldr	r3, [r2]
+ 102 000c 7F21     		movs	r1, #127
+ 103 000e 8B43     		bics	r3, r1
+ 104              	.LVL4:
+ 137:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 138:Generated_Source\PSoC4/IDAC7_1.c ****     newRegisterValue |= ((current << IDAC7_1_CURRENT_VALUE_POS) & IDAC7_1_CURRENT_VALUE_MASK);
+ 105              		.loc 1 138 0
+ 106 0010 0C40     		ands	r4, r1
+ 107              	.LVL5:
+ 108 0012 1C43     		orrs	r4, r3
+ 109              	.LVL6:
+ 139:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 140:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_IDAC_CONTROL_REG = newRegisterValue;
+ 110              		.loc 1 140 0
+ 111 0014 1460     		str	r4, [r2]
+ 141:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 142:Generated_Source\PSoC4/IDAC7_1.c ****     CyExitCriticalSection(interruptState);
+ 112              		.loc 1 142 0
+ 113 0016 FFF7FEFF 		bl	CyExitCriticalSection
+ 114              	.LVL7:
+ 143:Generated_Source\PSoC4/IDAC7_1.c **** }
+ 115              		.loc 1 143 0
+ 116              		@ sp needed
+ 117              	.LVL8:
+ 118 001a 10BD     		pop	{r4, pc}
+ 119              	.L7:
+ 120              		.align	2
+ 121              	.L6:
+ 122 001c C0010B40 		.word	1074463168
+ 123              		.cfi_endproc
+ 124              	.LFE5:
+ 125              		.size	IDAC7_1_SetValue, .-IDAC7_1_SetValue
+ 126              		.section	.text.IDAC7_1_SetPolarity,"ax",%progbits
+ 127              		.align	2
+ 128              		.global	IDAC7_1_SetPolarity
+ 129              		.code	16
+ 130              		.thumb_func
+ 131              		.type	IDAC7_1_SetPolarity, %function
+ 132              	IDAC7_1_SetPolarity:
+ 133              	.LFB6:
+ 144:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 145:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 146:Generated_Source\PSoC4/IDAC7_1.c **** /*******************************************************************************
+ 147:Generated_Source\PSoC4/IDAC7_1.c **** * Function Name: IDAC7_1_SetPolarity
+ 148:Generated_Source\PSoC4/IDAC7_1.c **** ****************************************************************************//**
+ 149:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 150:Generated_Source\PSoC4/IDAC7_1.c **** *  Sets polarity to either sink or source.
+ 151:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 152:Generated_Source\PSoC4/IDAC7_1.c **** *  \param uint32 polarity: Current polarity
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 6
+
+
+ 153:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_POL_SOURCE   : Source polarity
+ 154:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_POL_SINK     : Sink polarity
+ 155:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 156:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************/
+ 157:Generated_Source\PSoC4/IDAC7_1.c **** void IDAC7_1_SetPolarity(uint32 polarity)
+ 158:Generated_Source\PSoC4/IDAC7_1.c **** {
+ 134              		.loc 1 158 0
+ 135              		.cfi_startproc
+ 136              		@ args = 0, pretend = 0, frame = 0
+ 137              		@ frame_needed = 0, uses_anonymous_args = 0
+ 138              	.LVL9:
+ 139 0000 70B5     		push	{r4, r5, r6, lr}
+ 140              		.cfi_def_cfa_offset 16
+ 141              		.cfi_offset 4, -16
+ 142              		.cfi_offset 5, -12
+ 143              		.cfi_offset 6, -8
+ 144              		.cfi_offset 14, -4
+ 145 0002 0400     		movs	r4, r0
+ 159:Generated_Source\PSoC4/IDAC7_1.c ****     uint8 interruptState;
+ 160:Generated_Source\PSoC4/IDAC7_1.c ****     uint32 newRegisterValue;
+ 161:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 162:Generated_Source\PSoC4/IDAC7_1.c ****     interruptState = CyEnterCriticalSection();
+ 146              		.loc 1 162 0
+ 147 0004 FFF7FEFF 		bl	CyEnterCriticalSection
+ 148              	.LVL10:
+ 163:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 164:Generated_Source\PSoC4/IDAC7_1.c ****     newRegisterValue = IDAC7_1_IDAC_CONTROL_REG & ~IDAC7_1_POLARITY_MASK;
+ 149              		.loc 1 164 0
+ 150 0008 064D     		ldr	r5, .L9
+ 151 000a 2B68     		ldr	r3, [r5]
+ 152 000c 064A     		ldr	r2, .L9+4
+ 153 000e 1340     		ands	r3, r2
+ 154 0010 1900     		movs	r1, r3
+ 155              	.LVL11:
+ 165:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 166:Generated_Source\PSoC4/IDAC7_1.c ****     newRegisterValue |= ((polarity << IDAC7_1_POLARITY_POS) & IDAC7_1_POLARITY_MASK);
+ 156              		.loc 1 166 0
+ 157 0012 2302     		lsls	r3, r4, #8
+ 158 0014 C022     		movs	r2, #192
+ 159 0016 9200     		lsls	r2, r2, #2
+ 160 0018 1340     		ands	r3, r2
+ 161 001a 0B43     		orrs	r3, r1
+ 162              	.LVL12:
+ 167:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 168:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_IDAC_CONTROL_REG = newRegisterValue;
+ 163              		.loc 1 168 0
+ 164 001c 2B60     		str	r3, [r5]
+ 169:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 170:Generated_Source\PSoC4/IDAC7_1.c ****     CyExitCriticalSection(interruptState);
+ 165              		.loc 1 170 0
+ 166 001e FFF7FEFF 		bl	CyExitCriticalSection
+ 167              	.LVL13:
+ 171:Generated_Source\PSoC4/IDAC7_1.c **** }
+ 168              		.loc 1 171 0
+ 169              		@ sp needed
+ 170              	.LVL14:
+ 171 0022 70BD     		pop	{r4, r5, r6, pc}
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 7
+
+
+ 172              	.L10:
+ 173              		.align	2
+ 174              	.L9:
+ 175 0024 C0010B40 		.word	1074463168
+ 176 0028 FFFCFFFF 		.word	-769
+ 177              		.cfi_endproc
+ 178              	.LFE6:
+ 179              		.size	IDAC7_1_SetPolarity, .-IDAC7_1_SetPolarity
+ 180              		.section	.text.IDAC7_1_SetRange,"ax",%progbits
+ 181              		.align	2
+ 182              		.global	IDAC7_1_SetRange
+ 183              		.code	16
+ 184              		.thumb_func
+ 185              		.type	IDAC7_1_SetRange, %function
+ 186              	IDAC7_1_SetRange:
+ 187              	.LFB7:
+ 172:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 173:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 174:Generated_Source\PSoC4/IDAC7_1.c **** /*******************************************************************************
+ 175:Generated_Source\PSoC4/IDAC7_1.c **** * Function Name: IDAC7_1_SetRange
+ 176:Generated_Source\PSoC4/IDAC7_1.c **** ****************************************************************************//**
+ 177:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 178:Generated_Source\PSoC4/IDAC7_1.c **** * Sets the IDAC range to one of the six ranges.
+ 179:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 180:Generated_Source\PSoC4/IDAC7_1.c **** *  \param uint32 range: Current range
+ 181:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_RNG_4_76UA   : 37.5 nA/bit current range
+ 182:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_RNG_9_52UA   : 75 nA/bit current range
+ 183:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_RNG_38_1UA   : 300 nA/bit current range
+ 184:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_RNG_76_2UA   : 600 nA/bit current range
+ 185:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_RNG_152_4UA  : 1.2 uA/bit current range
+ 186:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_RNG_304_8UA  : 2.4 uA/bit current range
+ 187:Generated_Source\PSoC4/IDAC7_1.c **** *  * IDAC7_1_RNG_609_6UA  : 4.8 uA/bit current range
+ 188:Generated_Source\PSoC4/IDAC7_1.c **** *
+ 189:Generated_Source\PSoC4/IDAC7_1.c **** *******************************************************************************/
+ 190:Generated_Source\PSoC4/IDAC7_1.c **** void IDAC7_1_SetRange(uint32 range)
+ 191:Generated_Source\PSoC4/IDAC7_1.c **** {
+ 188              		.loc 1 191 0
+ 189              		.cfi_startproc
+ 190              		@ args = 0, pretend = 0, frame = 0
+ 191              		@ frame_needed = 0, uses_anonymous_args = 0
+ 192              	.LVL15:
+ 193 0000 10B5     		push	{r4, lr}
+ 194              		.cfi_def_cfa_offset 8
+ 195              		.cfi_offset 4, -8
+ 196              		.cfi_offset 14, -4
+ 197 0002 0400     		movs	r4, r0
+ 192:Generated_Source\PSoC4/IDAC7_1.c ****     uint8 interruptState;
+ 193:Generated_Source\PSoC4/IDAC7_1.c ****     uint32 newRegisterValue;
+ 194:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 195:Generated_Source\PSoC4/IDAC7_1.c ****     interruptState = CyEnterCriticalSection();
+ 198              		.loc 1 195 0
+ 199 0004 FFF7FEFF 		bl	CyEnterCriticalSection
+ 200              	.LVL16:
+ 196:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 197:Generated_Source\PSoC4/IDAC7_1.c ****     newRegisterValue = IDAC7_1_IDAC_CONTROL_REG & (~IDAC7_1_RANGE_MASK    &
+ 201              		.loc 1 197 0
+ 202 0008 044A     		ldr	r2, .L12
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 8
+
+
+ 203 000a 1168     		ldr	r1, [r2]
+ 204 000c 044B     		ldr	r3, .L12+4
+ 205 000e 0B40     		ands	r3, r1
+ 206              	.LVL17:
+ 198:Generated_Source\PSoC4/IDAC7_1.c ****                                                             ~IDAC7_1_LEG1_EN       &
+ 199:Generated_Source\PSoC4/IDAC7_1.c ****                                                             ~IDAC7_1_LEG2_EN);
+ 200:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 201:Generated_Source\PSoC4/IDAC7_1.c ****     newRegisterValue |= (range << IDAC7_1_RANGE_POS);
+ 207              		.loc 1 201 0
+ 208 0010 A405     		lsls	r4, r4, #22
+ 209              	.LVL18:
+ 210 0012 1C43     		orrs	r4, r3
+ 211              	.LVL19:
+ 202:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 203:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_IDAC_CONTROL_REG = newRegisterValue;
+ 212              		.loc 1 203 0
+ 213 0014 1460     		str	r4, [r2]
+ 204:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 205:Generated_Source\PSoC4/IDAC7_1.c ****     CyExitCriticalSection(interruptState);
+ 214              		.loc 1 205 0
+ 215 0016 FFF7FEFF 		bl	CyExitCriticalSection
+ 216              	.LVL20:
+ 206:Generated_Source\PSoC4/IDAC7_1.c **** }
+ 217              		.loc 1 206 0
+ 218              		@ sp needed
+ 219              	.LVL21:
+ 220 001a 10BD     		pop	{r4, pc}
+ 221              	.L13:
+ 222              		.align	2
+ 223              	.L12:
+ 224 001c C0010B40 		.word	1074463168
+ 225 0020 FFFF3FFC 		.word	-62914561
+ 226              		.cfi_endproc
+ 227              	.LFE7:
+ 228              		.size	IDAC7_1_SetRange, .-IDAC7_1_SetRange
+ 229              		.section	.text.IDAC7_1_Init,"ax",%progbits
+ 230              		.align	2
+ 231              		.global	IDAC7_1_Init
+ 232              		.code	16
+ 233              		.thumb_func
+ 234              		.type	IDAC7_1_Init, %function
+ 235              	IDAC7_1_Init:
+ 236              	.LFB1:
+  29:Generated_Source\PSoC4/IDAC7_1.c ****     uint8 interruptState;
+ 237              		.loc 1 29 0
+ 238              		.cfi_startproc
+ 239              		@ args = 0, pretend = 0, frame = 0
+ 240              		@ frame_needed = 0, uses_anonymous_args = 0
+ 241 0000 10B5     		push	{r4, lr}
+ 242              		.cfi_def_cfa_offset 8
+ 243              		.cfi_offset 4, -8
+ 244              		.cfi_offset 14, -4
+  33:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 245              		.loc 1 33 0
+ 246 0002 FFF7FEFF 		bl	CyEnterCriticalSection
+ 247              	.LVL22:
+  35:Generated_Source\PSoC4/IDAC7_1.c ****                                           ~IDAC7_1_LEG1_MODE_MASK &
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 9
+
+
+ 248              		.loc 1 35 0
+ 249 0006 084A     		ldr	r2, .L15
+ 250 0008 1168     		ldr	r1, [r2]
+ 251 000a 084B     		ldr	r3, .L15+4
+ 252 000c 0B40     		ands	r3, r1
+ 253 000e 1360     		str	r3, [r2]
+  40:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 254              		.loc 1 40 0
+ 255 0010 FFF7FEFF 		bl	CyExitCriticalSection
+ 256              	.LVL23:
+  43:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_SetPolarity(IDAC7_1_CURRENT_POLARITY);
+ 257              		.loc 1 43 0
+ 258 0014 4020     		movs	r0, #64
+ 259 0016 FFF7FEFF 		bl	IDAC7_1_SetValue
+ 260              	.LVL24:
+  44:Generated_Source\PSoC4/IDAC7_1.c ****     IDAC7_1_SetRange(IDAC7_1_CURRENT_RANGE);
+ 261              		.loc 1 44 0
+ 262 001a 0020     		movs	r0, #0
+ 263 001c FFF7FEFF 		bl	IDAC7_1_SetPolarity
+ 264              	.LVL25:
+  45:Generated_Source\PSoC4/IDAC7_1.c **** }
+ 265              		.loc 1 45 0
+ 266 0020 0E20     		movs	r0, #14
+ 267 0022 FFF7FEFF 		bl	IDAC7_1_SetRange
+ 268              	.LVL26:
+  46:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 269              		.loc 1 46 0
+ 270              		@ sp needed
+ 271 0026 10BD     		pop	{r4, pc}
+ 272              	.L16:
+ 273              		.align	2
+ 274              	.L15:
+ 275 0028 C0010B40 		.word	1074463168
+ 276 002c 7FFFD0FF 		.word	-3080321
+ 277              		.cfi_endproc
+ 278              	.LFE1:
+ 279              		.size	IDAC7_1_Init, .-IDAC7_1_Init
+ 280              		.section	.text.IDAC7_1_Start,"ax",%progbits
+ 281              		.align	2
+ 282              		.global	IDAC7_1_Start
+ 283              		.code	16
+ 284              		.thumb_func
+ 285              		.type	IDAC7_1_Start, %function
+ 286              	IDAC7_1_Start:
+ 287              	.LFB3:
+  90:Generated_Source\PSoC4/IDAC7_1.c ****     if(0u == IDAC7_1_initVar)
+ 288              		.loc 1 90 0
+ 289              		.cfi_startproc
+ 290              		@ args = 0, pretend = 0, frame = 0
+ 291              		@ frame_needed = 0, uses_anonymous_args = 0
+ 292 0000 10B5     		push	{r4, lr}
+ 293              		.cfi_def_cfa_offset 8
+ 294              		.cfi_offset 4, -8
+ 295              		.cfi_offset 14, -4
+  91:Generated_Source\PSoC4/IDAC7_1.c ****     {
+ 296              		.loc 1 91 0
+ 297 0002 064B     		ldr	r3, .L19
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 10
+
+
+ 298 0004 1B68     		ldr	r3, [r3]
+ 299 0006 002B     		cmp	r3, #0
+ 300 0008 04D1     		bne	.L18
+  93:Generated_Source\PSoC4/IDAC7_1.c ****         IDAC7_1_initVar = 1u;
+ 301              		.loc 1 93 0
+ 302 000a FFF7FEFF 		bl	IDAC7_1_Init
+ 303              	.LVL27:
+  94:Generated_Source\PSoC4/IDAC7_1.c ****     }
+ 304              		.loc 1 94 0
+ 305 000e 0122     		movs	r2, #1
+ 306 0010 024B     		ldr	r3, .L19
+ 307 0012 1A60     		str	r2, [r3]
+ 308              	.L18:
+  97:Generated_Source\PSoC4/IDAC7_1.c **** }
+ 309              		.loc 1 97 0
+ 310 0014 FFF7FEFF 		bl	IDAC7_1_Enable
+ 311              	.LVL28:
+  98:Generated_Source\PSoC4/IDAC7_1.c **** 
+ 312              		.loc 1 98 0
+ 313              		@ sp needed
+ 314 0018 10BD     		pop	{r4, pc}
+ 315              	.L20:
+ 316 001a C046     		.align	2
+ 317              	.L19:
+ 318 001c 00000000 		.word	.LANCHOR0
+ 319              		.cfi_endproc
+ 320              	.LFE3:
+ 321              		.size	IDAC7_1_Start, .-IDAC7_1_Start
+ 322              		.global	IDAC7_1_initVar
+ 323              		.bss
+ 324              		.align	2
+ 325              		.set	.LANCHOR0,. + 0
+ 326              		.type	IDAC7_1_initVar, %object
+ 327              		.size	IDAC7_1_initVar, 4
+ 328              	IDAC7_1_initVar:
+ 329 0000 00000000 		.space	4
+ 330              		.text
+ 331              	.Letext0:
+ 332              		.file 2 "Generated_Source\\PSoC4\\cytypes.h"
+ 333              		.file 3 "Generated_Source\\PSoC4\\CyLib.h"
+ 334              		.section	.debug_info,"",%progbits
+ 335              	.Ldebug_info0:
+ 336 0000 B7020000 		.4byte	0x2b7
+ 337 0004 0400     		.2byte	0x4
+ 338 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 339 000a 04       		.byte	0x4
+ 340 000b 01       		.uleb128 0x1
+ 341 000c EE010000 		.4byte	.LASF30
+ 342 0010 0C       		.byte	0xc
+ 343 0011 00000000 		.4byte	.LASF31
+ 344 0015 7D010000 		.4byte	.LASF32
+ 345 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 346 001d 00000000 		.4byte	0
+ 347 0021 00000000 		.4byte	.Ldebug_line0
+ 348 0025 02       		.uleb128 0x2
+ 349 0026 01       		.byte	0x1
+ 350 0027 06       		.byte	0x6
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 11
+
+
+ 351 0028 80020000 		.4byte	.LASF0
+ 352 002c 02       		.uleb128 0x2
+ 353 002d 01       		.byte	0x1
+ 354 002e 08       		.byte	0x8
+ 355 002f 97000000 		.4byte	.LASF1
+ 356 0033 02       		.uleb128 0x2
+ 357 0034 02       		.byte	0x2
+ 358 0035 05       		.byte	0x5
+ 359 0036 C7010000 		.4byte	.LASF2
+ 360 003a 02       		.uleb128 0x2
+ 361 003b 02       		.byte	0x2
+ 362 003c 07       		.byte	0x7
+ 363 003d 56000000 		.4byte	.LASF3
+ 364 0041 02       		.uleb128 0x2
+ 365 0042 04       		.byte	0x4
+ 366 0043 05       		.byte	0x5
+ 367 0044 D9010000 		.4byte	.LASF4
+ 368 0048 02       		.uleb128 0x2
+ 369 0049 04       		.byte	0x4
+ 370 004a 07       		.byte	0x7
+ 371 004b B4000000 		.4byte	.LASF5
+ 372 004f 02       		.uleb128 0x2
+ 373 0050 08       		.byte	0x8
+ 374 0051 05       		.byte	0x5
+ 375 0052 6A010000 		.4byte	.LASF6
+ 376 0056 02       		.uleb128 0x2
+ 377 0057 08       		.byte	0x8
+ 378 0058 07       		.byte	0x7
+ 379 0059 80000000 		.4byte	.LASF7
+ 380 005d 03       		.uleb128 0x3
+ 381 005e 04       		.byte	0x4
+ 382 005f 05       		.byte	0x5
+ 383 0060 696E7400 		.ascii	"int\000"
+ 384 0064 02       		.uleb128 0x2
+ 385 0065 04       		.byte	0x4
+ 386 0066 07       		.byte	0x7
+ 387 0067 15010000 		.4byte	.LASF8
+ 388 006b 04       		.uleb128 0x4
+ 389 006c C6000000 		.4byte	.LASF9
+ 390 0070 02       		.byte	0x2
+ 391 0071 E401     		.2byte	0x1e4
+ 392 0073 2C000000 		.4byte	0x2c
+ 393 0077 04       		.uleb128 0x4
+ 394 0078 F7000000 		.4byte	.LASF10
+ 395 007c 02       		.byte	0x2
+ 396 007d E601     		.2byte	0x1e6
+ 397 007f 48000000 		.4byte	0x48
+ 398 0083 02       		.uleb128 0x2
+ 399 0084 04       		.byte	0x4
+ 400 0085 04       		.byte	0x4
+ 401 0086 7A000000 		.4byte	.LASF11
+ 402 008a 02       		.uleb128 0x2
+ 403 008b 08       		.byte	0x8
+ 404 008c 04       		.byte	0x4
+ 405 008d DF000000 		.4byte	.LASF12
+ 406 0091 02       		.uleb128 0x2
+ 407 0092 01       		.byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 12
+
+
+ 408 0093 08       		.byte	0x8
+ 409 0094 78010000 		.4byte	.LASF13
+ 410 0098 04       		.uleb128 0x4
+ 411 0099 21000000 		.4byte	.LASF14
+ 412 009d 02       		.byte	0x2
+ 413 009e 9002     		.2byte	0x290
+ 414 00a0 A4000000 		.4byte	0xa4
+ 415 00a4 05       		.uleb128 0x5
+ 416 00a5 77000000 		.4byte	0x77
+ 417 00a9 02       		.uleb128 0x2
+ 418 00aa 08       		.byte	0x8
+ 419 00ab 04       		.byte	0x4
+ 420 00ac E2010000 		.4byte	.LASF15
+ 421 00b0 02       		.uleb128 0x2
+ 422 00b1 04       		.byte	0x4
+ 423 00b2 07       		.byte	0x7
+ 424 00b3 61010000 		.4byte	.LASF16
+ 425 00b7 06       		.uleb128 0x6
+ 426 00b8 22010000 		.4byte	.LASF17
+ 427 00bc 01       		.byte	0x1
+ 428 00bd 38       		.byte	0x38
+ 429 00be 00000000 		.4byte	.LFB2
+ 430 00c2 20000000 		.4byte	.LFE2-.LFB2
+ 431 00c6 01       		.uleb128 0x1
+ 432 00c7 9C       		.byte	0x9c
+ 433 00c8 EE000000 		.4byte	0xee
+ 434 00cc 07       		.uleb128 0x7
+ 435 00cd A5000000 		.4byte	.LASF19
+ 436 00d1 01       		.byte	0x1
+ 437 00d2 3A       		.byte	0x3a
+ 438 00d3 6B000000 		.4byte	0x6b
+ 439 00d7 00000000 		.4byte	.LLST0
+ 440 00db 08       		.uleb128 0x8
+ 441 00dc 06000000 		.4byte	.LVL0
+ 442 00e0 A4020000 		.4byte	0x2a4
+ 443 00e4 08       		.uleb128 0x8
+ 444 00e5 14000000 		.4byte	.LVL1
+ 445 00e9 AF020000 		.4byte	0x2af
+ 446 00ed 00       		.byte	0
+ 447 00ee 09       		.uleb128 0x9
+ 448 00ef D2000000 		.4byte	.LASF33
+ 449 00f3 01       		.byte	0x1
+ 450 00f4 71       		.byte	0x71
+ 451 00f5 00000000 		.4byte	.LFB4
+ 452 00f9 02000000 		.4byte	.LFE4-.LFB4
+ 453 00fd 01       		.uleb128 0x1
+ 454 00fe 9C       		.byte	0x9c
+ 455 00ff 06       		.uleb128 0x6
+ 456 0100 69000000 		.4byte	.LASF18
+ 457 0104 01       		.byte	0x1
+ 458 0105 81       		.byte	0x81
+ 459 0106 00000000 		.4byte	.LFB5
+ 460 010a 20000000 		.4byte	.LFE5-.LFB5
+ 461 010e 01       		.uleb128 0x1
+ 462 010f 9C       		.byte	0x9c
+ 463 0110 54010000 		.4byte	0x154
+ 464 0114 0A       		.uleb128 0xa
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 13
+
+
+ 465 0115 D1010000 		.4byte	.LASF22
+ 466 0119 01       		.byte	0x1
+ 467 011a 81       		.byte	0x81
+ 468 011b 77000000 		.4byte	0x77
+ 469 011f 13000000 		.4byte	.LLST1
+ 470 0123 07       		.uleb128 0x7
+ 471 0124 A5000000 		.4byte	.LASF19
+ 472 0128 01       		.byte	0x1
+ 473 0129 83       		.byte	0x83
+ 474 012a 6B000000 		.4byte	0x6b
+ 475 012e 3F000000 		.4byte	.LLST2
+ 476 0132 07       		.uleb128 0x7
+ 477 0133 50010000 		.4byte	.LASF20
+ 478 0137 01       		.byte	0x1
+ 479 0138 84       		.byte	0x84
+ 480 0139 77000000 		.4byte	0x77
+ 481 013d 52000000 		.4byte	.LLST3
+ 482 0141 08       		.uleb128 0x8
+ 483 0142 08000000 		.4byte	.LVL3
+ 484 0146 A4020000 		.4byte	0x2a4
+ 485 014a 08       		.uleb128 0x8
+ 486 014b 1A000000 		.4byte	.LVL7
+ 487 014f AF020000 		.4byte	0x2af
+ 488 0153 00       		.byte	0
+ 489 0154 06       		.uleb128 0x6
+ 490 0155 27000000 		.4byte	.LASF21
+ 491 0159 01       		.byte	0x1
+ 492 015a 9D       		.byte	0x9d
+ 493 015b 00000000 		.4byte	.LFB6
+ 494 015f 2C000000 		.4byte	.LFE6-.LFB6
+ 495 0163 01       		.uleb128 0x1
+ 496 0164 9C       		.byte	0x9c
+ 497 0165 A9010000 		.4byte	0x1a9
+ 498 0169 0A       		.uleb128 0xa
+ 499 016a 47010000 		.4byte	.LASF23
+ 500 016e 01       		.byte	0x1
+ 501 016f 9D       		.byte	0x9d
+ 502 0170 77000000 		.4byte	0x77
+ 503 0174 70000000 		.4byte	.LLST4
+ 504 0178 07       		.uleb128 0x7
+ 505 0179 A5000000 		.4byte	.LASF19
+ 506 017d 01       		.byte	0x1
+ 507 017e 9F       		.byte	0x9f
+ 508 017f 6B000000 		.4byte	0x6b
+ 509 0183 9C000000 		.4byte	.LLST5
+ 510 0187 07       		.uleb128 0x7
+ 511 0188 50010000 		.4byte	.LASF20
+ 512 018c 01       		.byte	0x1
+ 513 018d A0       		.byte	0xa0
+ 514 018e 77000000 		.4byte	0x77
+ 515 0192 AF000000 		.4byte	.LLST6
+ 516 0196 08       		.uleb128 0x8
+ 517 0197 08000000 		.4byte	.LVL10
+ 518 019b A4020000 		.4byte	0x2a4
+ 519 019f 08       		.uleb128 0x8
+ 520 01a0 22000000 		.4byte	.LVL13
+ 521 01a4 AF020000 		.4byte	0x2af
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 14
+
+
+ 522 01a8 00       		.byte	0
+ 523 01a9 06       		.uleb128 0x6
+ 524 01aa E6000000 		.4byte	.LASF24
+ 525 01ae 01       		.byte	0x1
+ 526 01af BE       		.byte	0xbe
+ 527 01b0 00000000 		.4byte	.LFB7
+ 528 01b4 24000000 		.4byte	.LFE7-.LFB7
+ 529 01b8 01       		.uleb128 0x1
+ 530 01b9 9C       		.byte	0x9c
+ 531 01ba FE010000 		.4byte	0x1fe
+ 532 01be 0A       		.uleb128 0xa
+ 533 01bf CC000000 		.4byte	.LASF25
+ 534 01c3 01       		.byte	0x1
+ 535 01c4 BE       		.byte	0xbe
+ 536 01c5 77000000 		.4byte	0x77
+ 537 01c9 CD000000 		.4byte	.LLST7
+ 538 01cd 07       		.uleb128 0x7
+ 539 01ce A5000000 		.4byte	.LASF19
+ 540 01d2 01       		.byte	0x1
+ 541 01d3 C0       		.byte	0xc0
+ 542 01d4 6B000000 		.4byte	0x6b
+ 543 01d8 F9000000 		.4byte	.LLST8
+ 544 01dc 07       		.uleb128 0x7
+ 545 01dd 50010000 		.4byte	.LASF20
+ 546 01e1 01       		.byte	0x1
+ 547 01e2 C1       		.byte	0xc1
+ 548 01e3 77000000 		.4byte	0x77
+ 549 01e7 0C010000 		.4byte	.LLST9
+ 550 01eb 08       		.uleb128 0x8
+ 551 01ec 08000000 		.4byte	.LVL16
+ 552 01f0 A4020000 		.4byte	0x2a4
+ 553 01f4 08       		.uleb128 0x8
+ 554 01f5 1A000000 		.4byte	.LVL20
+ 555 01f9 AF020000 		.4byte	0x2af
+ 556 01fd 00       		.byte	0
+ 557 01fe 06       		.uleb128 0x6
+ 558 01ff 3B000000 		.4byte	.LASF26
+ 559 0203 01       		.byte	0x1
+ 560 0204 1C       		.byte	0x1c
+ 561 0205 00000000 		.4byte	.LFB1
+ 562 0209 30000000 		.4byte	.LFE1-.LFB1
+ 563 020d 01       		.uleb128 0x1
+ 564 020e 9C       		.byte	0x9c
+ 565 020f 6B020000 		.4byte	0x26b
+ 566 0213 07       		.uleb128 0x7
+ 567 0214 A5000000 		.4byte	.LASF19
+ 568 0218 01       		.byte	0x1
+ 569 0219 1E       		.byte	0x1e
+ 570 021a 6B000000 		.4byte	0x6b
+ 571 021e 2A010000 		.4byte	.LLST10
+ 572 0222 08       		.uleb128 0x8
+ 573 0223 06000000 		.4byte	.LVL22
+ 574 0227 A4020000 		.4byte	0x2a4
+ 575 022b 08       		.uleb128 0x8
+ 576 022c 14000000 		.4byte	.LVL23
+ 577 0230 AF020000 		.4byte	0x2af
+ 578 0234 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 15
+
+
+ 579 0235 1A000000 		.4byte	.LVL24
+ 580 0239 FF000000 		.4byte	0xff
+ 581 023d 48020000 		.4byte	0x248
+ 582 0241 0C       		.uleb128 0xc
+ 583 0242 01       		.uleb128 0x1
+ 584 0243 50       		.byte	0x50
+ 585 0244 02       		.uleb128 0x2
+ 586 0245 08       		.byte	0x8
+ 587 0246 40       		.byte	0x40
+ 588 0247 00       		.byte	0
+ 589 0248 0B       		.uleb128 0xb
+ 590 0249 20000000 		.4byte	.LVL25
+ 591 024d 54010000 		.4byte	0x154
+ 592 0251 5B020000 		.4byte	0x25b
+ 593 0255 0C       		.uleb128 0xc
+ 594 0256 01       		.uleb128 0x1
+ 595 0257 50       		.byte	0x50
+ 596 0258 01       		.uleb128 0x1
+ 597 0259 30       		.byte	0x30
+ 598 025a 00       		.byte	0
+ 599 025b 0D       		.uleb128 0xd
+ 600 025c 26000000 		.4byte	.LVL26
+ 601 0260 A9010000 		.4byte	0x1a9
+ 602 0264 0C       		.uleb128 0xc
+ 603 0265 01       		.uleb128 0x1
+ 604 0266 50       		.byte	0x50
+ 605 0267 01       		.uleb128 0x1
+ 606 0268 3E       		.byte	0x3e
+ 607 0269 00       		.byte	0
+ 608 026a 00       		.byte	0
+ 609 026b 06       		.uleb128 0x6
+ 610 026c 48000000 		.4byte	.LASF27
+ 611 0270 01       		.byte	0x1
+ 612 0271 59       		.byte	0x59
+ 613 0272 00000000 		.4byte	.LFB3
+ 614 0276 20000000 		.4byte	.LFE3-.LFB3
+ 615 027a 01       		.uleb128 0x1
+ 616 027b 9C       		.byte	0x9c
+ 617 027c 93020000 		.4byte	0x293
+ 618 0280 08       		.uleb128 0x8
+ 619 0281 0E000000 		.4byte	.LVL27
+ 620 0285 FE010000 		.4byte	0x1fe
+ 621 0289 08       		.uleb128 0x8
+ 622 028a 18000000 		.4byte	.LVL28
+ 623 028e B7000000 		.4byte	0xb7
+ 624 0292 00       		.byte	0
+ 625 0293 0E       		.uleb128 0xe
+ 626 0294 8C020000 		.4byte	.LASF34
+ 627 0298 01       		.byte	0x1
+ 628 0299 12       		.byte	0x12
+ 629 029a 77000000 		.4byte	0x77
+ 630 029e 05       		.uleb128 0x5
+ 631 029f 03       		.byte	0x3
+ 632 02a0 00000000 		.4byte	IDAC7_1_initVar
+ 633 02a4 0F       		.uleb128 0xf
+ 634 02a5 FE000000 		.4byte	.LASF28
+ 635 02a9 FE000000 		.4byte	.LASF28
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 16
+
+
+ 636 02ad 03       		.byte	0x3
+ 637 02ae E5       		.byte	0xe5
+ 638 02af 0F       		.uleb128 0xf
+ 639 02b0 31010000 		.4byte	.LASF29
+ 640 02b4 31010000 		.4byte	.LASF29
+ 641 02b8 03       		.byte	0x3
+ 642 02b9 E6       		.byte	0xe6
+ 643 02ba 00       		.byte	0
+ 644              		.section	.debug_abbrev,"",%progbits
+ 645              	.Ldebug_abbrev0:
+ 646 0000 01       		.uleb128 0x1
+ 647 0001 11       		.uleb128 0x11
+ 648 0002 01       		.byte	0x1
+ 649 0003 25       		.uleb128 0x25
+ 650 0004 0E       		.uleb128 0xe
+ 651 0005 13       		.uleb128 0x13
+ 652 0006 0B       		.uleb128 0xb
+ 653 0007 03       		.uleb128 0x3
+ 654 0008 0E       		.uleb128 0xe
+ 655 0009 1B       		.uleb128 0x1b
+ 656 000a 0E       		.uleb128 0xe
+ 657 000b 55       		.uleb128 0x55
+ 658 000c 17       		.uleb128 0x17
+ 659 000d 11       		.uleb128 0x11
+ 660 000e 01       		.uleb128 0x1
+ 661 000f 10       		.uleb128 0x10
+ 662 0010 17       		.uleb128 0x17
+ 663 0011 00       		.byte	0
+ 664 0012 00       		.byte	0
+ 665 0013 02       		.uleb128 0x2
+ 666 0014 24       		.uleb128 0x24
+ 667 0015 00       		.byte	0
+ 668 0016 0B       		.uleb128 0xb
+ 669 0017 0B       		.uleb128 0xb
+ 670 0018 3E       		.uleb128 0x3e
+ 671 0019 0B       		.uleb128 0xb
+ 672 001a 03       		.uleb128 0x3
+ 673 001b 0E       		.uleb128 0xe
+ 674 001c 00       		.byte	0
+ 675 001d 00       		.byte	0
+ 676 001e 03       		.uleb128 0x3
+ 677 001f 24       		.uleb128 0x24
+ 678 0020 00       		.byte	0
+ 679 0021 0B       		.uleb128 0xb
+ 680 0022 0B       		.uleb128 0xb
+ 681 0023 3E       		.uleb128 0x3e
+ 682 0024 0B       		.uleb128 0xb
+ 683 0025 03       		.uleb128 0x3
+ 684 0026 08       		.uleb128 0x8
+ 685 0027 00       		.byte	0
+ 686 0028 00       		.byte	0
+ 687 0029 04       		.uleb128 0x4
+ 688 002a 16       		.uleb128 0x16
+ 689 002b 00       		.byte	0
+ 690 002c 03       		.uleb128 0x3
+ 691 002d 0E       		.uleb128 0xe
+ 692 002e 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 17
+
+
+ 693 002f 0B       		.uleb128 0xb
+ 694 0030 3B       		.uleb128 0x3b
+ 695 0031 05       		.uleb128 0x5
+ 696 0032 49       		.uleb128 0x49
+ 697 0033 13       		.uleb128 0x13
+ 698 0034 00       		.byte	0
+ 699 0035 00       		.byte	0
+ 700 0036 05       		.uleb128 0x5
+ 701 0037 35       		.uleb128 0x35
+ 702 0038 00       		.byte	0
+ 703 0039 49       		.uleb128 0x49
+ 704 003a 13       		.uleb128 0x13
+ 705 003b 00       		.byte	0
+ 706 003c 00       		.byte	0
+ 707 003d 06       		.uleb128 0x6
+ 708 003e 2E       		.uleb128 0x2e
+ 709 003f 01       		.byte	0x1
+ 710 0040 3F       		.uleb128 0x3f
+ 711 0041 19       		.uleb128 0x19
+ 712 0042 03       		.uleb128 0x3
+ 713 0043 0E       		.uleb128 0xe
+ 714 0044 3A       		.uleb128 0x3a
+ 715 0045 0B       		.uleb128 0xb
+ 716 0046 3B       		.uleb128 0x3b
+ 717 0047 0B       		.uleb128 0xb
+ 718 0048 27       		.uleb128 0x27
+ 719 0049 19       		.uleb128 0x19
+ 720 004a 11       		.uleb128 0x11
+ 721 004b 01       		.uleb128 0x1
+ 722 004c 12       		.uleb128 0x12
+ 723 004d 06       		.uleb128 0x6
+ 724 004e 40       		.uleb128 0x40
+ 725 004f 18       		.uleb128 0x18
+ 726 0050 9742     		.uleb128 0x2117
+ 727 0052 19       		.uleb128 0x19
+ 728 0053 01       		.uleb128 0x1
+ 729 0054 13       		.uleb128 0x13
+ 730 0055 00       		.byte	0
+ 731 0056 00       		.byte	0
+ 732 0057 07       		.uleb128 0x7
+ 733 0058 34       		.uleb128 0x34
+ 734 0059 00       		.byte	0
+ 735 005a 03       		.uleb128 0x3
+ 736 005b 0E       		.uleb128 0xe
+ 737 005c 3A       		.uleb128 0x3a
+ 738 005d 0B       		.uleb128 0xb
+ 739 005e 3B       		.uleb128 0x3b
+ 740 005f 0B       		.uleb128 0xb
+ 741 0060 49       		.uleb128 0x49
+ 742 0061 13       		.uleb128 0x13
+ 743 0062 02       		.uleb128 0x2
+ 744 0063 17       		.uleb128 0x17
+ 745 0064 00       		.byte	0
+ 746 0065 00       		.byte	0
+ 747 0066 08       		.uleb128 0x8
+ 748 0067 898201   		.uleb128 0x4109
+ 749 006a 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 18
+
+
+ 750 006b 11       		.uleb128 0x11
+ 751 006c 01       		.uleb128 0x1
+ 752 006d 31       		.uleb128 0x31
+ 753 006e 13       		.uleb128 0x13
+ 754 006f 00       		.byte	0
+ 755 0070 00       		.byte	0
+ 756 0071 09       		.uleb128 0x9
+ 757 0072 2E       		.uleb128 0x2e
+ 758 0073 00       		.byte	0
+ 759 0074 3F       		.uleb128 0x3f
+ 760 0075 19       		.uleb128 0x19
+ 761 0076 03       		.uleb128 0x3
+ 762 0077 0E       		.uleb128 0xe
+ 763 0078 3A       		.uleb128 0x3a
+ 764 0079 0B       		.uleb128 0xb
+ 765 007a 3B       		.uleb128 0x3b
+ 766 007b 0B       		.uleb128 0xb
+ 767 007c 27       		.uleb128 0x27
+ 768 007d 19       		.uleb128 0x19
+ 769 007e 11       		.uleb128 0x11
+ 770 007f 01       		.uleb128 0x1
+ 771 0080 12       		.uleb128 0x12
+ 772 0081 06       		.uleb128 0x6
+ 773 0082 40       		.uleb128 0x40
+ 774 0083 18       		.uleb128 0x18
+ 775 0084 9742     		.uleb128 0x2117
+ 776 0086 19       		.uleb128 0x19
+ 777 0087 00       		.byte	0
+ 778 0088 00       		.byte	0
+ 779 0089 0A       		.uleb128 0xa
+ 780 008a 05       		.uleb128 0x5
+ 781 008b 00       		.byte	0
+ 782 008c 03       		.uleb128 0x3
+ 783 008d 0E       		.uleb128 0xe
+ 784 008e 3A       		.uleb128 0x3a
+ 785 008f 0B       		.uleb128 0xb
+ 786 0090 3B       		.uleb128 0x3b
+ 787 0091 0B       		.uleb128 0xb
+ 788 0092 49       		.uleb128 0x49
+ 789 0093 13       		.uleb128 0x13
+ 790 0094 02       		.uleb128 0x2
+ 791 0095 17       		.uleb128 0x17
+ 792 0096 00       		.byte	0
+ 793 0097 00       		.byte	0
+ 794 0098 0B       		.uleb128 0xb
+ 795 0099 898201   		.uleb128 0x4109
+ 796 009c 01       		.byte	0x1
+ 797 009d 11       		.uleb128 0x11
+ 798 009e 01       		.uleb128 0x1
+ 799 009f 31       		.uleb128 0x31
+ 800 00a0 13       		.uleb128 0x13
+ 801 00a1 01       		.uleb128 0x1
+ 802 00a2 13       		.uleb128 0x13
+ 803 00a3 00       		.byte	0
+ 804 00a4 00       		.byte	0
+ 805 00a5 0C       		.uleb128 0xc
+ 806 00a6 8A8201   		.uleb128 0x410a
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 19
+
+
+ 807 00a9 00       		.byte	0
+ 808 00aa 02       		.uleb128 0x2
+ 809 00ab 18       		.uleb128 0x18
+ 810 00ac 9142     		.uleb128 0x2111
+ 811 00ae 18       		.uleb128 0x18
+ 812 00af 00       		.byte	0
+ 813 00b0 00       		.byte	0
+ 814 00b1 0D       		.uleb128 0xd
+ 815 00b2 898201   		.uleb128 0x4109
+ 816 00b5 01       		.byte	0x1
+ 817 00b6 11       		.uleb128 0x11
+ 818 00b7 01       		.uleb128 0x1
+ 819 00b8 31       		.uleb128 0x31
+ 820 00b9 13       		.uleb128 0x13
+ 821 00ba 00       		.byte	0
+ 822 00bb 00       		.byte	0
+ 823 00bc 0E       		.uleb128 0xe
+ 824 00bd 34       		.uleb128 0x34
+ 825 00be 00       		.byte	0
+ 826 00bf 03       		.uleb128 0x3
+ 827 00c0 0E       		.uleb128 0xe
+ 828 00c1 3A       		.uleb128 0x3a
+ 829 00c2 0B       		.uleb128 0xb
+ 830 00c3 3B       		.uleb128 0x3b
+ 831 00c4 0B       		.uleb128 0xb
+ 832 00c5 49       		.uleb128 0x49
+ 833 00c6 13       		.uleb128 0x13
+ 834 00c7 3F       		.uleb128 0x3f
+ 835 00c8 19       		.uleb128 0x19
+ 836 00c9 02       		.uleb128 0x2
+ 837 00ca 18       		.uleb128 0x18
+ 838 00cb 00       		.byte	0
+ 839 00cc 00       		.byte	0
+ 840 00cd 0F       		.uleb128 0xf
+ 841 00ce 2E       		.uleb128 0x2e
+ 842 00cf 00       		.byte	0
+ 843 00d0 3F       		.uleb128 0x3f
+ 844 00d1 19       		.uleb128 0x19
+ 845 00d2 3C       		.uleb128 0x3c
+ 846 00d3 19       		.uleb128 0x19
+ 847 00d4 6E       		.uleb128 0x6e
+ 848 00d5 0E       		.uleb128 0xe
+ 849 00d6 03       		.uleb128 0x3
+ 850 00d7 0E       		.uleb128 0xe
+ 851 00d8 3A       		.uleb128 0x3a
+ 852 00d9 0B       		.uleb128 0xb
+ 853 00da 3B       		.uleb128 0x3b
+ 854 00db 0B       		.uleb128 0xb
+ 855 00dc 00       		.byte	0
+ 856 00dd 00       		.byte	0
+ 857 00de 00       		.byte	0
+ 858              		.section	.debug_loc,"",%progbits
+ 859              	.Ldebug_loc0:
+ 860              	.LLST0:
+ 861 0000 06000000 		.4byte	.LVL0
+ 862 0004 13000000 		.4byte	.LVL1-1
+ 863 0008 0100     		.2byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 20
+
+
+ 864 000a 50       		.byte	0x50
+ 865 000b 00000000 		.4byte	0
+ 866 000f 00000000 		.4byte	0
+ 867              	.LLST1:
+ 868 0013 00000000 		.4byte	.LVL2
+ 869 0017 07000000 		.4byte	.LVL3-1
+ 870 001b 0100     		.2byte	0x1
+ 871 001d 50       		.byte	0x50
+ 872 001e 07000000 		.4byte	.LVL3-1
+ 873 0022 12000000 		.4byte	.LVL5
+ 874 0026 0100     		.2byte	0x1
+ 875 0028 54       		.byte	0x54
+ 876 0029 12000000 		.4byte	.LVL5
+ 877 002d 20000000 		.4byte	.LFE5
+ 878 0031 0400     		.2byte	0x4
+ 879 0033 F3       		.byte	0xf3
+ 880 0034 01       		.uleb128 0x1
+ 881 0035 50       		.byte	0x50
+ 882 0036 9F       		.byte	0x9f
+ 883 0037 00000000 		.4byte	0
+ 884 003b 00000000 		.4byte	0
+ 885              	.LLST2:
+ 886 003f 08000000 		.4byte	.LVL3
+ 887 0043 19000000 		.4byte	.LVL7-1
+ 888 0047 0100     		.2byte	0x1
+ 889 0049 50       		.byte	0x50
+ 890 004a 00000000 		.4byte	0
+ 891 004e 00000000 		.4byte	0
+ 892              	.LLST3:
+ 893 0052 10000000 		.4byte	.LVL4
+ 894 0056 14000000 		.4byte	.LVL6
+ 895 005a 0100     		.2byte	0x1
+ 896 005c 53       		.byte	0x53
+ 897 005d 14000000 		.4byte	.LVL6
+ 898 0061 1A000000 		.4byte	.LVL8
+ 899 0065 0100     		.2byte	0x1
+ 900 0067 54       		.byte	0x54
+ 901 0068 00000000 		.4byte	0
+ 902 006c 00000000 		.4byte	0
+ 903              	.LLST4:
+ 904 0070 00000000 		.4byte	.LVL9
+ 905 0074 07000000 		.4byte	.LVL10-1
+ 906 0078 0100     		.2byte	0x1
+ 907 007a 50       		.byte	0x50
+ 908 007b 07000000 		.4byte	.LVL10-1
+ 909 007f 22000000 		.4byte	.LVL14
+ 910 0083 0100     		.2byte	0x1
+ 911 0085 54       		.byte	0x54
+ 912 0086 22000000 		.4byte	.LVL14
+ 913 008a 2C000000 		.4byte	.LFE6
+ 914 008e 0400     		.2byte	0x4
+ 915 0090 F3       		.byte	0xf3
+ 916 0091 01       		.uleb128 0x1
+ 917 0092 50       		.byte	0x50
+ 918 0093 9F       		.byte	0x9f
+ 919 0094 00000000 		.4byte	0
+ 920 0098 00000000 		.4byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 21
+
+
+ 921              	.LLST5:
+ 922 009c 08000000 		.4byte	.LVL10
+ 923 00a0 21000000 		.4byte	.LVL13-1
+ 924 00a4 0100     		.2byte	0x1
+ 925 00a6 50       		.byte	0x50
+ 926 00a7 00000000 		.4byte	0
+ 927 00ab 00000000 		.4byte	0
+ 928              	.LLST6:
+ 929 00af 12000000 		.4byte	.LVL11
+ 930 00b3 1C000000 		.4byte	.LVL12
+ 931 00b7 0100     		.2byte	0x1
+ 932 00b9 51       		.byte	0x51
+ 933 00ba 1C000000 		.4byte	.LVL12
+ 934 00be 21000000 		.4byte	.LVL13-1
+ 935 00c2 0100     		.2byte	0x1
+ 936 00c4 53       		.byte	0x53
+ 937 00c5 00000000 		.4byte	0
+ 938 00c9 00000000 		.4byte	0
+ 939              	.LLST7:
+ 940 00cd 00000000 		.4byte	.LVL15
+ 941 00d1 07000000 		.4byte	.LVL16-1
+ 942 00d5 0100     		.2byte	0x1
+ 943 00d7 50       		.byte	0x50
+ 944 00d8 07000000 		.4byte	.LVL16-1
+ 945 00dc 12000000 		.4byte	.LVL18
+ 946 00e0 0100     		.2byte	0x1
+ 947 00e2 54       		.byte	0x54
+ 948 00e3 12000000 		.4byte	.LVL18
+ 949 00e7 24000000 		.4byte	.LFE7
+ 950 00eb 0400     		.2byte	0x4
+ 951 00ed F3       		.byte	0xf3
+ 952 00ee 01       		.uleb128 0x1
+ 953 00ef 50       		.byte	0x50
+ 954 00f0 9F       		.byte	0x9f
+ 955 00f1 00000000 		.4byte	0
+ 956 00f5 00000000 		.4byte	0
+ 957              	.LLST8:
+ 958 00f9 08000000 		.4byte	.LVL16
+ 959 00fd 19000000 		.4byte	.LVL20-1
+ 960 0101 0100     		.2byte	0x1
+ 961 0103 50       		.byte	0x50
+ 962 0104 00000000 		.4byte	0
+ 963 0108 00000000 		.4byte	0
+ 964              	.LLST9:
+ 965 010c 10000000 		.4byte	.LVL17
+ 966 0110 14000000 		.4byte	.LVL19
+ 967 0114 0100     		.2byte	0x1
+ 968 0116 53       		.byte	0x53
+ 969 0117 14000000 		.4byte	.LVL19
+ 970 011b 1A000000 		.4byte	.LVL21
+ 971 011f 0100     		.2byte	0x1
+ 972 0121 54       		.byte	0x54
+ 973 0122 00000000 		.4byte	0
+ 974 0126 00000000 		.4byte	0
+ 975              	.LLST10:
+ 976 012a 06000000 		.4byte	.LVL22
+ 977 012e 13000000 		.4byte	.LVL23-1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 22
+
+
+ 978 0132 0100     		.2byte	0x1
+ 979 0134 50       		.byte	0x50
+ 980 0135 00000000 		.4byte	0
+ 981 0139 00000000 		.4byte	0
+ 982              		.section	.debug_aranges,"",%progbits
+ 983 0000 4C000000 		.4byte	0x4c
+ 984 0004 0200     		.2byte	0x2
+ 985 0006 00000000 		.4byte	.Ldebug_info0
+ 986 000a 04       		.byte	0x4
+ 987 000b 00       		.byte	0
+ 988 000c 0000     		.2byte	0
+ 989 000e 0000     		.2byte	0
+ 990 0010 00000000 		.4byte	.LFB2
+ 991 0014 20000000 		.4byte	.LFE2-.LFB2
+ 992 0018 00000000 		.4byte	.LFB4
+ 993 001c 02000000 		.4byte	.LFE4-.LFB4
+ 994 0020 00000000 		.4byte	.LFB5
+ 995 0024 20000000 		.4byte	.LFE5-.LFB5
+ 996 0028 00000000 		.4byte	.LFB6
+ 997 002c 2C000000 		.4byte	.LFE6-.LFB6
+ 998 0030 00000000 		.4byte	.LFB7
+ 999 0034 24000000 		.4byte	.LFE7-.LFB7
+ 1000 0038 00000000 		.4byte	.LFB1
+ 1001 003c 30000000 		.4byte	.LFE1-.LFB1
+ 1002 0040 00000000 		.4byte	.LFB3
+ 1003 0044 20000000 		.4byte	.LFE3-.LFB3
+ 1004 0048 00000000 		.4byte	0
+ 1005 004c 00000000 		.4byte	0
+ 1006              		.section	.debug_ranges,"",%progbits
+ 1007              	.Ldebug_ranges0:
+ 1008 0000 00000000 		.4byte	.LFB2
+ 1009 0004 20000000 		.4byte	.LFE2
+ 1010 0008 00000000 		.4byte	.LFB4
+ 1011 000c 02000000 		.4byte	.LFE4
+ 1012 0010 00000000 		.4byte	.LFB5
+ 1013 0014 20000000 		.4byte	.LFE5
+ 1014 0018 00000000 		.4byte	.LFB6
+ 1015 001c 2C000000 		.4byte	.LFE6
+ 1016 0020 00000000 		.4byte	.LFB7
+ 1017 0024 24000000 		.4byte	.LFE7
+ 1018 0028 00000000 		.4byte	.LFB1
+ 1019 002c 30000000 		.4byte	.LFE1
+ 1020 0030 00000000 		.4byte	.LFB3
+ 1021 0034 20000000 		.4byte	.LFE3
+ 1022 0038 00000000 		.4byte	0
+ 1023 003c 00000000 		.4byte	0
+ 1024              		.section	.debug_line,"",%progbits
+ 1025              	.Ldebug_line0:
+ 1026 0000 E6000000 		.section	.debug_str,"MS",%progbits,1
+ 1026      02004F00 
+ 1026      00000201 
+ 1026      FB0E0D00 
+ 1026      01010101 
+ 1027              	.LASF31:
+ 1028 0000 47656E65 		.ascii	"Generated_Source\\PSoC4\\IDAC7_1.c\000"
+ 1028      72617465 
+ 1028      645F536F 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 23
+
+
+ 1028      75726365 
+ 1028      5C50536F 
+ 1029              	.LASF14:
+ 1030 0021 72656733 		.ascii	"reg32\000"
+ 1030      3200
+ 1031              	.LASF21:
+ 1032 0027 49444143 		.ascii	"IDAC7_1_SetPolarity\000"
+ 1032      375F315F 
+ 1032      53657450 
+ 1032      6F6C6172 
+ 1032      69747900 
+ 1033              	.LASF26:
+ 1034 003b 49444143 		.ascii	"IDAC7_1_Init\000"
+ 1034      375F315F 
+ 1034      496E6974 
+ 1034      00
+ 1035              	.LASF27:
+ 1036 0048 49444143 		.ascii	"IDAC7_1_Start\000"
+ 1036      375F315F 
+ 1036      53746172 
+ 1036      7400
+ 1037              	.LASF3:
+ 1038 0056 73686F72 		.ascii	"short unsigned int\000"
+ 1038      7420756E 
+ 1038      7369676E 
+ 1038      65642069 
+ 1038      6E7400
+ 1039              	.LASF18:
+ 1040 0069 49444143 		.ascii	"IDAC7_1_SetValue\000"
+ 1040      375F315F 
+ 1040      53657456 
+ 1040      616C7565 
+ 1040      00
+ 1041              	.LASF11:
+ 1042 007a 666C6F61 		.ascii	"float\000"
+ 1042      7400
+ 1043              	.LASF7:
+ 1044 0080 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1044      206C6F6E 
+ 1044      6720756E 
+ 1044      7369676E 
+ 1044      65642069 
+ 1045              	.LASF1:
+ 1046 0097 756E7369 		.ascii	"unsigned char\000"
+ 1046      676E6564 
+ 1046      20636861 
+ 1046      7200
+ 1047              	.LASF19:
+ 1048 00a5 696E7465 		.ascii	"interruptState\000"
+ 1048      72727570 
+ 1048      74537461 
+ 1048      746500
+ 1049              	.LASF5:
+ 1050 00b4 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1050      20756E73 
+ 1050      69676E65 
+ 1050      6420696E 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 24
+
+
+ 1050      7400
+ 1051              	.LASF9:
+ 1052 00c6 75696E74 		.ascii	"uint8\000"
+ 1052      3800
+ 1053              	.LASF25:
+ 1054 00cc 72616E67 		.ascii	"range\000"
+ 1054      6500
+ 1055              	.LASF33:
+ 1056 00d2 49444143 		.ascii	"IDAC7_1_Stop\000"
+ 1056      375F315F 
+ 1056      53746F70 
+ 1056      00
+ 1057              	.LASF12:
+ 1058 00df 646F7562 		.ascii	"double\000"
+ 1058      6C6500
+ 1059              	.LASF24:
+ 1060 00e6 49444143 		.ascii	"IDAC7_1_SetRange\000"
+ 1060      375F315F 
+ 1060      53657452 
+ 1060      616E6765 
+ 1060      00
+ 1061              	.LASF10:
+ 1062 00f7 75696E74 		.ascii	"uint32\000"
+ 1062      333200
+ 1063              	.LASF28:
+ 1064 00fe 4379456E 		.ascii	"CyEnterCriticalSection\000"
+ 1064      74657243 
+ 1064      72697469 
+ 1064      63616C53 
+ 1064      65637469 
+ 1065              	.LASF8:
+ 1066 0115 756E7369 		.ascii	"unsigned int\000"
+ 1066      676E6564 
+ 1066      20696E74 
+ 1066      00
+ 1067              	.LASF17:
+ 1068 0122 49444143 		.ascii	"IDAC7_1_Enable\000"
+ 1068      375F315F 
+ 1068      456E6162 
+ 1068      6C6500
+ 1069              	.LASF29:
+ 1070 0131 43794578 		.ascii	"CyExitCriticalSection\000"
+ 1070      69744372 
+ 1070      69746963 
+ 1070      616C5365 
+ 1070      6374696F 
+ 1071              	.LASF23:
+ 1072 0147 706F6C61 		.ascii	"polarity\000"
+ 1072      72697479 
+ 1072      00
+ 1073              	.LASF20:
+ 1074 0150 6E657752 		.ascii	"newRegisterValue\000"
+ 1074      65676973 
+ 1074      74657256 
+ 1074      616C7565 
+ 1074      00
+ 1075              	.LASF16:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 25
+
+
+ 1076 0161 73697A65 		.ascii	"sizetype\000"
+ 1076      74797065 
+ 1076      00
+ 1077              	.LASF6:
+ 1078 016a 6C6F6E67 		.ascii	"long long int\000"
+ 1078      206C6F6E 
+ 1078      6720696E 
+ 1078      7400
+ 1079              	.LASF13:
+ 1080 0178 63686172 		.ascii	"char\000"
+ 1080      00
+ 1081              	.LASF32:
+ 1082 017d 433A5C55 		.ascii	"C:\\Users\\dmytro.fedorchenko\\Documents\\PSoC Crea"
+ 1082      73657273 
+ 1082      5C646D79 
+ 1082      74726F2E 
+ 1082      6665646F 
+ 1083 01ac 746F725C 		.ascii	"tor\\PWM01\\midiPlayer.cydsn\000"
+ 1083      50574D30 
+ 1083      315C6D69 
+ 1083      6469506C 
+ 1083      61796572 
+ 1084              	.LASF2:
+ 1085 01c7 73686F72 		.ascii	"short int\000"
+ 1085      7420696E 
+ 1085      7400
+ 1086              	.LASF22:
+ 1087 01d1 63757272 		.ascii	"current\000"
+ 1087      656E7400 
+ 1088              	.LASF4:
+ 1089 01d9 6C6F6E67 		.ascii	"long int\000"
+ 1089      20696E74 
+ 1089      00
+ 1090              	.LASF15:
+ 1091 01e2 6C6F6E67 		.ascii	"long double\000"
+ 1091      20646F75 
+ 1091      626C6500 
+ 1092              	.LASF30:
+ 1093 01ee 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1093      43313120 
+ 1093      352E342E 
+ 1093      31203230 
+ 1093      31363036 
+ 1094 0221 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0plus -mthumb -"
+ 1094      20726576 
+ 1094      6973696F 
+ 1094      6E203233 
+ 1094      37373135 
+ 1095 0254 67202D4F 		.ascii	"g -Og -ffunction-sections -ffat-lto-objects\000"
+ 1095      67202D66 
+ 1095      66756E63 
+ 1095      74696F6E 
+ 1095      2D736563 
+ 1096              	.LASF0:
+ 1097 0280 7369676E 		.ascii	"signed char\000"
+ 1097      65642063 
+ 1097      68617200 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccvPy5Kr.s 			page 26
+
+
+ 1098              	.LASF34:
+ 1099 028c 49444143 		.ascii	"IDAC7_1_initVar\000"
+ 1099      375F315F 
+ 1099      696E6974 
+ 1099      56617200 
+ 1100              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

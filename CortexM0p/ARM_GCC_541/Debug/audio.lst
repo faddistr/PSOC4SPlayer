@@ -1,0 +1,3279 @@
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0plus
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"audio.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.Isr_TC_Handler,"ax",%progbits
+  20              		.align	2
+  21              		.global	Isr_TC_Handler
+  22              		.code	16
+  23              		.thumb_func
+  24              		.type	Isr_TC_Handler, %function
+  25              	Isr_TC_Handler:
+  26              	.LFB33:
+  27              		.file 1 "audio.c"
+   1:audio.c       **** /** @file
+   2:audio.c       ****  *  @brief Source file for low level audio functions
+   3:audio.c       ****  */
+   4:audio.c       **** #include <stdint.h>
+   5:audio.c       **** #include <stdlib.h>
+   6:audio.c       **** #include <stdbool.h>
+   7:audio.c       **** #include "project.h"
+   8:audio.c       **** #include "audio.h"
+   9:audio.c       **** #include "assert.h"
+  10:audio.c       **** 
+  11:audio.c       **** #define MAX_VOL_VALUE  100U
+  12:audio.c       **** #define MAX_FACTOR     14U
+  13:audio.c       **** 
+  14:audio.c       **** static bool play   = true;
+  15:audio.c       **** static bool isInit = false;
+  16:audio.c       **** static uint32_t volume = 0;
+  17:audio.c       **** static uint8_t volumePerc = 0;
+  18:audio.c       **** static audio_SampleRate_t sampleRate = AUDIO_SAMPLE_RATE_COUNT;
+  19:audio.c       **** static uint32_t audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_COUNT];
+  20:audio.c       **** static audio_SampleCb_t audio_OnTimerCb = NULL;
+  21:audio.c       **** 
+  22:audio.c       **** static void audio_PrintSampleRate(audio_SampleRate_t rate);
+  23:audio.c       **** 
+  24:audio.c       **** CY_ISR(Isr_TC_Handler)
+  25:audio.c       **** {   
+  28              		.loc 1 25 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 10B5     		push	{r4, lr}
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 2
+
+
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 4, -8
+  35              		.cfi_offset 14, -4
+  26:audio.c       ****     Timer_audio_ClearInterrupt(Timer_audio_INTR_MASK_TC);
+  36              		.loc 1 26 0
+  37 0002 0120     		movs	r0, #1
+  38 0004 FFF7FEFF 		bl	Timer_audio_ClearInterrupt
+  39              	.LVL0:
+  27:audio.c       ****     if ((NULL != audio_OnTimerCb) && (play))
+  40              		.loc 1 27 0
+  41 0008 044B     		ldr	r3, .L3
+  42 000a 1B68     		ldr	r3, [r3]
+  43 000c 002B     		cmp	r3, #0
+  44 000e 04D0     		beq	.L1
+  45              		.loc 1 27 0 is_stmt 0 discriminator 1
+  46 0010 034A     		ldr	r2, .L3+4
+  47 0012 1278     		ldrb	r2, [r2]
+  48 0014 002A     		cmp	r2, #0
+  49 0016 00D0     		beq	.L1
+  28:audio.c       ****     {
+  29:audio.c       ****         audio_OnTimerCb();
+  50              		.loc 1 29 0 is_stmt 1
+  51 0018 9847     		blx	r3
+  52              	.LVL1:
+  53              	.L1:
+  30:audio.c       ****     }
+  31:audio.c       **** }
+  54              		.loc 1 31 0
+  55              		@ sp needed
+  56 001a 10BD     		pop	{r4, pc}
+  57              	.L4:
+  58              		.align	2
+  59              	.L3:
+  60 001c 00000000 		.word	.LANCHOR0
+  61 0020 00000000 		.word	.LANCHOR1
+  62              		.cfi_endproc
+  63              	.LFE33:
+  64              		.size	Isr_TC_Handler, .-Isr_TC_Handler
+  65              		.section	.text.audio_PrintSampleRate,"ax",%progbits
+  66              		.align	2
+  67              		.code	16
+  68              		.thumb_func
+  69              		.type	audio_PrintSampleRate, %function
+  70              	audio_PrintSampleRate:
+  71              	.LFB43:
+  32:audio.c       **** 
+  33:audio.c       **** void audio_Play(uint8_t sample)
+  34:audio.c       **** {
+  35:audio.c       ****     uint32_t volumeChange = volume>>1;
+  36:audio.c       ****     uint32_t tmp = 0;
+  37:audio.c       ****      
+  38:audio.c       ****     ASSERT(isInit);
+  39:audio.c       ****     //attenuation volume adjusment of the input samples.
+  40:audio.c       ****     //idea from https://www.microchip.com/forums/m932509.aspx
+  41:audio.c       ****     if (volume&0x01)
+  42:audio.c       ****     {
+  43:audio.c       ****         volumeChange++;
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 3
+
+
+  44:audio.c       ****         tmp = sample >> volumeChange;
+  45:audio.c       ****         tmp = tmp + (tmp >> 1);
+  46:audio.c       ****     } else
+  47:audio.c       ****     {
+  48:audio.c       ****         tmp = sample >> volumeChange;
+  49:audio.c       ****     }
+  50:audio.c       **** 
+  51:audio.c       ****     PWM_WriteCompare(tmp & 0xff); 
+  52:audio.c       **** }
+  53:audio.c       **** 
+  54:audio.c       **** void audio_Start(void)
+  55:audio.c       **** {
+  56:audio.c       ****     ASSERT(isInit);
+  57:audio.c       ****     
+  58:audio.c       ****     play = true;
+  59:audio.c       ****     uartPrintf("Audio: Started\r\n");
+  60:audio.c       **** }
+  61:audio.c       **** 
+  62:audio.c       **** void audio_Stop(void)
+  63:audio.c       **** {
+  64:audio.c       ****     ASSERT(isInit);
+  65:audio.c       ****     
+  66:audio.c       ****     play = false;
+  67:audio.c       ****     audio_Play(0);
+  68:audio.c       ****     uartPrintf("Audio: Stopped\r\n");
+  69:audio.c       **** }
+  70:audio.c       **** 
+  71:audio.c       **** bool audio_SetSampleRate(audio_SampleRate_t rate)
+  72:audio.c       **** {
+  73:audio.c       ****     bool result = false;
+  74:audio.c       ****     
+  75:audio.c       ****     ASSERT(isInit);
+  76:audio.c       ****     if (AUDIO_SAMPLE_RATE_COUNT > rate)
+  77:audio.c       ****     {
+  78:audio.c       ****         result = true;
+  79:audio.c       ****         sampleRate = rate;
+  80:audio.c       ****         Timer_audio_Stop();
+  81:audio.c       ****         Timer_audio_WritePeriod(audio_SampleRateTPeriods[sampleRate]);
+  82:audio.c       ****         Timer_audio_Start();
+  83:audio.c       ****         PWM_WriteCompare(0);
+  84:audio.c       ****         uartPrintf("Audio: Timer rate %d\r\n", audio_SampleRateTPeriods[sampleRate]);
+  85:audio.c       ****         audio_PrintSampleRate(sampleRate);
+  86:audio.c       ****     }
+  87:audio.c       ****     
+  88:audio.c       ****     return result;
+  89:audio.c       **** }
+  90:audio.c       **** 
+  91:audio.c       **** audio_SampleRate_t audio_GetSampleRate(void)
+  92:audio.c       **** {
+  93:audio.c       ****     ASSERT(isInit);
+  94:audio.c       ****     return sampleRate;
+  95:audio.c       **** }
+  96:audio.c       **** 
+  97:audio.c       **** bool audio_SetCallback(audio_SampleCb_t cb)
+  98:audio.c       **** {
+  99:audio.c       ****     ASSERT(isInit);
+ 100:audio.c       ****     bool result = false;
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 4
+
+
+ 101:audio.c       ****     
+ 102:audio.c       ****     if (cb != NULL)
+ 103:audio.c       ****     {
+ 104:audio.c       ****         result = true;
+ 105:audio.c       ****         audio_OnTimerCb = cb;
+ 106:audio.c       ****         uartPrintf("Audio: Callback set.\r\n");
+ 107:audio.c       ****     }
+ 108:audio.c       **** 
+ 109:audio.c       ****     return result;
+ 110:audio.c       **** }
+ 111:audio.c       **** 
+ 112:audio.c       **** void audio_Init(void)
+ 113:audio.c       **** {
+ 114:audio.c       ****     /* To avoid update and position bugs */
+ 115:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_4K]  = 256;
+ 116:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_8K]  = 128;
+ 117:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_16K] = 64;
+ 118:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_32K] = 32;
+ 119:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_64K] = 16;
+ 120:audio.c       ****     
+ 121:audio.c       ****     isInit = true;
+ 122:audio.c       **** 
+ 123:audio.c       ****     Isr_TC_StartEx(Isr_TC_Handler);
+ 124:audio.c       ****     PWM_Start();
+ 125:audio.c       ****     
+ 126:audio.c       ****     ASSERT(true == audio_SetSampleRate(AUDIO_SAMPLE_RATE_DEFAULT));
+ 127:audio.c       ****     Timer_audio_Start();
+ 128:audio.c       ****     uartPrintf("Audio: Inited.\r\n");
+ 129:audio.c       ****     audio_SetVolume(50);
+ 130:audio.c       **** }
+ 131:audio.c       **** 
+ 132:audio.c       **** bool audio_SetVolume(uint8_t perc)
+ 133:audio.c       **** {
+ 134:audio.c       ****     bool result = false;
+ 135:audio.c       ****     ASSERT(isInit);
+ 136:audio.c       ****     
+ 137:audio.c       ****     if (MAX_VOL_VALUE >= perc)
+ 138:audio.c       ****     {
+ 139:audio.c       ****         result = true;
+ 140:audio.c       ****         volumePerc = perc;
+ 141:audio.c       ****         volume = MAX_FACTOR - (perc * MAX_FACTOR ) / 100; 
+ 142:audio.c       ****         uartPrintf("Audio: Set volume %d %d.\r\n", perc, volume);
+ 143:audio.c       ****     }
+ 144:audio.c       ****       
+ 145:audio.c       ****     return result;
+ 146:audio.c       **** }
+ 147:audio.c       **** 
+ 148:audio.c       **** uint8_t audio_GetVolume(void)
+ 149:audio.c       **** {
+ 150:audio.c       ****     uint8_t retval = volumePerc;
+ 151:audio.c       ****     
+ 152:audio.c       ****     ASSERT(isInit);
+ 153:audio.c       ****     
+ 154:audio.c       ****     return retval;
+ 155:audio.c       **** }
+ 156:audio.c       **** 
+ 157:audio.c       **** static void audio_PrintSampleRate(audio_SampleRate_t rate)
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 5
+
+
+ 158:audio.c       **** {
+  72              		.loc 1 158 0
+  73              		.cfi_startproc
+  74              		@ args = 0, pretend = 0, frame = 0
+  75              		@ frame_needed = 0, uses_anonymous_args = 0
+  76              	.LVL2:
+  77 0000 10B5     		push	{r4, lr}
+  78              		.cfi_def_cfa_offset 8
+  79              		.cfi_offset 4, -8
+  80              		.cfi_offset 14, -4
+ 159:audio.c       ****     switch (rate)
+  81              		.loc 1 159 0
+  82 0002 0428     		cmp	r0, #4
+  83 0004 17D8     		bhi	.L6
+  84 0006 8000     		lsls	r0, r0, #2
+  85              	.LVL3:
+  86 0008 0D4B     		ldr	r3, .L14
+  87 000a 1B58     		ldr	r3, [r3, r0]
+  88 000c 9F46     		mov	pc, r3
+  89              		.section	.rodata
+  90              		.align	2
+  91              	.L8:
+  92 0000 0E000000 		.word	.L7
+  93 0004 16000000 		.word	.L9
+  94 0008 1E000000 		.word	.L10
+  95 000c 26000000 		.word	.L11
+  96 0010 2E000000 		.word	.L12
+  97              		.section	.text.audio_PrintSampleRate
+  98              	.L7:
+ 160:audio.c       ****     {
+ 161:audio.c       ****         case AUDIO_SAMPLE_RATE_4K:
+ 162:audio.c       ****             uartPrintf("Audio: Rate 4K\r\n");
+  99              		.loc 1 162 0
+ 100 000e 0D48     		ldr	r0, .L14+4
+ 101 0010 FFF7FEFF 		bl	uartPrintf
+ 102              	.LVL4:
+ 163:audio.c       ****             break;
+ 103              		.loc 1 163 0
+ 104 0014 13E0     		b	.L5
+ 105              	.L9:
+ 164:audio.c       ****         
+ 165:audio.c       ****         case AUDIO_SAMPLE_RATE_8K:
+ 166:audio.c       ****             uartPrintf("Audio: Rate 8K\r\n");
+ 106              		.loc 1 166 0
+ 107 0016 0C48     		ldr	r0, .L14+8
+ 108 0018 FFF7FEFF 		bl	uartPrintf
+ 109              	.LVL5:
+ 167:audio.c       ****             break;
+ 110              		.loc 1 167 0
+ 111 001c 0FE0     		b	.L5
+ 112              	.L10:
+ 168:audio.c       ****         
+ 169:audio.c       ****         case AUDIO_SAMPLE_RATE_16K:
+ 170:audio.c       ****             uartPrintf("Audio: Rate 16K\r\n");
+ 113              		.loc 1 170 0
+ 114 001e 0B48     		ldr	r0, .L14+12
+ 115 0020 FFF7FEFF 		bl	uartPrintf
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 6
+
+
+ 116              	.LVL6:
+ 171:audio.c       ****             break;
+ 117              		.loc 1 171 0
+ 118 0024 0BE0     		b	.L5
+ 119              	.L11:
+ 172:audio.c       ****         
+ 173:audio.c       ****         case AUDIO_SAMPLE_RATE_32K:
+ 174:audio.c       ****             uartPrintf("Audio: Rate 32K\r\n");
+ 120              		.loc 1 174 0
+ 121 0026 0A48     		ldr	r0, .L14+16
+ 122 0028 FFF7FEFF 		bl	uartPrintf
+ 123              	.LVL7:
+ 175:audio.c       ****             break;
+ 124              		.loc 1 175 0
+ 125 002c 07E0     		b	.L5
+ 126              	.L12:
+ 176:audio.c       ****         
+ 177:audio.c       ****         case AUDIO_SAMPLE_RATE_64K:
+ 178:audio.c       ****             uartPrintf("Audio: Rate 64K\r\n");
+ 127              		.loc 1 178 0
+ 128 002e 0948     		ldr	r0, .L14+20
+ 129 0030 FFF7FEFF 		bl	uartPrintf
+ 130              	.LVL8:
+ 179:audio.c       ****             break;
+ 131              		.loc 1 179 0
+ 132 0034 03E0     		b	.L5
+ 133              	.LVL9:
+ 134              	.L6:
+ 180:audio.c       ****     
+ 181:audio.c       ****         default:
+ 182:audio.c       ****             uartPrintf("Audio: Unknown rate %d\r\n", rate);
+ 135              		.loc 1 182 0
+ 136 0036 0100     		movs	r1, r0
+ 137 0038 0748     		ldr	r0, .L14+24
+ 138              	.LVL10:
+ 139 003a FFF7FEFF 		bl	uartPrintf
+ 140              	.LVL11:
+ 141              	.L5:
+ 183:audio.c       ****             break;
+ 184:audio.c       ****     }
+ 185:audio.c       **** }...
+ 142              		.loc 1 185 0
+ 143              		@ sp needed
+ 144 003e 10BD     		pop	{r4, pc}
+ 145              	.L15:
+ 146              		.align	2
+ 147              	.L14:
+ 148 0040 00000000 		.word	.L8
+ 149 0044 00000000 		.word	.LC3
+ 150 0048 14000000 		.word	.LC5
+ 151 004c 28000000 		.word	.LC7
+ 152 0050 3C000000 		.word	.LC9
+ 153 0054 50000000 		.word	.LC11
+ 154 0058 64000000 		.word	.LC13
+ 155              		.cfi_endproc
+ 156              	.LFE43:
+ 157              		.size	audio_PrintSampleRate, .-audio_PrintSampleRate
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 7
+
+
+ 158              		.section	.text.audio_Play,"ax",%progbits
+ 159              		.align	2
+ 160              		.global	audio_Play
+ 161              		.code	16
+ 162              		.thumb_func
+ 163              		.type	audio_Play, %function
+ 164              	audio_Play:
+ 165              	.LFB34:
+  34:audio.c       **** {
+ 166              		.loc 1 34 0
+ 167              		.cfi_startproc
+ 168              		@ args = 0, pretend = 0, frame = 0
+ 169              		@ frame_needed = 0, uses_anonymous_args = 0
+ 170              	.LVL12:
+ 171 0000 10B5     		push	{r4, lr}
+ 172              		.cfi_def_cfa_offset 8
+ 173              		.cfi_offset 4, -8
+ 174              		.cfi_offset 14, -4
+  35:audio.c       ****     uint32_t volumeChange = volume>>1;
+ 175              		.loc 1 35 0
+ 176 0002 0C49     		ldr	r1, .L21
+ 177 0004 4A68     		ldr	r2, [r1, #4]
+ 178 0006 5308     		lsrs	r3, r2, #1
+ 179              	.LVL13:
+  38:audio.c       ****     ASSERT(isInit);
+ 180              		.loc 1 38 0
+ 181 0008 097A     		ldrb	r1, [r1, #8]
+ 182 000a 0029     		cmp	r1, #0
+ 183 000c 05D1     		bne	.L17
+  38:audio.c       ****     ASSERT(isInit);
+ 184              		.loc 1 38 0 is_stmt 0 discriminator 1
+ 185 000e 2622     		movs	r2, #38
+ 186 0010 0949     		ldr	r1, .L21+4
+ 187 0012 0A48     		ldr	r0, .L21+8
+ 188              	.LVL14:
+ 189 0014 FFF7FEFF 		bl	uartPrintf
+ 190              	.LVL15:
+ 191              	.L18:
+ 192 0018 FEE7     		b	.L18
+ 193              	.LVL16:
+ 194              	.L17:
+  41:audio.c       ****     if (volume&0x01)
+ 195              		.loc 1 41 0 is_stmt 1
+ 196 001a D207     		lsls	r2, r2, #31
+ 197 001c 04D5     		bpl	.L19
+  43:audio.c       ****         volumeChange++;
+ 198              		.loc 1 43 0
+ 199 001e 0133     		adds	r3, r3, #1
+ 200              	.LVL17:
+  44:audio.c       ****         tmp = sample >> volumeChange;
+ 201              		.loc 1 44 0
+ 202 0020 1841     		asrs	r0, r0, r3
+ 203              	.LVL18:
+  45:audio.c       ****         tmp = tmp + (tmp >> 1);
+ 204              		.loc 1 45 0
+ 205 0022 4308     		lsrs	r3, r0, #1
+ 206              	.LVL19:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 8
+
+
+ 207 0024 C018     		adds	r0, r0, r3
+ 208              	.LVL20:
+ 209 0026 00E0     		b	.L20
+ 210              	.LVL21:
+ 211              	.L19:
+  48:audio.c       ****         tmp = sample >> volumeChange;
+ 212              		.loc 1 48 0
+ 213 0028 1841     		asrs	r0, r0, r3
+ 214              	.LVL22:
+ 215              	.L20:
+  51:audio.c       ****     PWM_WriteCompare(tmp & 0xff); 
+ 216              		.loc 1 51 0
+ 217 002a FF23     		movs	r3, #255
+ 218 002c 1840     		ands	r0, r3
+ 219              	.LVL23:
+ 220 002e FFF7FEFF 		bl	PWM_WriteCompare
+ 221              	.LVL24:
+  52:audio.c       **** }
+ 222              		.loc 1 52 0
+ 223              		@ sp needed
+ 224 0032 10BD     		pop	{r4, pc}
+ 225              	.L22:
+ 226              		.align	2
+ 227              	.L21:
+ 228 0034 00000000 		.word	.LANCHOR0
+ 229 0038 80000000 		.word	.LC16
+ 230 003c 88000000 		.word	.LC18
+ 231              		.cfi_endproc
+ 232              	.LFE34:
+ 233              		.size	audio_Play, .-audio_Play
+ 234              		.section	.text.audio_Start,"ax",%progbits
+ 235              		.align	2
+ 236              		.global	audio_Start
+ 237              		.code	16
+ 238              		.thumb_func
+ 239              		.type	audio_Start, %function
+ 240              	audio_Start:
+ 241              	.LFB35:
+  55:audio.c       **** {
+ 242              		.loc 1 55 0
+ 243              		.cfi_startproc
+ 244              		@ args = 0, pretend = 0, frame = 0
+ 245              		@ frame_needed = 0, uses_anonymous_args = 0
+ 246 0000 10B5     		push	{r4, lr}
+ 247              		.cfi_def_cfa_offset 8
+ 248              		.cfi_offset 4, -8
+ 249              		.cfi_offset 14, -4
+  56:audio.c       ****     ASSERT(isInit);
+ 250              		.loc 1 56 0
+ 251 0002 084B     		ldr	r3, .L26
+ 252 0004 1B7A     		ldrb	r3, [r3, #8]
+ 253 0006 002B     		cmp	r3, #0
+ 254 0008 05D1     		bne	.L24
+  56:audio.c       ****     ASSERT(isInit);
+ 255              		.loc 1 56 0 is_stmt 0 discriminator 1
+ 256 000a 3822     		movs	r2, #56
+ 257 000c 0649     		ldr	r1, .L26+4
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 9
+
+
+ 258 000e 0748     		ldr	r0, .L26+8
+ 259 0010 FFF7FEFF 		bl	uartPrintf
+ 260              	.LVL25:
+ 261              	.L25:
+ 262 0014 FEE7     		b	.L25
+ 263              	.L24:
+  58:audio.c       ****     play = true;
+ 264              		.loc 1 58 0 is_stmt 1
+ 265 0016 0122     		movs	r2, #1
+ 266 0018 054B     		ldr	r3, .L26+12
+ 267 001a 1A70     		strb	r2, [r3]
+  59:audio.c       ****     uartPrintf("Audio: Started\r\n");
+ 268              		.loc 1 59 0
+ 269 001c 0548     		ldr	r0, .L26+16
+ 270 001e FFF7FEFF 		bl	uartPrintf
+ 271              	.LVL26:
+  60:audio.c       **** }
+ 272              		.loc 1 60 0
+ 273              		@ sp needed
+ 274 0022 10BD     		pop	{r4, pc}
+ 275              	.L27:
+ 276              		.align	2
+ 277              	.L26:
+ 278 0024 00000000 		.word	.LANCHOR0
+ 279 0028 80000000 		.word	.LC16
+ 280 002c 88000000 		.word	.LC18
+ 281 0030 00000000 		.word	.LANCHOR1
+ 282 0034 B4000000 		.word	.LC24
+ 283              		.cfi_endproc
+ 284              	.LFE35:
+ 285              		.size	audio_Start, .-audio_Start
+ 286              		.section	.text.audio_Stop,"ax",%progbits
+ 287              		.align	2
+ 288              		.global	audio_Stop
+ 289              		.code	16
+ 290              		.thumb_func
+ 291              		.type	audio_Stop, %function
+ 292              	audio_Stop:
+ 293              	.LFB36:
+  63:audio.c       **** {
+ 294              		.loc 1 63 0
+ 295              		.cfi_startproc
+ 296              		@ args = 0, pretend = 0, frame = 0
+ 297              		@ frame_needed = 0, uses_anonymous_args = 0
+ 298 0000 10B5     		push	{r4, lr}
+ 299              		.cfi_def_cfa_offset 8
+ 300              		.cfi_offset 4, -8
+ 301              		.cfi_offset 14, -4
+  64:audio.c       ****     ASSERT(isInit);
+ 302              		.loc 1 64 0
+ 303 0002 0A4B     		ldr	r3, .L31
+ 304 0004 1B7A     		ldrb	r3, [r3, #8]
+ 305 0006 002B     		cmp	r3, #0
+ 306 0008 05D1     		bne	.L29
+  64:audio.c       ****     ASSERT(isInit);
+ 307              		.loc 1 64 0 is_stmt 0 discriminator 1
+ 308 000a 4022     		movs	r2, #64
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 10
+
+
+ 309 000c 0849     		ldr	r1, .L31+4
+ 310 000e 0948     		ldr	r0, .L31+8
+ 311 0010 FFF7FEFF 		bl	uartPrintf
+ 312              	.LVL27:
+ 313              	.L30:
+ 314 0014 FEE7     		b	.L30
+ 315              	.L29:
+  66:audio.c       ****     play = false;
+ 316              		.loc 1 66 0 is_stmt 1
+ 317 0016 0022     		movs	r2, #0
+ 318 0018 074B     		ldr	r3, .L31+12
+ 319 001a 1A70     		strb	r2, [r3]
+  67:audio.c       ****     audio_Play(0);
+ 320              		.loc 1 67 0
+ 321 001c 0020     		movs	r0, #0
+ 322 001e FFF7FEFF 		bl	audio_Play
+ 323              	.LVL28:
+  68:audio.c       ****     uartPrintf("Audio: Stopped\r\n");
+ 324              		.loc 1 68 0
+ 325 0022 0648     		ldr	r0, .L31+16
+ 326 0024 FFF7FEFF 		bl	uartPrintf
+ 327              	.LVL29:
+  69:audio.c       **** }
+ 328              		.loc 1 69 0
+ 329              		@ sp needed
+ 330 0028 10BD     		pop	{r4, pc}
+ 331              	.L32:
+ 332 002a C046     		.align	2
+ 333              	.L31:
+ 334 002c 00000000 		.word	.LANCHOR0
+ 335 0030 80000000 		.word	.LC16
+ 336 0034 88000000 		.word	.LC18
+ 337 0038 00000000 		.word	.LANCHOR1
+ 338 003c C8000000 		.word	.LC30
+ 339              		.cfi_endproc
+ 340              	.LFE36:
+ 341              		.size	audio_Stop, .-audio_Stop
+ 342              		.section	.text.audio_SetSampleRate,"ax",%progbits
+ 343              		.align	2
+ 344              		.global	audio_SetSampleRate
+ 345              		.code	16
+ 346              		.thumb_func
+ 347              		.type	audio_SetSampleRate, %function
+ 348              	audio_SetSampleRate:
+ 349              	.LFB37:
+  72:audio.c       **** {
+ 350              		.loc 1 72 0
+ 351              		.cfi_startproc
+ 352              		@ args = 0, pretend = 0, frame = 0
+ 353              		@ frame_needed = 0, uses_anonymous_args = 0
+ 354              	.LVL30:
+ 355 0000 70B5     		push	{r4, r5, r6, lr}
+ 356              		.cfi_def_cfa_offset 16
+ 357              		.cfi_offset 4, -16
+ 358              		.cfi_offset 5, -12
+ 359              		.cfi_offset 6, -8
+ 360              		.cfi_offset 14, -4
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 11
+
+
+ 361              	.LVL31:
+  75:audio.c       ****     ASSERT(isInit);
+ 362              		.loc 1 75 0
+ 363 0002 154B     		ldr	r3, .L38
+ 364 0004 1B7A     		ldrb	r3, [r3, #8]
+ 365 0006 002B     		cmp	r3, #0
+ 366 0008 05D1     		bne	.L34
+  75:audio.c       ****     ASSERT(isInit);
+ 367              		.loc 1 75 0 is_stmt 0 discriminator 1
+ 368 000a 4B22     		movs	r2, #75
+ 369 000c 1349     		ldr	r1, .L38+4
+ 370 000e 1448     		ldr	r0, .L38+8
+ 371              	.LVL32:
+ 372 0010 FFF7FEFF 		bl	uartPrintf
+ 373              	.LVL33:
+ 374              	.L35:
+ 375 0014 FEE7     		b	.L35
+ 376              	.LVL34:
+ 377              	.L34:
+  76:audio.c       ****     if (AUDIO_SAMPLE_RATE_COUNT > rate)
+ 378              		.loc 1 76 0 is_stmt 1
+ 379 0016 0428     		cmp	r0, #4
+ 380 0018 1BD8     		bhi	.L37
+ 381              	.LVL35:
+  79:audio.c       ****         sampleRate = rate;
+ 382              		.loc 1 79 0
+ 383 001a 124C     		ldr	r4, .L38+12
+ 384 001c 6070     		strb	r0, [r4, #1]
+  80:audio.c       ****         Timer_audio_Stop();
+ 385              		.loc 1 80 0
+ 386 001e FFF7FEFF 		bl	Timer_audio_Stop
+ 387              	.LVL36:
+  81:audio.c       ****         Timer_audio_WritePeriod(audio_SampleRateTPeriods[sampleRate]);
+ 388              		.loc 1 81 0
+ 389 0022 0D4D     		ldr	r5, .L38
+ 390 0024 6378     		ldrb	r3, [r4, #1]
+ 391 0026 9B00     		lsls	r3, r3, #2
+ 392 0028 EB18     		adds	r3, r5, r3
+ 393 002a D868     		ldr	r0, [r3, #12]
+ 394 002c FFF7FEFF 		bl	Timer_audio_WritePeriod
+ 395              	.LVL37:
+  82:audio.c       ****         Timer_audio_Start();
+ 396              		.loc 1 82 0
+ 397 0030 FFF7FEFF 		bl	Timer_audio_Start
+ 398              	.LVL38:
+  83:audio.c       ****         PWM_WriteCompare(0);
+ 399              		.loc 1 83 0
+ 400 0034 0020     		movs	r0, #0
+ 401 0036 FFF7FEFF 		bl	PWM_WriteCompare
+ 402              	.LVL39:
+  84:audio.c       ****         uartPrintf("Audio: Timer rate %d\r\n", audio_SampleRateTPeriods[sampleRate]);
+ 403              		.loc 1 84 0
+ 404 003a 6378     		ldrb	r3, [r4, #1]
+ 405 003c 9B00     		lsls	r3, r3, #2
+ 406 003e EB18     		adds	r3, r5, r3
+ 407 0040 D968     		ldr	r1, [r3, #12]
+ 408 0042 0948     		ldr	r0, .L38+16
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 12
+
+
+ 409 0044 FFF7FEFF 		bl	uartPrintf
+ 410              	.LVL40:
+  85:audio.c       ****         audio_PrintSampleRate(sampleRate);
+ 411              		.loc 1 85 0
+ 412 0048 6078     		ldrb	r0, [r4, #1]
+ 413 004a FFF7FEFF 		bl	audio_PrintSampleRate
+ 414              	.LVL41:
+  78:audio.c       ****         result = true;
+ 415              		.loc 1 78 0
+ 416 004e 0120     		movs	r0, #1
+ 417 0050 00E0     		b	.L36
+ 418              	.LVL42:
+ 419              	.L37:
+  73:audio.c       ****     bool result = false;
+ 420              		.loc 1 73 0
+ 421 0052 0020     		movs	r0, #0
+ 422              	.LVL43:
+ 423              	.L36:
+  89:audio.c       **** }
+ 424              		.loc 1 89 0
+ 425              		@ sp needed
+ 426 0054 70BD     		pop	{r4, r5, r6, pc}
+ 427              	.L39:
+ 428 0056 C046     		.align	2
+ 429              	.L38:
+ 430 0058 00000000 		.word	.LANCHOR0
+ 431 005c 80000000 		.word	.LC16
+ 432 0060 88000000 		.word	.LC18
+ 433 0064 00000000 		.word	.LANCHOR1
+ 434 0068 DC000000 		.word	.LC36
+ 435              		.cfi_endproc
+ 436              	.LFE37:
+ 437              		.size	audio_SetSampleRate, .-audio_SetSampleRate
+ 438              		.section	.text.audio_GetSampleRate,"ax",%progbits
+ 439              		.align	2
+ 440              		.global	audio_GetSampleRate
+ 441              		.code	16
+ 442              		.thumb_func
+ 443              		.type	audio_GetSampleRate, %function
+ 444              	audio_GetSampleRate:
+ 445              	.LFB38:
+  92:audio.c       **** {
+ 446              		.loc 1 92 0
+ 447              		.cfi_startproc
+ 448              		@ args = 0, pretend = 0, frame = 0
+ 449              		@ frame_needed = 0, uses_anonymous_args = 0
+ 450 0000 10B5     		push	{r4, lr}
+ 451              		.cfi_def_cfa_offset 8
+ 452              		.cfi_offset 4, -8
+ 453              		.cfi_offset 14, -4
+  93:audio.c       ****     ASSERT(isInit);
+ 454              		.loc 1 93 0
+ 455 0002 064B     		ldr	r3, .L43
+ 456 0004 1B7A     		ldrb	r3, [r3, #8]
+ 457 0006 002B     		cmp	r3, #0
+ 458 0008 05D1     		bne	.L41
+  93:audio.c       ****     ASSERT(isInit);
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 13
+
+
+ 459              		.loc 1 93 0 is_stmt 0 discriminator 1
+ 460 000a 5D22     		movs	r2, #93
+ 461 000c 0449     		ldr	r1, .L43+4
+ 462 000e 0548     		ldr	r0, .L43+8
+ 463 0010 FFF7FEFF 		bl	uartPrintf
+ 464              	.LVL44:
+ 465              	.L42:
+ 466 0014 FEE7     		b	.L42
+ 467              	.L41:
+  94:audio.c       ****     return sampleRate;
+ 468              		.loc 1 94 0 is_stmt 1
+ 469 0016 044B     		ldr	r3, .L43+12
+ 470 0018 5878     		ldrb	r0, [r3, #1]
+  95:audio.c       **** }
+ 471              		.loc 1 95 0
+ 472              		@ sp needed
+ 473 001a 10BD     		pop	{r4, pc}
+ 474              	.L44:
+ 475              		.align	2
+ 476              	.L43:
+ 477 001c 00000000 		.word	.LANCHOR0
+ 478 0020 80000000 		.word	.LC16
+ 479 0024 88000000 		.word	.LC18
+ 480 0028 00000000 		.word	.LANCHOR1
+ 481              		.cfi_endproc
+ 482              	.LFE38:
+ 483              		.size	audio_GetSampleRate, .-audio_GetSampleRate
+ 484              		.section	.text.audio_SetCallback,"ax",%progbits
+ 485              		.align	2
+ 486              		.global	audio_SetCallback
+ 487              		.code	16
+ 488              		.thumb_func
+ 489              		.type	audio_SetCallback, %function
+ 490              	audio_SetCallback:
+ 491              	.LFB39:
+  98:audio.c       **** {
+ 492              		.loc 1 98 0
+ 493              		.cfi_startproc
+ 494              		@ args = 0, pretend = 0, frame = 0
+ 495              		@ frame_needed = 0, uses_anonymous_args = 0
+ 496              	.LVL45:
+ 497 0000 10B5     		push	{r4, lr}
+ 498              		.cfi_def_cfa_offset 8
+ 499              		.cfi_offset 4, -8
+ 500              		.cfi_offset 14, -4
+  99:audio.c       ****     ASSERT(isInit);
+ 501              		.loc 1 99 0
+ 502 0002 0A4B     		ldr	r3, .L50
+ 503 0004 1B7A     		ldrb	r3, [r3, #8]
+ 504 0006 002B     		cmp	r3, #0
+ 505 0008 05D1     		bne	.L46
+  99:audio.c       ****     ASSERT(isInit);
+ 506              		.loc 1 99 0 is_stmt 0 discriminator 1
+ 507 000a 6322     		movs	r2, #99
+ 508 000c 0849     		ldr	r1, .L50+4
+ 509 000e 0948     		ldr	r0, .L50+8
+ 510              	.LVL46:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 14
+
+
+ 511 0010 FFF7FEFF 		bl	uartPrintf
+ 512              	.LVL47:
+ 513              	.L47:
+ 514 0014 FEE7     		b	.L47
+ 515              	.LVL48:
+ 516              	.L46:
+ 102:audio.c       ****     if (cb != NULL)
+ 517              		.loc 1 102 0 is_stmt 1
+ 518 0016 0028     		cmp	r0, #0
+ 519 0018 06D0     		beq	.L49
+ 520              	.LVL49:
+ 105:audio.c       ****         audio_OnTimerCb = cb;
+ 521              		.loc 1 105 0
+ 522 001a 044B     		ldr	r3, .L50
+ 523 001c 1860     		str	r0, [r3]
+ 106:audio.c       ****         uartPrintf("Audio: Callback set.\r\n");
+ 524              		.loc 1 106 0
+ 525 001e 0648     		ldr	r0, .L50+12
+ 526              	.LVL50:
+ 527 0020 FFF7FEFF 		bl	uartPrintf
+ 528              	.LVL51:
+ 104:audio.c       ****         result = true;
+ 529              		.loc 1 104 0
+ 530 0024 0120     		movs	r0, #1
+ 531 0026 00E0     		b	.L48
+ 532              	.LVL52:
+ 533              	.L49:
+ 100:audio.c       ****     bool result = false;
+ 534              		.loc 1 100 0
+ 535 0028 0020     		movs	r0, #0
+ 536              	.LVL53:
+ 537              	.L48:
+ 110:audio.c       **** }
+ 538              		.loc 1 110 0
+ 539              		@ sp needed
+ 540 002a 10BD     		pop	{r4, pc}
+ 541              	.L51:
+ 542              		.align	2
+ 543              	.L50:
+ 544 002c 00000000 		.word	.LANCHOR0
+ 545 0030 80000000 		.word	.LC16
+ 546 0034 88000000 		.word	.LC18
+ 547 0038 F4000000 		.word	.LC45
+ 548              		.cfi_endproc
+ 549              	.LFE39:
+ 550              		.size	audio_SetCallback, .-audio_SetCallback
+ 551              		.global	__aeabi_uidiv
+ 552              		.section	.text.audio_SetVolume,"ax",%progbits
+ 553              		.align	2
+ 554              		.global	audio_SetVolume
+ 555              		.code	16
+ 556              		.thumb_func
+ 557              		.type	audio_SetVolume, %function
+ 558              	audio_SetVolume:
+ 559              	.LFB41:
+ 133:audio.c       **** {
+ 560              		.loc 1 133 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 15
+
+
+ 561              		.cfi_startproc
+ 562              		@ args = 0, pretend = 0, frame = 0
+ 563              		@ frame_needed = 0, uses_anonymous_args = 0
+ 564              	.LVL54:
+ 565 0000 70B5     		push	{r4, r5, r6, lr}
+ 566              		.cfi_def_cfa_offset 16
+ 567              		.cfi_offset 4, -16
+ 568              		.cfi_offset 5, -12
+ 569              		.cfi_offset 6, -8
+ 570              		.cfi_offset 14, -4
+ 571 0002 0400     		movs	r4, r0
+ 572              	.LVL55:
+ 135:audio.c       ****     ASSERT(isInit);
+ 573              		.loc 1 135 0
+ 574 0004 0F4B     		ldr	r3, .L57
+ 575 0006 1B7A     		ldrb	r3, [r3, #8]
+ 576 0008 002B     		cmp	r3, #0
+ 577 000a 05D1     		bne	.L53
+ 135:audio.c       ****     ASSERT(isInit);
+ 578              		.loc 1 135 0 is_stmt 0 discriminator 1
+ 579 000c 8722     		movs	r2, #135
+ 580 000e 0E49     		ldr	r1, .L57+4
+ 581 0010 0E48     		ldr	r0, .L57+8
+ 582              	.LVL56:
+ 583 0012 FFF7FEFF 		bl	uartPrintf
+ 584              	.LVL57:
+ 585              	.L54:
+ 586 0016 FEE7     		b	.L54
+ 587              	.LVL58:
+ 588              	.L53:
+ 137:audio.c       ****     if (MAX_VOL_VALUE >= perc)
+ 589              		.loc 1 137 0 is_stmt 1
+ 590 0018 6428     		cmp	r0, #100
+ 591 001a 11D8     		bhi	.L56
+ 592              	.LVL59:
+ 140:audio.c       ****         volumePerc = perc;
+ 593              		.loc 1 140 0
+ 594 001c 094D     		ldr	r5, .L57
+ 595 001e 2023     		movs	r3, #32
+ 596 0020 E854     		strb	r0, [r5, r3]
+ 141:audio.c       ****         volume = MAX_FACTOR - (perc * MAX_FACTOR ) / 100; 
+ 597              		.loc 1 141 0
+ 598 0022 C300     		lsls	r3, r0, #3
+ 599 0024 1B1A     		subs	r3, r3, r0
+ 600 0026 5800     		lsls	r0, r3, #1
+ 601              	.LVL60:
+ 602 0028 6421     		movs	r1, #100
+ 603 002a FFF7FEFF 		bl	__aeabi_uidiv
+ 604              	.LVL61:
+ 605 002e 0E23     		movs	r3, #14
+ 606 0030 1A1A     		subs	r2, r3, r0
+ 607 0032 6A60     		str	r2, [r5, #4]
+ 142:audio.c       ****         uartPrintf("Audio: Set volume %d %d.\r\n", perc, volume);
+ 608              		.loc 1 142 0
+ 609 0034 2100     		movs	r1, r4
+ 610 0036 0648     		ldr	r0, .L57+12
+ 611 0038 FFF7FEFF 		bl	uartPrintf
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 16
+
+
+ 612              	.LVL62:
+ 139:audio.c       ****         result = true;
+ 613              		.loc 1 139 0
+ 614 003c 0120     		movs	r0, #1
+ 615 003e 00E0     		b	.L55
+ 616              	.LVL63:
+ 617              	.L56:
+ 134:audio.c       ****     bool result = false;
+ 618              		.loc 1 134 0
+ 619 0040 0020     		movs	r0, #0
+ 620              	.LVL64:
+ 621              	.L55:
+ 146:audio.c       **** }
+ 622              		.loc 1 146 0
+ 623              		@ sp needed
+ 624 0042 70BD     		pop	{r4, r5, r6, pc}
+ 625              	.L58:
+ 626              		.align	2
+ 627              	.L57:
+ 628 0044 00000000 		.word	.LANCHOR0
+ 629 0048 80000000 		.word	.LC16
+ 630 004c 88000000 		.word	.LC18
+ 631 0050 0C010000 		.word	.LC50
+ 632              		.cfi_endproc
+ 633              	.LFE41:
+ 634              		.size	audio_SetVolume, .-audio_SetVolume
+ 635              		.section	.text.audio_Init,"ax",%progbits
+ 636              		.align	2
+ 637              		.global	audio_Init
+ 638              		.code	16
+ 639              		.thumb_func
+ 640              		.type	audio_Init, %function
+ 641              	audio_Init:
+ 642              	.LFB40:
+ 113:audio.c       **** {
+ 643              		.loc 1 113 0
+ 644              		.cfi_startproc
+ 645              		@ args = 0, pretend = 0, frame = 0
+ 646              		@ frame_needed = 0, uses_anonymous_args = 0
+ 647 0000 10B5     		push	{r4, lr}
+ 648              		.cfi_def_cfa_offset 8
+ 649              		.cfi_offset 4, -8
+ 650              		.cfi_offset 14, -4
+ 115:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_4K]  = 256;
+ 651              		.loc 1 115 0
+ 652 0002 134B     		ldr	r3, .L62
+ 653 0004 8022     		movs	r2, #128
+ 654 0006 5200     		lsls	r2, r2, #1
+ 655 0008 DA60     		str	r2, [r3, #12]
+ 116:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_8K]  = 128;
+ 656              		.loc 1 116 0
+ 657 000a 803A     		subs	r2, r2, #128
+ 658 000c 1A61     		str	r2, [r3, #16]
+ 117:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_16K] = 64;
+ 659              		.loc 1 117 0
+ 660 000e 403A     		subs	r2, r2, #64
+ 661 0010 5A61     		str	r2, [r3, #20]
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 17
+
+
+ 118:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_32K] = 32;
+ 662              		.loc 1 118 0
+ 663 0012 203A     		subs	r2, r2, #32
+ 664 0014 9A61     		str	r2, [r3, #24]
+ 119:audio.c       ****     audio_SampleRateTPeriods[AUDIO_SAMPLE_RATE_64K] = 16;
+ 665              		.loc 1 119 0
+ 666 0016 103A     		subs	r2, r2, #16
+ 667 0018 DA61     		str	r2, [r3, #28]
+ 121:audio.c       ****     isInit = true;
+ 668              		.loc 1 121 0
+ 669 001a 0F3A     		subs	r2, r2, #15
+ 670 001c 1A72     		strb	r2, [r3, #8]
+ 123:audio.c       ****     Isr_TC_StartEx(Isr_TC_Handler);
+ 671              		.loc 1 123 0
+ 672 001e 0D48     		ldr	r0, .L62+4
+ 673 0020 FFF7FEFF 		bl	Isr_TC_StartEx
+ 674              	.LVL65:
+ 124:audio.c       ****     PWM_Start();
+ 675              		.loc 1 124 0
+ 676 0024 FFF7FEFF 		bl	PWM_Start
+ 677              	.LVL66:
+ 126:audio.c       ****     ASSERT(true == audio_SetSampleRate(AUDIO_SAMPLE_RATE_DEFAULT));
+ 678              		.loc 1 126 0
+ 679 0028 0220     		movs	r0, #2
+ 680 002a FFF7FEFF 		bl	audio_SetSampleRate
+ 681              	.LVL67:
+ 682 002e 0028     		cmp	r0, #0
+ 683 0030 05D1     		bne	.L60
+ 126:audio.c       ****     ASSERT(true == audio_SetSampleRate(AUDIO_SAMPLE_RATE_DEFAULT));
+ 684              		.loc 1 126 0 is_stmt 0 discriminator 1
+ 685 0032 7E22     		movs	r2, #126
+ 686 0034 0849     		ldr	r1, .L62+8
+ 687 0036 0948     		ldr	r0, .L62+12
+ 688 0038 FFF7FEFF 		bl	uartPrintf
+ 689              	.LVL68:
+ 690              	.L61:
+ 691 003c FEE7     		b	.L61
+ 692              	.L60:
+ 127:audio.c       ****     Timer_audio_Start();
+ 693              		.loc 1 127 0 is_stmt 1
+ 694 003e FFF7FEFF 		bl	Timer_audio_Start
+ 695              	.LVL69:
+ 128:audio.c       ****     uartPrintf("Audio: Inited.\r\n");
+ 696              		.loc 1 128 0
+ 697 0042 0748     		ldr	r0, .L62+16
+ 698 0044 FFF7FEFF 		bl	uartPrintf
+ 699              	.LVL70:
+ 129:audio.c       ****     audio_SetVolume(50);
+ 700              		.loc 1 129 0
+ 701 0048 3220     		movs	r0, #50
+ 702 004a FFF7FEFF 		bl	audio_SetVolume
+ 703              	.LVL71:
+ 130:audio.c       **** }
+ 704              		.loc 1 130 0
+ 705              		@ sp needed
+ 706 004e 10BD     		pop	{r4, pc}
+ 707              	.L63:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 18
+
+
+ 708              		.align	2
+ 709              	.L62:
+ 710 0050 00000000 		.word	.LANCHOR0
+ 711 0054 00000000 		.word	Isr_TC_Handler
+ 712 0058 80000000 		.word	.LC16
+ 713 005c 88000000 		.word	.LC18
+ 714 0060 28010000 		.word	.LC56
+ 715              		.cfi_endproc
+ 716              	.LFE40:
+ 717              		.size	audio_Init, .-audio_Init
+ 718              		.section	.text.audio_GetVolume,"ax",%progbits
+ 719              		.align	2
+ 720              		.global	audio_GetVolume
+ 721              		.code	16
+ 722              		.thumb_func
+ 723              		.type	audio_GetVolume, %function
+ 724              	audio_GetVolume:
+ 725              	.LFB42:
+ 149:audio.c       **** {
+ 726              		.loc 1 149 0
+ 727              		.cfi_startproc
+ 728              		@ args = 0, pretend = 0, frame = 0
+ 729              		@ frame_needed = 0, uses_anonymous_args = 0
+ 730 0000 10B5     		push	{r4, lr}
+ 731              		.cfi_def_cfa_offset 8
+ 732              		.cfi_offset 4, -8
+ 733              		.cfi_offset 14, -4
+ 150:audio.c       ****     uint8_t retval = volumePerc;
+ 734              		.loc 1 150 0
+ 735 0002 064B     		ldr	r3, .L67
+ 736 0004 2022     		movs	r2, #32
+ 737 0006 985C     		ldrb	r0, [r3, r2]
+ 738              	.LVL72:
+ 152:audio.c       ****     ASSERT(isInit);
+ 739              		.loc 1 152 0
+ 740 0008 1B7A     		ldrb	r3, [r3, #8]
+ 741 000a 002B     		cmp	r3, #0
+ 742 000c 05D1     		bne	.L65
+ 152:audio.c       ****     ASSERT(isInit);
+ 743              		.loc 1 152 0 is_stmt 0 discriminator 1
+ 744 000e 7832     		adds	r2, r2, #120
+ 745 0010 0349     		ldr	r1, .L67+4
+ 746 0012 0448     		ldr	r0, .L67+8
+ 747              	.LVL73:
+ 748 0014 FFF7FEFF 		bl	uartPrintf
+ 749              	.LVL74:
+ 750              	.L66:
+ 751 0018 FEE7     		b	.L66
+ 752              	.LVL75:
+ 753              	.L65:
+ 155:audio.c       **** }
+ 754              		.loc 1 155 0 is_stmt 1
+ 755              		@ sp needed
+ 756 001a 10BD     		pop	{r4, pc}
+ 757              	.L68:
+ 758              		.align	2
+ 759              	.L67:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 19
+
+
+ 760 001c 00000000 		.word	.LANCHOR0
+ 761 0020 80000000 		.word	.LC16
+ 762 0024 88000000 		.word	.LC18
+ 763              		.cfi_endproc
+ 764              	.LFE42:
+ 765              		.size	audio_GetVolume, .-audio_GetVolume
+ 766              		.data
+ 767              		.set	.LANCHOR1,. + 0
+ 768              		.type	play, %object
+ 769              		.size	play, 1
+ 770              	play:
+ 771 0000 01       		.byte	1
+ 772              		.type	sampleRate, %object
+ 773              		.size	sampleRate, 1
+ 774              	sampleRate:
+ 775 0001 05       		.byte	5
+ 776              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 777              		.align	2
+ 778              	.LC3:
+ 779 0000 41756469 		.ascii	"Audio: Rate 4K\015\012\000"
+ 779      6F3A2052 
+ 779      61746520 
+ 779      344B0D0A 
+ 779      00
+ 780 0011 000000   		.space	3
+ 781              	.LC5:
+ 782 0014 41756469 		.ascii	"Audio: Rate 8K\015\012\000"
+ 782      6F3A2052 
+ 782      61746520 
+ 782      384B0D0A 
+ 782      00
+ 783 0025 000000   		.space	3
+ 784              	.LC7:
+ 785 0028 41756469 		.ascii	"Audio: Rate 16K\015\012\000"
+ 785      6F3A2052 
+ 785      61746520 
+ 785      31364B0D 
+ 785      0A00
+ 786 003a 0000     		.space	2
+ 787              	.LC9:
+ 788 003c 41756469 		.ascii	"Audio: Rate 32K\015\012\000"
+ 788      6F3A2052 
+ 788      61746520 
+ 788      33324B0D 
+ 788      0A00
+ 789 004e 0000     		.space	2
+ 790              	.LC11:
+ 791 0050 41756469 		.ascii	"Audio: Rate 64K\015\012\000"
+ 791      6F3A2052 
+ 791      61746520 
+ 791      36344B0D 
+ 791      0A00
+ 792 0062 0000     		.space	2
+ 793              	.LC13:
+ 794 0064 41756469 		.ascii	"Audio: Unknown rate %d\015\012\000"
+ 794      6F3A2055 
+ 794      6E6B6E6F 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 20
+
+
+ 794      776E2072 
+ 794      61746520 
+ 795 007d 000000   		.space	3
+ 796              	.LC16:
+ 797 0080 61756469 		.ascii	"audio.c\000"
+ 797      6F2E6300 
+ 798              	.LC18:
+ 799 0088 52756E74 		.ascii	"RuntimeError: Assert in file: %s line: %d\015\012\000"
+ 799      696D6545 
+ 799      72726F72 
+ 799      3A204173 
+ 799      73657274 
+ 800              	.LC24:
+ 801 00b4 41756469 		.ascii	"Audio: Started\015\012\000"
+ 801      6F3A2053 
+ 801      74617274 
+ 801      65640D0A 
+ 801      00
+ 802 00c5 000000   		.space	3
+ 803              	.LC30:
+ 804 00c8 41756469 		.ascii	"Audio: Stopped\015\012\000"
+ 804      6F3A2053 
+ 804      746F7070 
+ 804      65640D0A 
+ 804      00
+ 805 00d9 000000   		.space	3
+ 806              	.LC36:
+ 807 00dc 41756469 		.ascii	"Audio: Timer rate %d\015\012\000"
+ 807      6F3A2054 
+ 807      696D6572 
+ 807      20726174 
+ 807      65202564 
+ 808 00f3 00       		.space	1
+ 809              	.LC45:
+ 810 00f4 41756469 		.ascii	"Audio: Callback set.\015\012\000"
+ 810      6F3A2043 
+ 810      616C6C62 
+ 810      61636B20 
+ 810      7365742E 
+ 811 010b 00       		.space	1
+ 812              	.LC50:
+ 813 010c 41756469 		.ascii	"Audio: Set volume %d %d.\015\012\000"
+ 813      6F3A2053 
+ 813      65742076 
+ 813      6F6C756D 
+ 813      65202564 
+ 814 0127 00       		.space	1
+ 815              	.LC56:
+ 816 0128 41756469 		.ascii	"Audio: Inited.\015\012\000"
+ 816      6F3A2049 
+ 816      6E697465 
+ 816      642E0D0A 
+ 816      00
+ 817              		.bss
+ 818              		.align	2
+ 819              		.set	.LANCHOR0,. + 0
+ 820              		.type	audio_OnTimerCb, %object
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 21
+
+
+ 821              		.size	audio_OnTimerCb, 4
+ 822              	audio_OnTimerCb:
+ 823 0000 00000000 		.space	4
+ 824              		.type	volume, %object
+ 825              		.size	volume, 4
+ 826              	volume:
+ 827 0004 00000000 		.space	4
+ 828              		.type	isInit, %object
+ 829              		.size	isInit, 1
+ 830              	isInit:
+ 831 0008 00       		.space	1
+ 832 0009 000000   		.space	3
+ 833              		.type	audio_SampleRateTPeriods, %object
+ 834              		.size	audio_SampleRateTPeriods, 20
+ 835              	audio_SampleRateTPeriods:
+ 836 000c 00000000 		.space	20
+ 836      00000000 
+ 836      00000000 
+ 836      00000000 
+ 836      00000000 
+ 837              		.type	volumePerc, %object
+ 838              		.size	volumePerc, 1
+ 839              	volumePerc:
+ 840 0020 00       		.space	1
+ 841              		.text
+ 842              	.Letext0:
+ 843              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 844              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 845              		.file 4 "Generated_Source\\PSoC4/cytypes.h"
+ 846              		.file 5 "audio.h"
+ 847              		.file 6 "Generated_Source\\PSoC4/Timer_audio.h"
+ 848              		.file 7 "uartPrint.h"
+ 849              		.file 8 "Generated_Source\\PSoC4/PWM.h"
+ 850              		.file 9 "Generated_Source\\PSoC4/Isr_TC.h"
+ 851              		.section	.debug_info,"",%progbits
+ 852              	.Ldebug_info0:
+ 853 0000 AF060000 		.4byte	0x6af
+ 854 0004 0400     		.2byte	0x4
+ 855 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 856 000a 04       		.byte	0x4
+ 857 000b 01       		.uleb128 0x1
+ 858 000c 14030000 		.4byte	.LASF60
+ 859 0010 0C       		.byte	0xc
+ 860 0011 BF030000 		.4byte	.LASF61
+ 861 0015 19000000 		.4byte	.LASF62
+ 862 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 863 001d 00000000 		.4byte	0
+ 864 0021 00000000 		.4byte	.Ldebug_line0
+ 865 0025 02       		.uleb128 0x2
+ 866 0026 01       		.byte	0x1
+ 867 0027 06       		.byte	0x6
+ 868 0028 3E020000 		.4byte	.LASF0
+ 869 002c 03       		.uleb128 0x3
+ 870 002d BE010000 		.4byte	.LASF5
+ 871 0031 02       		.byte	0x2
+ 872 0032 1D       		.byte	0x1d
+ 873 0033 37000000 		.4byte	0x37
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 22
+
+
+ 874 0037 02       		.uleb128 0x2
+ 875 0038 01       		.byte	0x1
+ 876 0039 08       		.byte	0x8
+ 877 003a 04020000 		.4byte	.LASF1
+ 878 003e 02       		.uleb128 0x2
+ 879 003f 02       		.byte	0x2
+ 880 0040 05       		.byte	0x5
+ 881 0041 E6000000 		.4byte	.LASF2
+ 882 0045 02       		.uleb128 0x2
+ 883 0046 02       		.byte	0x2
+ 884 0047 07       		.byte	0x7
+ 885 0048 98020000 		.4byte	.LASF3
+ 886 004c 02       		.uleb128 0x2
+ 887 004d 04       		.byte	0x4
+ 888 004e 05       		.byte	0x5
+ 889 004f 7A010000 		.4byte	.LASF4
+ 890 0053 03       		.uleb128 0x3
+ 891 0054 C4000000 		.4byte	.LASF6
+ 892 0058 02       		.byte	0x2
+ 893 0059 41       		.byte	0x41
+ 894 005a 5E000000 		.4byte	0x5e
+ 895 005e 02       		.uleb128 0x2
+ 896 005f 04       		.byte	0x4
+ 897 0060 07       		.byte	0x7
+ 898 0061 EE020000 		.4byte	.LASF7
+ 899 0065 02       		.uleb128 0x2
+ 900 0066 08       		.byte	0x8
+ 901 0067 05       		.byte	0x5
+ 902 0068 6C010000 		.4byte	.LASF8
+ 903 006c 02       		.uleb128 0x2
+ 904 006d 08       		.byte	0x8
+ 905 006e 07       		.byte	0x7
+ 906 006f 4A020000 		.4byte	.LASF9
+ 907 0073 04       		.uleb128 0x4
+ 908 0074 04       		.byte	0x4
+ 909 0075 05       		.byte	0x5
+ 910 0076 696E7400 		.ascii	"int\000"
+ 911 007a 02       		.uleb128 0x2
+ 912 007b 04       		.byte	0x4
+ 913 007c 07       		.byte	0x7
+ 914 007d 6A020000 		.4byte	.LASF10
+ 915 0081 03       		.uleb128 0x3
+ 916 0082 04010000 		.4byte	.LASF11
+ 917 0086 03       		.byte	0x3
+ 918 0087 18       		.byte	0x18
+ 919 0088 2C000000 		.4byte	0x2c
+ 920 008c 03       		.uleb128 0x3
+ 921 008d 61020000 		.4byte	.LASF12
+ 922 0091 03       		.byte	0x3
+ 923 0092 30       		.byte	0x30
+ 924 0093 53000000 		.4byte	0x53
+ 925 0097 02       		.uleb128 0x2
+ 926 0098 08       		.byte	0x8
+ 927 0099 04       		.byte	0x4
+ 928 009a ED010000 		.4byte	.LASF13
+ 929 009e 02       		.uleb128 0x2
+ 930 009f 04       		.byte	0x4
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 23
+
+
+ 931 00a0 07       		.byte	0x7
+ 932 00a1 90000000 		.4byte	.LASF14
+ 933 00a5 02       		.uleb128 0x2
+ 934 00a6 01       		.byte	0x1
+ 935 00a7 08       		.byte	0x8
+ 936 00a8 AB020000 		.4byte	.LASF15
+ 937 00ac 05       		.uleb128 0x5
+ 938 00ad 04       		.byte	0x4
+ 939 00ae B2000000 		.4byte	0xb2
+ 940 00b2 06       		.uleb128 0x6
+ 941 00b3 07       		.uleb128 0x7
+ 942 00b4 0D030000 		.4byte	.LASF16
+ 943 00b8 04       		.byte	0x4
+ 944 00b9 E601     		.2byte	0x1e6
+ 945 00bb 5E000000 		.4byte	0x5e
+ 946 00bf 02       		.uleb128 0x2
+ 947 00c0 04       		.byte	0x4
+ 948 00c1 04       		.byte	0x4
+ 949 00c2 55010000 		.4byte	.LASF17
+ 950 00c6 02       		.uleb128 0x2
+ 951 00c7 08       		.byte	0x8
+ 952 00c8 04       		.byte	0x4
+ 953 00c9 F2030000 		.4byte	.LASF18
+ 954 00cd 03       		.uleb128 0x3
+ 955 00ce 5B010000 		.4byte	.LASF19
+ 956 00d2 05       		.byte	0x5
+ 957 00d3 13       		.byte	0x13
+ 958 00d4 AC000000 		.4byte	0xac
+ 959 00d8 08       		.uleb128 0x8
+ 960 00d9 01       		.byte	0x1
+ 961 00da 37000000 		.4byte	0x37
+ 962 00de 05       		.byte	0x5
+ 963 00df 17       		.byte	0x17
+ 964 00e0 0F010000 		.4byte	0x10f
+ 965 00e4 09       		.uleb128 0x9
+ 966 00e5 DD030000 		.4byte	.LASF20
+ 967 00e9 00       		.byte	0
+ 968 00ea 09       		.uleb128 0x9
+ 969 00eb F9030000 		.4byte	.LASF21
+ 970 00ef 01       		.byte	0x1
+ 971 00f0 09       		.uleb128 0x9
+ 972 00f1 83010000 		.4byte	.LASF22
+ 973 00f5 02       		.byte	0x2
+ 974 00f6 09       		.uleb128 0x9
+ 975 00f7 6A000000 		.4byte	.LASF23
+ 976 00fb 03       		.byte	0x3
+ 977 00fc 09       		.uleb128 0x9
+ 978 00fd 27010000 		.4byte	.LASF24
+ 979 0101 04       		.byte	0x4
+ 980 0102 09       		.uleb128 0x9
+ 981 0103 3D010000 		.4byte	.LASF25
+ 982 0107 05       		.byte	0x5
+ 983 0108 09       		.uleb128 0x9
+ 984 0109 A0000000 		.4byte	.LASF26
+ 985 010d 02       		.byte	0x2
+ 986 010e 00       		.byte	0
+ 987 010f 03       		.uleb128 0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 24
+
+
+ 988 0110 A0010000 		.4byte	.LASF27
+ 989 0114 05       		.byte	0x5
+ 990 0115 1F       		.byte	0x1f
+ 991 0116 D8000000 		.4byte	0xd8
+ 992 011a 0A       		.uleb128 0xa
+ 993 011b 2A040000 		.4byte	.LASF28
+ 994 011f 01       		.byte	0x1
+ 995 0120 18       		.byte	0x18
+ 996 0121 00000000 		.4byte	.LFB33
+ 997 0125 24000000 		.4byte	.LFE33-.LFB33
+ 998 0129 01       		.uleb128 0x1
+ 999 012a 9C       		.byte	0x9c
+ 1000 012b 3F010000 		.4byte	0x13f
+ 1001 012f 0B       		.uleb128 0xb
+ 1002 0130 08000000 		.4byte	.LVL0
+ 1003 0134 54060000 		.4byte	0x654
+ 1004 0138 0C       		.uleb128 0xc
+ 1005 0139 01       		.uleb128 0x1
+ 1006 013a 50       		.byte	0x50
+ 1007 013b 01       		.uleb128 0x1
+ 1008 013c 31       		.byte	0x31
+ 1009 013d 00       		.byte	0
+ 1010 013e 00       		.byte	0
+ 1011 013f 0D       		.uleb128 0xd
+ 1012 0140 C8010000 		.4byte	.LASF63
+ 1013 0144 01       		.byte	0x1
+ 1014 0145 9D       		.byte	0x9d
+ 1015 0146 00000000 		.4byte	.LFB43
+ 1016 014a 5C000000 		.4byte	.LFE43-.LFB43
+ 1017 014e 01       		.uleb128 0x1
+ 1018 014f 9C       		.byte	0x9c
+ 1019 0150 EA010000 		.4byte	0x1ea
+ 1020 0154 0E       		.uleb128 0xe
+ 1021 0155 D8030000 		.4byte	.LASF30
+ 1022 0159 01       		.byte	0x1
+ 1023 015a 9D       		.byte	0x9d
+ 1024 015b 0F010000 		.4byte	0x10f
+ 1025 015f 00000000 		.4byte	.LLST0
+ 1026 0163 0F       		.uleb128 0xf
+ 1027 0164 14000000 		.4byte	.LVL4
+ 1028 0168 60060000 		.4byte	0x660
+ 1029 016c 7A010000 		.4byte	0x17a
+ 1030 0170 0C       		.uleb128 0xc
+ 1031 0171 01       		.uleb128 0x1
+ 1032 0172 50       		.byte	0x50
+ 1033 0173 05       		.uleb128 0x5
+ 1034 0174 03       		.byte	0x3
+ 1035 0175 00000000 		.4byte	.LC3
+ 1036 0179 00       		.byte	0
+ 1037 017a 0F       		.uleb128 0xf
+ 1038 017b 1C000000 		.4byte	.LVL5
+ 1039 017f 60060000 		.4byte	0x660
+ 1040 0183 91010000 		.4byte	0x191
+ 1041 0187 0C       		.uleb128 0xc
+ 1042 0188 01       		.uleb128 0x1
+ 1043 0189 50       		.byte	0x50
+ 1044 018a 05       		.uleb128 0x5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 25
+
+
+ 1045 018b 03       		.byte	0x3
+ 1046 018c 14000000 		.4byte	.LC5
+ 1047 0190 00       		.byte	0
+ 1048 0191 0F       		.uleb128 0xf
+ 1049 0192 24000000 		.4byte	.LVL6
+ 1050 0196 60060000 		.4byte	0x660
+ 1051 019a A8010000 		.4byte	0x1a8
+ 1052 019e 0C       		.uleb128 0xc
+ 1053 019f 01       		.uleb128 0x1
+ 1054 01a0 50       		.byte	0x50
+ 1055 01a1 05       		.uleb128 0x5
+ 1056 01a2 03       		.byte	0x3
+ 1057 01a3 28000000 		.4byte	.LC7
+ 1058 01a7 00       		.byte	0
+ 1059 01a8 0F       		.uleb128 0xf
+ 1060 01a9 2C000000 		.4byte	.LVL7
+ 1061 01ad 60060000 		.4byte	0x660
+ 1062 01b1 BF010000 		.4byte	0x1bf
+ 1063 01b5 0C       		.uleb128 0xc
+ 1064 01b6 01       		.uleb128 0x1
+ 1065 01b7 50       		.byte	0x50
+ 1066 01b8 05       		.uleb128 0x5
+ 1067 01b9 03       		.byte	0x3
+ 1068 01ba 3C000000 		.4byte	.LC9
+ 1069 01be 00       		.byte	0
+ 1070 01bf 0F       		.uleb128 0xf
+ 1071 01c0 34000000 		.4byte	.LVL8
+ 1072 01c4 60060000 		.4byte	0x660
+ 1073 01c8 D6010000 		.4byte	0x1d6
+ 1074 01cc 0C       		.uleb128 0xc
+ 1075 01cd 01       		.uleb128 0x1
+ 1076 01ce 50       		.byte	0x50
+ 1077 01cf 05       		.uleb128 0x5
+ 1078 01d0 03       		.byte	0x3
+ 1079 01d1 50000000 		.4byte	.LC11
+ 1080 01d5 00       		.byte	0
+ 1081 01d6 0B       		.uleb128 0xb
+ 1082 01d7 3E000000 		.4byte	.LVL11
+ 1083 01db 60060000 		.4byte	0x660
+ 1084 01df 0C       		.uleb128 0xc
+ 1085 01e0 01       		.uleb128 0x1
+ 1086 01e1 50       		.byte	0x50
+ 1087 01e2 05       		.uleb128 0x5
+ 1088 01e3 03       		.byte	0x3
+ 1089 01e4 64000000 		.4byte	.LC13
+ 1090 01e8 00       		.byte	0
+ 1091 01e9 00       		.byte	0
+ 1092 01ea 10       		.uleb128 0x10
+ 1093 01eb B3010000 		.4byte	.LASF29
+ 1094 01ef 01       		.byte	0x1
+ 1095 01f0 21       		.byte	0x21
+ 1096 01f1 00000000 		.4byte	.LFB34
+ 1097 01f5 40000000 		.4byte	.LFE34-.LFB34
+ 1098 01f9 01       		.uleb128 0x1
+ 1099 01fa 9C       		.byte	0x9c
+ 1100 01fb 5C020000 		.4byte	0x25c
+ 1101 01ff 0E       		.uleb128 0xe
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 26
+
+
+ 1102 0200 63000000 		.4byte	.LASF31
+ 1103 0204 01       		.byte	0x1
+ 1104 0205 21       		.byte	0x21
+ 1105 0206 81000000 		.4byte	0x81
+ 1106 020a 3A000000 		.4byte	.LLST1
+ 1107 020e 11       		.uleb128 0x11
+ 1108 020f 00030000 		.4byte	.LASF32
+ 1109 0213 01       		.byte	0x1
+ 1110 0214 23       		.byte	0x23
+ 1111 0215 8C000000 		.4byte	0x8c
+ 1112 0219 8D000000 		.4byte	.LLST2
+ 1113 021d 12       		.uleb128 0x12
+ 1114 021e 746D7000 		.ascii	"tmp\000"
+ 1115 0222 01       		.byte	0x1
+ 1116 0223 24       		.byte	0x24
+ 1117 0224 8C000000 		.4byte	0x8c
+ 1118 0228 CB000000 		.4byte	.LLST3
+ 1119 022c 0F       		.uleb128 0xf
+ 1120 022d 18000000 		.4byte	.LVL15
+ 1121 0231 60060000 		.4byte	0x660
+ 1122 0235 52020000 		.4byte	0x252
+ 1123 0239 0C       		.uleb128 0xc
+ 1124 023a 01       		.uleb128 0x1
+ 1125 023b 50       		.byte	0x50
+ 1126 023c 05       		.uleb128 0x5
+ 1127 023d 03       		.byte	0x3
+ 1128 023e 88000000 		.4byte	.LC18
+ 1129 0242 0C       		.uleb128 0xc
+ 1130 0243 01       		.uleb128 0x1
+ 1131 0244 51       		.byte	0x51
+ 1132 0245 05       		.uleb128 0x5
+ 1133 0246 03       		.byte	0x3
+ 1134 0247 80000000 		.4byte	.LC16
+ 1135 024b 0C       		.uleb128 0xc
+ 1136 024c 01       		.uleb128 0x1
+ 1137 024d 52       		.byte	0x52
+ 1138 024e 02       		.uleb128 0x2
+ 1139 024f 08       		.byte	0x8
+ 1140 0250 26       		.byte	0x26
+ 1141 0251 00       		.byte	0
+ 1142 0252 13       		.uleb128 0x13
+ 1143 0253 32000000 		.4byte	.LVL24
+ 1144 0257 6B060000 		.4byte	0x66b
+ 1145 025b 00       		.byte	0
+ 1146 025c 10       		.uleb128 0x10
+ 1147 025d CC030000 		.4byte	.LASF33
+ 1148 0261 01       		.byte	0x1
+ 1149 0262 36       		.byte	0x36
+ 1150 0263 00000000 		.4byte	.LFB35
+ 1151 0267 38000000 		.4byte	.LFE35-.LFB35
+ 1152 026b 01       		.uleb128 0x1
+ 1153 026c 9C       		.byte	0x9c
+ 1154 026d AB020000 		.4byte	0x2ab
+ 1155 0271 0F       		.uleb128 0xf
+ 1156 0272 14000000 		.4byte	.LVL25
+ 1157 0276 60060000 		.4byte	0x660
+ 1158 027a 97020000 		.4byte	0x297
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 27
+
+
+ 1159 027e 0C       		.uleb128 0xc
+ 1160 027f 01       		.uleb128 0x1
+ 1161 0280 50       		.byte	0x50
+ 1162 0281 05       		.uleb128 0x5
+ 1163 0282 03       		.byte	0x3
+ 1164 0283 88000000 		.4byte	.LC18
+ 1165 0287 0C       		.uleb128 0xc
+ 1166 0288 01       		.uleb128 0x1
+ 1167 0289 51       		.byte	0x51
+ 1168 028a 05       		.uleb128 0x5
+ 1169 028b 03       		.byte	0x3
+ 1170 028c 80000000 		.4byte	.LC16
+ 1171 0290 0C       		.uleb128 0xc
+ 1172 0291 01       		.uleb128 0x1
+ 1173 0292 52       		.byte	0x52
+ 1174 0293 02       		.uleb128 0x2
+ 1175 0294 08       		.byte	0x8
+ 1176 0295 38       		.byte	0x38
+ 1177 0296 00       		.byte	0
+ 1178 0297 0B       		.uleb128 0xb
+ 1179 0298 22000000 		.4byte	.LVL26
+ 1180 029c 60060000 		.4byte	0x660
+ 1181 02a0 0C       		.uleb128 0xc
+ 1182 02a1 01       		.uleb128 0x1
+ 1183 02a2 50       		.byte	0x50
+ 1184 02a3 05       		.uleb128 0x5
+ 1185 02a4 03       		.byte	0x3
+ 1186 02a5 B4000000 		.4byte	.LC24
+ 1187 02a9 00       		.byte	0
+ 1188 02aa 00       		.byte	0
+ 1189 02ab 10       		.uleb128 0x10
+ 1190 02ac 1F040000 		.4byte	.LASF34
+ 1191 02b0 01       		.byte	0x1
+ 1192 02b1 3E       		.byte	0x3e
+ 1193 02b2 00000000 		.4byte	.LFB36
+ 1194 02b6 40000000 		.4byte	.LFE36-.LFB36
+ 1195 02ba 01       		.uleb128 0x1
+ 1196 02bb 9C       		.byte	0x9c
+ 1197 02bc 0D030000 		.4byte	0x30d
+ 1198 02c0 0F       		.uleb128 0xf
+ 1199 02c1 14000000 		.4byte	.LVL27
+ 1200 02c5 60060000 		.4byte	0x660
+ 1201 02c9 E6020000 		.4byte	0x2e6
+ 1202 02cd 0C       		.uleb128 0xc
+ 1203 02ce 01       		.uleb128 0x1
+ 1204 02cf 50       		.byte	0x50
+ 1205 02d0 05       		.uleb128 0x5
+ 1206 02d1 03       		.byte	0x3
+ 1207 02d2 88000000 		.4byte	.LC18
+ 1208 02d6 0C       		.uleb128 0xc
+ 1209 02d7 01       		.uleb128 0x1
+ 1210 02d8 51       		.byte	0x51
+ 1211 02d9 05       		.uleb128 0x5
+ 1212 02da 03       		.byte	0x3
+ 1213 02db 80000000 		.4byte	.LC16
+ 1214 02df 0C       		.uleb128 0xc
+ 1215 02e0 01       		.uleb128 0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 28
+
+
+ 1216 02e1 52       		.byte	0x52
+ 1217 02e2 02       		.uleb128 0x2
+ 1218 02e3 08       		.byte	0x8
+ 1219 02e4 40       		.byte	0x40
+ 1220 02e5 00       		.byte	0
+ 1221 02e6 0F       		.uleb128 0xf
+ 1222 02e7 22000000 		.4byte	.LVL28
+ 1223 02eb EA010000 		.4byte	0x1ea
+ 1224 02ef F9020000 		.4byte	0x2f9
+ 1225 02f3 0C       		.uleb128 0xc
+ 1226 02f4 01       		.uleb128 0x1
+ 1227 02f5 50       		.byte	0x50
+ 1228 02f6 01       		.uleb128 0x1
+ 1229 02f7 30       		.byte	0x30
+ 1230 02f8 00       		.byte	0
+ 1231 02f9 0B       		.uleb128 0xb
+ 1232 02fa 28000000 		.4byte	.LVL29
+ 1233 02fe 60060000 		.4byte	0x660
+ 1234 0302 0C       		.uleb128 0xc
+ 1235 0303 01       		.uleb128 0x1
+ 1236 0304 50       		.byte	0x50
+ 1237 0305 05       		.uleb128 0x5
+ 1238 0306 03       		.byte	0x3
+ 1239 0307 C8000000 		.4byte	.LC30
+ 1240 030b 00       		.byte	0
+ 1241 030c 00       		.byte	0
+ 1242 030d 14       		.uleb128 0x14
+ 1243 030e 2A020000 		.4byte	.LASF37
+ 1244 0312 01       		.byte	0x1
+ 1245 0313 47       		.byte	0x47
+ 1246 0314 B9030000 		.4byte	0x3b9
+ 1247 0318 00000000 		.4byte	.LFB37
+ 1248 031c 6C000000 		.4byte	.LFE37-.LFB37
+ 1249 0320 01       		.uleb128 0x1
+ 1250 0321 9C       		.byte	0x9c
+ 1251 0322 B9030000 		.4byte	0x3b9
+ 1252 0326 0E       		.uleb128 0xe
+ 1253 0327 D8030000 		.4byte	.LASF30
+ 1254 032b 01       		.byte	0x1
+ 1255 032c 47       		.byte	0x47
+ 1256 032d 0F010000 		.4byte	0x10f
+ 1257 0331 01010000 		.4byte	.LLST4
+ 1258 0335 11       		.uleb128 0x11
+ 1259 0336 00000000 		.4byte	.LASF35
+ 1260 033a 01       		.byte	0x1
+ 1261 033b 49       		.byte	0x49
+ 1262 033c B9030000 		.4byte	0x3b9
+ 1263 0340 54010000 		.4byte	.LLST5
+ 1264 0344 0F       		.uleb128 0xf
+ 1265 0345 14000000 		.4byte	.LVL33
+ 1266 0349 60060000 		.4byte	0x660
+ 1267 034d 6A030000 		.4byte	0x36a
+ 1268 0351 0C       		.uleb128 0xc
+ 1269 0352 01       		.uleb128 0x1
+ 1270 0353 50       		.byte	0x50
+ 1271 0354 05       		.uleb128 0x5
+ 1272 0355 03       		.byte	0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 29
+
+
+ 1273 0356 88000000 		.4byte	.LC18
+ 1274 035a 0C       		.uleb128 0xc
+ 1275 035b 01       		.uleb128 0x1
+ 1276 035c 51       		.byte	0x51
+ 1277 035d 05       		.uleb128 0x5
+ 1278 035e 03       		.byte	0x3
+ 1279 035f 80000000 		.4byte	.LC16
+ 1280 0363 0C       		.uleb128 0xc
+ 1281 0364 01       		.uleb128 0x1
+ 1282 0365 52       		.byte	0x52
+ 1283 0366 02       		.uleb128 0x2
+ 1284 0367 08       		.byte	0x8
+ 1285 0368 4B       		.byte	0x4b
+ 1286 0369 00       		.byte	0
+ 1287 036a 13       		.uleb128 0x13
+ 1288 036b 22000000 		.4byte	.LVL36
+ 1289 036f 77060000 		.4byte	0x677
+ 1290 0373 13       		.uleb128 0x13
+ 1291 0374 30000000 		.4byte	.LVL37
+ 1292 0378 83060000 		.4byte	0x683
+ 1293 037c 13       		.uleb128 0x13
+ 1294 037d 34000000 		.4byte	.LVL38
+ 1295 0381 8F060000 		.4byte	0x68f
+ 1296 0385 0F       		.uleb128 0xf
+ 1297 0386 3A000000 		.4byte	.LVL39
+ 1298 038a 6B060000 		.4byte	0x66b
+ 1299 038e 98030000 		.4byte	0x398
+ 1300 0392 0C       		.uleb128 0xc
+ 1301 0393 01       		.uleb128 0x1
+ 1302 0394 50       		.byte	0x50
+ 1303 0395 01       		.uleb128 0x1
+ 1304 0396 30       		.byte	0x30
+ 1305 0397 00       		.byte	0
+ 1306 0398 0F       		.uleb128 0xf
+ 1307 0399 48000000 		.4byte	.LVL40
+ 1308 039d 60060000 		.4byte	0x660
+ 1309 03a1 AF030000 		.4byte	0x3af
+ 1310 03a5 0C       		.uleb128 0xc
+ 1311 03a6 01       		.uleb128 0x1
+ 1312 03a7 50       		.byte	0x50
+ 1313 03a8 05       		.uleb128 0x5
+ 1314 03a9 03       		.byte	0x3
+ 1315 03aa DC000000 		.4byte	.LC36
+ 1316 03ae 00       		.byte	0
+ 1317 03af 13       		.uleb128 0x13
+ 1318 03b0 4E000000 		.4byte	.LVL41
+ 1319 03b4 3F010000 		.4byte	0x13f
+ 1320 03b8 00       		.byte	0
+ 1321 03b9 02       		.uleb128 0x2
+ 1322 03ba 01       		.byte	0x1
+ 1323 03bb 02       		.byte	0x2
+ 1324 03bc C0020000 		.4byte	.LASF36
+ 1325 03c0 14       		.uleb128 0x14
+ 1326 03c1 F0000000 		.4byte	.LASF38
+ 1327 03c5 01       		.byte	0x1
+ 1328 03c6 5B       		.byte	0x5b
+ 1329 03c7 0F010000 		.4byte	0x10f
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 30
+
+
+ 1330 03cb 00000000 		.4byte	.LFB38
+ 1331 03cf 2C000000 		.4byte	.LFE38-.LFB38
+ 1332 03d3 01       		.uleb128 0x1
+ 1333 03d4 9C       		.byte	0x9c
+ 1334 03d5 FC030000 		.4byte	0x3fc
+ 1335 03d9 0B       		.uleb128 0xb
+ 1336 03da 14000000 		.4byte	.LVL44
+ 1337 03de 60060000 		.4byte	0x660
+ 1338 03e2 0C       		.uleb128 0xc
+ 1339 03e3 01       		.uleb128 0x1
+ 1340 03e4 50       		.byte	0x50
+ 1341 03e5 05       		.uleb128 0x5
+ 1342 03e6 03       		.byte	0x3
+ 1343 03e7 88000000 		.4byte	.LC18
+ 1344 03eb 0C       		.uleb128 0xc
+ 1345 03ec 01       		.uleb128 0x1
+ 1346 03ed 51       		.byte	0x51
+ 1347 03ee 05       		.uleb128 0x5
+ 1348 03ef 03       		.byte	0x3
+ 1349 03f0 80000000 		.4byte	.LC16
+ 1350 03f4 0C       		.uleb128 0xc
+ 1351 03f5 01       		.uleb128 0x1
+ 1352 03f6 52       		.byte	0x52
+ 1353 03f7 02       		.uleb128 0x2
+ 1354 03f8 08       		.byte	0x8
+ 1355 03f9 5D       		.byte	0x5d
+ 1356 03fa 00       		.byte	0
+ 1357 03fb 00       		.byte	0
+ 1358 03fc 14       		.uleb128 0x14
+ 1359 03fd 07000000 		.4byte	.LASF39
+ 1360 0401 01       		.byte	0x1
+ 1361 0402 61       		.byte	0x61
+ 1362 0403 B9030000 		.4byte	0x3b9
+ 1363 0407 00000000 		.4byte	.LFB39
+ 1364 040b 3C000000 		.4byte	.LFE39-.LFB39
+ 1365 040f 01       		.uleb128 0x1
+ 1366 0410 9C       		.byte	0x9c
+ 1367 0411 6C040000 		.4byte	0x46c
+ 1368 0415 15       		.uleb128 0x15
+ 1369 0416 636200   		.ascii	"cb\000"
+ 1370 0419 01       		.byte	0x1
+ 1371 041a 61       		.byte	0x61
+ 1372 041b CD000000 		.4byte	0xcd
+ 1373 041f 8B010000 		.4byte	.LLST6
+ 1374 0423 11       		.uleb128 0x11
+ 1375 0424 00000000 		.4byte	.LASF35
+ 1376 0428 01       		.byte	0x1
+ 1377 0429 64       		.byte	0x64
+ 1378 042a B9030000 		.4byte	0x3b9
+ 1379 042e ED010000 		.4byte	.LLST7
+ 1380 0432 0F       		.uleb128 0xf
+ 1381 0433 14000000 		.4byte	.LVL47
+ 1382 0437 60060000 		.4byte	0x660
+ 1383 043b 58040000 		.4byte	0x458
+ 1384 043f 0C       		.uleb128 0xc
+ 1385 0440 01       		.uleb128 0x1
+ 1386 0441 50       		.byte	0x50
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 31
+
+
+ 1387 0442 05       		.uleb128 0x5
+ 1388 0443 03       		.byte	0x3
+ 1389 0444 88000000 		.4byte	.LC18
+ 1390 0448 0C       		.uleb128 0xc
+ 1391 0449 01       		.uleb128 0x1
+ 1392 044a 51       		.byte	0x51
+ 1393 044b 05       		.uleb128 0x5
+ 1394 044c 03       		.byte	0x3
+ 1395 044d 80000000 		.4byte	.LC16
+ 1396 0451 0C       		.uleb128 0xc
+ 1397 0452 01       		.uleb128 0x1
+ 1398 0453 52       		.byte	0x52
+ 1399 0454 02       		.uleb128 0x2
+ 1400 0455 08       		.byte	0x8
+ 1401 0456 63       		.byte	0x63
+ 1402 0457 00       		.byte	0
+ 1403 0458 0B       		.uleb128 0xb
+ 1404 0459 24000000 		.4byte	.LVL51
+ 1405 045d 60060000 		.4byte	0x660
+ 1406 0461 0C       		.uleb128 0xc
+ 1407 0462 01       		.uleb128 0x1
+ 1408 0463 50       		.byte	0x50
+ 1409 0464 05       		.uleb128 0x5
+ 1410 0465 03       		.byte	0x3
+ 1411 0466 F4000000 		.4byte	.LC45
+ 1412 046a 00       		.byte	0
+ 1413 046b 00       		.byte	0
+ 1414 046c 16       		.uleb128 0x16
+ 1415 046d 80000000 		.4byte	.LASF40
+ 1416 0471 01       		.byte	0x1
+ 1417 0472 84       		.byte	0x84
+ 1418 0473 B9030000 		.4byte	0x3b9
+ 1419 0477 00000000 		.4byte	.LFB41
+ 1420 047b 54000000 		.4byte	.LFE41-.LFB41
+ 1421 047f 01       		.uleb128 0x1
+ 1422 0480 9C       		.byte	0x9c
+ 1423 0481 E3040000 		.4byte	0x4e3
+ 1424 0485 0E       		.uleb128 0xe
+ 1425 0486 C7030000 		.4byte	.LASF41
+ 1426 048a 01       		.byte	0x1
+ 1427 048b 84       		.byte	0x84
+ 1428 048c 81000000 		.4byte	0x81
+ 1429 0490 24020000 		.4byte	.LLST8
+ 1430 0494 11       		.uleb128 0x11
+ 1431 0495 00000000 		.4byte	.LASF35
+ 1432 0499 01       		.byte	0x1
+ 1433 049a 86       		.byte	0x86
+ 1434 049b B9030000 		.4byte	0x3b9
+ 1435 049f 86020000 		.4byte	.LLST9
+ 1436 04a3 0F       		.uleb128 0xf
+ 1437 04a4 16000000 		.4byte	.LVL57
+ 1438 04a8 60060000 		.4byte	0x660
+ 1439 04ac C9040000 		.4byte	0x4c9
+ 1440 04b0 0C       		.uleb128 0xc
+ 1441 04b1 01       		.uleb128 0x1
+ 1442 04b2 50       		.byte	0x50
+ 1443 04b3 05       		.uleb128 0x5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 32
+
+
+ 1444 04b4 03       		.byte	0x3
+ 1445 04b5 88000000 		.4byte	.LC18
+ 1446 04b9 0C       		.uleb128 0xc
+ 1447 04ba 01       		.uleb128 0x1
+ 1448 04bb 51       		.byte	0x51
+ 1449 04bc 05       		.uleb128 0x5
+ 1450 04bd 03       		.byte	0x3
+ 1451 04be 80000000 		.4byte	.LC16
+ 1452 04c2 0C       		.uleb128 0xc
+ 1453 04c3 01       		.uleb128 0x1
+ 1454 04c4 52       		.byte	0x52
+ 1455 04c5 02       		.uleb128 0x2
+ 1456 04c6 08       		.byte	0x8
+ 1457 04c7 87       		.byte	0x87
+ 1458 04c8 00       		.byte	0
+ 1459 04c9 0B       		.uleb128 0xb
+ 1460 04ca 3C000000 		.4byte	.LVL62
+ 1461 04ce 60060000 		.4byte	0x660
+ 1462 04d2 0C       		.uleb128 0xc
+ 1463 04d3 01       		.uleb128 0x1
+ 1464 04d4 50       		.byte	0x50
+ 1465 04d5 05       		.uleb128 0x5
+ 1466 04d6 03       		.byte	0x3
+ 1467 04d7 0C010000 		.4byte	.LC50
+ 1468 04db 0C       		.uleb128 0xc
+ 1469 04dc 01       		.uleb128 0x1
+ 1470 04dd 51       		.byte	0x51
+ 1471 04de 02       		.uleb128 0x2
+ 1472 04df 74       		.byte	0x74
+ 1473 04e0 00       		.sleb128 0
+ 1474 04e1 00       		.byte	0
+ 1475 04e2 00       		.byte	0
+ 1476 04e3 10       		.uleb128 0x10
+ 1477 04e4 F9010000 		.4byte	.LASF42
+ 1478 04e8 01       		.byte	0x1
+ 1479 04e9 70       		.byte	0x70
+ 1480 04ea 00000000 		.4byte	.LFB40
+ 1481 04ee 64000000 		.4byte	.LFE40-.LFB40
+ 1482 04f2 01       		.uleb128 0x1
+ 1483 04f3 9C       		.byte	0x9c
+ 1484 04f4 82050000 		.4byte	0x582
+ 1485 04f8 0F       		.uleb128 0xf
+ 1486 04f9 24000000 		.4byte	.LVL65
+ 1487 04fd 9B060000 		.4byte	0x69b
+ 1488 0501 0F050000 		.4byte	0x50f
+ 1489 0505 0C       		.uleb128 0xc
+ 1490 0506 01       		.uleb128 0x1
+ 1491 0507 50       		.byte	0x50
+ 1492 0508 05       		.uleb128 0x5
+ 1493 0509 03       		.byte	0x3
+ 1494 050a 00000000 		.4byte	Isr_TC_Handler
+ 1495 050e 00       		.byte	0
+ 1496 050f 13       		.uleb128 0x13
+ 1497 0510 28000000 		.4byte	.LVL66
+ 1498 0514 A6060000 		.4byte	0x6a6
+ 1499 0518 0F       		.uleb128 0xf
+ 1500 0519 2E000000 		.4byte	.LVL67
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 33
+
+
+ 1501 051d 0D030000 		.4byte	0x30d
+ 1502 0521 2B050000 		.4byte	0x52b
+ 1503 0525 0C       		.uleb128 0xc
+ 1504 0526 01       		.uleb128 0x1
+ 1505 0527 50       		.byte	0x50
+ 1506 0528 01       		.uleb128 0x1
+ 1507 0529 32       		.byte	0x32
+ 1508 052a 00       		.byte	0
+ 1509 052b 0F       		.uleb128 0xf
+ 1510 052c 3C000000 		.4byte	.LVL68
+ 1511 0530 60060000 		.4byte	0x660
+ 1512 0534 51050000 		.4byte	0x551
+ 1513 0538 0C       		.uleb128 0xc
+ 1514 0539 01       		.uleb128 0x1
+ 1515 053a 50       		.byte	0x50
+ 1516 053b 05       		.uleb128 0x5
+ 1517 053c 03       		.byte	0x3
+ 1518 053d 88000000 		.4byte	.LC18
+ 1519 0541 0C       		.uleb128 0xc
+ 1520 0542 01       		.uleb128 0x1
+ 1521 0543 51       		.byte	0x51
+ 1522 0544 05       		.uleb128 0x5
+ 1523 0545 03       		.byte	0x3
+ 1524 0546 80000000 		.4byte	.LC16
+ 1525 054a 0C       		.uleb128 0xc
+ 1526 054b 01       		.uleb128 0x1
+ 1527 054c 52       		.byte	0x52
+ 1528 054d 02       		.uleb128 0x2
+ 1529 054e 08       		.byte	0x8
+ 1530 054f 7E       		.byte	0x7e
+ 1531 0550 00       		.byte	0
+ 1532 0551 13       		.uleb128 0x13
+ 1533 0552 42000000 		.4byte	.LVL69
+ 1534 0556 8F060000 		.4byte	0x68f
+ 1535 055a 0F       		.uleb128 0xf
+ 1536 055b 48000000 		.4byte	.LVL70
+ 1537 055f 60060000 		.4byte	0x660
+ 1538 0563 71050000 		.4byte	0x571
+ 1539 0567 0C       		.uleb128 0xc
+ 1540 0568 01       		.uleb128 0x1
+ 1541 0569 50       		.byte	0x50
+ 1542 056a 05       		.uleb128 0x5
+ 1543 056b 03       		.byte	0x3
+ 1544 056c 28010000 		.4byte	.LC56
+ 1545 0570 00       		.byte	0
+ 1546 0571 0B       		.uleb128 0xb
+ 1547 0572 4E000000 		.4byte	.LVL71
+ 1548 0576 6C040000 		.4byte	0x46c
+ 1549 057a 0C       		.uleb128 0xc
+ 1550 057b 01       		.uleb128 0x1
+ 1551 057c 50       		.byte	0x50
+ 1552 057d 02       		.uleb128 0x2
+ 1553 057e 08       		.byte	0x8
+ 1554 057f 32       		.byte	0x32
+ 1555 0580 00       		.byte	0
+ 1556 0581 00       		.byte	0
+ 1557 0582 14       		.uleb128 0x14
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 34
+
+
+ 1558 0583 B0020000 		.4byte	.LASF43
+ 1559 0587 01       		.byte	0x1
+ 1560 0588 94       		.byte	0x94
+ 1561 0589 81000000 		.4byte	0x81
+ 1562 058d 00000000 		.4byte	.LFB42
+ 1563 0591 28000000 		.4byte	.LFE42-.LFB42
+ 1564 0595 01       		.uleb128 0x1
+ 1565 0596 9C       		.byte	0x9c
+ 1566 0597 CD050000 		.4byte	0x5cd
+ 1567 059b 11       		.uleb128 0x11
+ 1568 059c DF000000 		.4byte	.LASF44
+ 1569 05a0 01       		.byte	0x1
+ 1570 05a1 96       		.byte	0x96
+ 1571 05a2 81000000 		.4byte	0x81
+ 1572 05a6 BD020000 		.4byte	.LLST10
+ 1573 05aa 0B       		.uleb128 0xb
+ 1574 05ab 18000000 		.4byte	.LVL74
+ 1575 05af 60060000 		.4byte	0x660
+ 1576 05b3 0C       		.uleb128 0xc
+ 1577 05b4 01       		.uleb128 0x1
+ 1578 05b5 50       		.byte	0x50
+ 1579 05b6 05       		.uleb128 0x5
+ 1580 05b7 03       		.byte	0x3
+ 1581 05b8 88000000 		.4byte	.LC18
+ 1582 05bc 0C       		.uleb128 0xc
+ 1583 05bd 01       		.uleb128 0x1
+ 1584 05be 51       		.byte	0x51
+ 1585 05bf 05       		.uleb128 0x5
+ 1586 05c0 03       		.byte	0x3
+ 1587 05c1 80000000 		.4byte	.LC16
+ 1588 05c5 0C       		.uleb128 0xc
+ 1589 05c6 01       		.uleb128 0x1
+ 1590 05c7 52       		.byte	0x52
+ 1591 05c8 02       		.uleb128 0x2
+ 1592 05c9 08       		.byte	0x8
+ 1593 05ca 98       		.byte	0x98
+ 1594 05cb 00       		.byte	0
+ 1595 05cc 00       		.byte	0
+ 1596 05cd 17       		.uleb128 0x17
+ 1597 05ce 77020000 		.4byte	.LASF45
+ 1598 05d2 01       		.byte	0x1
+ 1599 05d3 0E       		.byte	0xe
+ 1600 05d4 B9030000 		.4byte	0x3b9
+ 1601 05d8 05       		.uleb128 0x5
+ 1602 05d9 03       		.byte	0x3
+ 1603 05da 00000000 		.4byte	play
+ 1604 05de 17       		.uleb128 0x17
+ 1605 05df 99000000 		.4byte	.LASF46
+ 1606 05e3 01       		.byte	0x1
+ 1607 05e4 0F       		.byte	0xf
+ 1608 05e5 B9030000 		.4byte	0x3b9
+ 1609 05e9 05       		.uleb128 0x5
+ 1610 05ea 03       		.byte	0x3
+ 1611 05eb 08000000 		.4byte	isInit
+ 1612 05ef 17       		.uleb128 0x17
+ 1613 05f0 99010000 		.4byte	.LASF47
+ 1614 05f4 01       		.byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 35
+
+
+ 1615 05f5 10       		.byte	0x10
+ 1616 05f6 8C000000 		.4byte	0x8c
+ 1617 05fa 05       		.uleb128 0x5
+ 1618 05fb 03       		.byte	0x3
+ 1619 05fc 04000000 		.4byte	volume
+ 1620 0600 17       		.uleb128 0x17
+ 1621 0601 E3020000 		.4byte	.LASF48
+ 1622 0605 01       		.byte	0x1
+ 1623 0606 11       		.byte	0x11
+ 1624 0607 81000000 		.4byte	0x81
+ 1625 060b 05       		.uleb128 0x5
+ 1626 060c 03       		.byte	0x3
+ 1627 060d 20000000 		.4byte	volumePerc
+ 1628 0611 17       		.uleb128 0x17
+ 1629 0612 C6020000 		.4byte	.LASF49
+ 1630 0616 01       		.byte	0x1
+ 1631 0617 12       		.byte	0x12
+ 1632 0618 0F010000 		.4byte	0x10f
+ 1633 061c 05       		.uleb128 0x5
+ 1634 061d 03       		.byte	0x3
+ 1635 061e 01000000 		.4byte	sampleRate
+ 1636 0622 18       		.uleb128 0x18
+ 1637 0623 8C000000 		.4byte	0x8c
+ 1638 0627 32060000 		.4byte	0x632
+ 1639 062b 19       		.uleb128 0x19
+ 1640 062c 9E000000 		.4byte	0x9e
+ 1641 0630 04       		.byte	0x4
+ 1642 0631 00       		.byte	0
+ 1643 0632 17       		.uleb128 0x17
+ 1644 0633 A6030000 		.4byte	.LASF50
+ 1645 0637 01       		.byte	0x1
+ 1646 0638 13       		.byte	0x13
+ 1647 0639 22060000 		.4byte	0x622
+ 1648 063d 05       		.uleb128 0x5
+ 1649 063e 03       		.byte	0x3
+ 1650 063f 0C000000 		.4byte	audio_SampleRateTPeriods
+ 1651 0643 17       		.uleb128 0x17
+ 1652 0644 CF000000 		.4byte	.LASF51
+ 1653 0648 01       		.byte	0x1
+ 1654 0649 14       		.byte	0x14
+ 1655 064a CD000000 		.4byte	0xcd
+ 1656 064e 05       		.uleb128 0x5
+ 1657 064f 03       		.byte	0x3
+ 1658 0650 00000000 		.4byte	audio_OnTimerCb
+ 1659 0654 1A       		.uleb128 0x1a
+ 1660 0655 0C010000 		.4byte	.LASF52
+ 1661 0659 0C010000 		.4byte	.LASF52
+ 1662 065d 06       		.byte	0x6
+ 1663 065e 4701     		.2byte	0x147
+ 1664 0660 1B       		.uleb128 0x1b
+ 1665 0661 8D020000 		.4byte	.LASF53
+ 1666 0665 8D020000 		.4byte	.LASF53
+ 1667 0669 07       		.byte	0x7
+ 1668 066a 18       		.byte	0x18
+ 1669 066b 1A       		.uleb128 0x1a
+ 1670 066c 7C020000 		.4byte	.LASF54
+ 1671 0670 7C020000 		.4byte	.LASF54
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 36
+
+
+ 1672 0674 08       		.byte	0x8
+ 1673 0675 5501     		.2byte	0x155
+ 1674 0677 1A       		.uleb128 0x1a
+ 1675 0678 0E040000 		.4byte	.LASF55
+ 1676 067c 0E040000 		.4byte	.LASF55
+ 1677 0680 06       		.byte	0x6
+ 1678 0681 3301     		.2byte	0x133
+ 1679 0683 1A       		.uleb128 0x1a
+ 1680 0684 12020000 		.4byte	.LASF56
+ 1681 0688 12020000 		.4byte	.LASF56
+ 1682 068c 06       		.byte	0x6
+ 1683 068d 5001     		.2byte	0x150
+ 1684 068f 1A       		.uleb128 0x1a
+ 1685 0690 D1020000 		.4byte	.LASF57
+ 1686 0694 D1020000 		.4byte	.LASF57
+ 1687 0698 06       		.byte	0x6
+ 1688 0699 3201     		.2byte	0x132
+ 1689 069b 1B       		.uleb128 0x1b
+ 1690 069c DE010000 		.4byte	.LASF58
+ 1691 06a0 DE010000 		.4byte	.LASF58
+ 1692 06a4 09       		.byte	0x9
+ 1693 06a5 18       		.byte	0x18
+ 1694 06a6 1A       		.uleb128 0x1a
+ 1695 06a7 BA000000 		.4byte	.LASF59
+ 1696 06ab BA000000 		.4byte	.LASF59
+ 1697 06af 08       		.byte	0x8
+ 1698 06b0 3201     		.2byte	0x132
+ 1699 06b2 00       		.byte	0
+ 1700              		.section	.debug_abbrev,"",%progbits
+ 1701              	.Ldebug_abbrev0:
+ 1702 0000 01       		.uleb128 0x1
+ 1703 0001 11       		.uleb128 0x11
+ 1704 0002 01       		.byte	0x1
+ 1705 0003 25       		.uleb128 0x25
+ 1706 0004 0E       		.uleb128 0xe
+ 1707 0005 13       		.uleb128 0x13
+ 1708 0006 0B       		.uleb128 0xb
+ 1709 0007 03       		.uleb128 0x3
+ 1710 0008 0E       		.uleb128 0xe
+ 1711 0009 1B       		.uleb128 0x1b
+ 1712 000a 0E       		.uleb128 0xe
+ 1713 000b 55       		.uleb128 0x55
+ 1714 000c 17       		.uleb128 0x17
+ 1715 000d 11       		.uleb128 0x11
+ 1716 000e 01       		.uleb128 0x1
+ 1717 000f 10       		.uleb128 0x10
+ 1718 0010 17       		.uleb128 0x17
+ 1719 0011 00       		.byte	0
+ 1720 0012 00       		.byte	0
+ 1721 0013 02       		.uleb128 0x2
+ 1722 0014 24       		.uleb128 0x24
+ 1723 0015 00       		.byte	0
+ 1724 0016 0B       		.uleb128 0xb
+ 1725 0017 0B       		.uleb128 0xb
+ 1726 0018 3E       		.uleb128 0x3e
+ 1727 0019 0B       		.uleb128 0xb
+ 1728 001a 03       		.uleb128 0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 37
+
+
+ 1729 001b 0E       		.uleb128 0xe
+ 1730 001c 00       		.byte	0
+ 1731 001d 00       		.byte	0
+ 1732 001e 03       		.uleb128 0x3
+ 1733 001f 16       		.uleb128 0x16
+ 1734 0020 00       		.byte	0
+ 1735 0021 03       		.uleb128 0x3
+ 1736 0022 0E       		.uleb128 0xe
+ 1737 0023 3A       		.uleb128 0x3a
+ 1738 0024 0B       		.uleb128 0xb
+ 1739 0025 3B       		.uleb128 0x3b
+ 1740 0026 0B       		.uleb128 0xb
+ 1741 0027 49       		.uleb128 0x49
+ 1742 0028 13       		.uleb128 0x13
+ 1743 0029 00       		.byte	0
+ 1744 002a 00       		.byte	0
+ 1745 002b 04       		.uleb128 0x4
+ 1746 002c 24       		.uleb128 0x24
+ 1747 002d 00       		.byte	0
+ 1748 002e 0B       		.uleb128 0xb
+ 1749 002f 0B       		.uleb128 0xb
+ 1750 0030 3E       		.uleb128 0x3e
+ 1751 0031 0B       		.uleb128 0xb
+ 1752 0032 03       		.uleb128 0x3
+ 1753 0033 08       		.uleb128 0x8
+ 1754 0034 00       		.byte	0
+ 1755 0035 00       		.byte	0
+ 1756 0036 05       		.uleb128 0x5
+ 1757 0037 0F       		.uleb128 0xf
+ 1758 0038 00       		.byte	0
+ 1759 0039 0B       		.uleb128 0xb
+ 1760 003a 0B       		.uleb128 0xb
+ 1761 003b 49       		.uleb128 0x49
+ 1762 003c 13       		.uleb128 0x13
+ 1763 003d 00       		.byte	0
+ 1764 003e 00       		.byte	0
+ 1765 003f 06       		.uleb128 0x6
+ 1766 0040 15       		.uleb128 0x15
+ 1767 0041 00       		.byte	0
+ 1768 0042 27       		.uleb128 0x27
+ 1769 0043 19       		.uleb128 0x19
+ 1770 0044 00       		.byte	0
+ 1771 0045 00       		.byte	0
+ 1772 0046 07       		.uleb128 0x7
+ 1773 0047 16       		.uleb128 0x16
+ 1774 0048 00       		.byte	0
+ 1775 0049 03       		.uleb128 0x3
+ 1776 004a 0E       		.uleb128 0xe
+ 1777 004b 3A       		.uleb128 0x3a
+ 1778 004c 0B       		.uleb128 0xb
+ 1779 004d 3B       		.uleb128 0x3b
+ 1780 004e 05       		.uleb128 0x5
+ 1781 004f 49       		.uleb128 0x49
+ 1782 0050 13       		.uleb128 0x13
+ 1783 0051 00       		.byte	0
+ 1784 0052 00       		.byte	0
+ 1785 0053 08       		.uleb128 0x8
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 38
+
+
+ 1786 0054 04       		.uleb128 0x4
+ 1787 0055 01       		.byte	0x1
+ 1788 0056 0B       		.uleb128 0xb
+ 1789 0057 0B       		.uleb128 0xb
+ 1790 0058 49       		.uleb128 0x49
+ 1791 0059 13       		.uleb128 0x13
+ 1792 005a 3A       		.uleb128 0x3a
+ 1793 005b 0B       		.uleb128 0xb
+ 1794 005c 3B       		.uleb128 0x3b
+ 1795 005d 0B       		.uleb128 0xb
+ 1796 005e 01       		.uleb128 0x1
+ 1797 005f 13       		.uleb128 0x13
+ 1798 0060 00       		.byte	0
+ 1799 0061 00       		.byte	0
+ 1800 0062 09       		.uleb128 0x9
+ 1801 0063 28       		.uleb128 0x28
+ 1802 0064 00       		.byte	0
+ 1803 0065 03       		.uleb128 0x3
+ 1804 0066 0E       		.uleb128 0xe
+ 1805 0067 1C       		.uleb128 0x1c
+ 1806 0068 0B       		.uleb128 0xb
+ 1807 0069 00       		.byte	0
+ 1808 006a 00       		.byte	0
+ 1809 006b 0A       		.uleb128 0xa
+ 1810 006c 2E       		.uleb128 0x2e
+ 1811 006d 01       		.byte	0x1
+ 1812 006e 3F       		.uleb128 0x3f
+ 1813 006f 19       		.uleb128 0x19
+ 1814 0070 03       		.uleb128 0x3
+ 1815 0071 0E       		.uleb128 0xe
+ 1816 0072 3A       		.uleb128 0x3a
+ 1817 0073 0B       		.uleb128 0xb
+ 1818 0074 3B       		.uleb128 0x3b
+ 1819 0075 0B       		.uleb128 0xb
+ 1820 0076 27       		.uleb128 0x27
+ 1821 0077 19       		.uleb128 0x19
+ 1822 0078 11       		.uleb128 0x11
+ 1823 0079 01       		.uleb128 0x1
+ 1824 007a 12       		.uleb128 0x12
+ 1825 007b 06       		.uleb128 0x6
+ 1826 007c 40       		.uleb128 0x40
+ 1827 007d 18       		.uleb128 0x18
+ 1828 007e 9642     		.uleb128 0x2116
+ 1829 0080 19       		.uleb128 0x19
+ 1830 0081 01       		.uleb128 0x1
+ 1831 0082 13       		.uleb128 0x13
+ 1832 0083 00       		.byte	0
+ 1833 0084 00       		.byte	0
+ 1834 0085 0B       		.uleb128 0xb
+ 1835 0086 898201   		.uleb128 0x4109
+ 1836 0089 01       		.byte	0x1
+ 1837 008a 11       		.uleb128 0x11
+ 1838 008b 01       		.uleb128 0x1
+ 1839 008c 31       		.uleb128 0x31
+ 1840 008d 13       		.uleb128 0x13
+ 1841 008e 00       		.byte	0
+ 1842 008f 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 39
+
+
+ 1843 0090 0C       		.uleb128 0xc
+ 1844 0091 8A8201   		.uleb128 0x410a
+ 1845 0094 00       		.byte	0
+ 1846 0095 02       		.uleb128 0x2
+ 1847 0096 18       		.uleb128 0x18
+ 1848 0097 9142     		.uleb128 0x2111
+ 1849 0099 18       		.uleb128 0x18
+ 1850 009a 00       		.byte	0
+ 1851 009b 00       		.byte	0
+ 1852 009c 0D       		.uleb128 0xd
+ 1853 009d 2E       		.uleb128 0x2e
+ 1854 009e 01       		.byte	0x1
+ 1855 009f 03       		.uleb128 0x3
+ 1856 00a0 0E       		.uleb128 0xe
+ 1857 00a1 3A       		.uleb128 0x3a
+ 1858 00a2 0B       		.uleb128 0xb
+ 1859 00a3 3B       		.uleb128 0x3b
+ 1860 00a4 0B       		.uleb128 0xb
+ 1861 00a5 27       		.uleb128 0x27
+ 1862 00a6 19       		.uleb128 0x19
+ 1863 00a7 11       		.uleb128 0x11
+ 1864 00a8 01       		.uleb128 0x1
+ 1865 00a9 12       		.uleb128 0x12
+ 1866 00aa 06       		.uleb128 0x6
+ 1867 00ab 40       		.uleb128 0x40
+ 1868 00ac 18       		.uleb128 0x18
+ 1869 00ad 9742     		.uleb128 0x2117
+ 1870 00af 19       		.uleb128 0x19
+ 1871 00b0 01       		.uleb128 0x1
+ 1872 00b1 13       		.uleb128 0x13
+ 1873 00b2 00       		.byte	0
+ 1874 00b3 00       		.byte	0
+ 1875 00b4 0E       		.uleb128 0xe
+ 1876 00b5 05       		.uleb128 0x5
+ 1877 00b6 00       		.byte	0
+ 1878 00b7 03       		.uleb128 0x3
+ 1879 00b8 0E       		.uleb128 0xe
+ 1880 00b9 3A       		.uleb128 0x3a
+ 1881 00ba 0B       		.uleb128 0xb
+ 1882 00bb 3B       		.uleb128 0x3b
+ 1883 00bc 0B       		.uleb128 0xb
+ 1884 00bd 49       		.uleb128 0x49
+ 1885 00be 13       		.uleb128 0x13
+ 1886 00bf 02       		.uleb128 0x2
+ 1887 00c0 17       		.uleb128 0x17
+ 1888 00c1 00       		.byte	0
+ 1889 00c2 00       		.byte	0
+ 1890 00c3 0F       		.uleb128 0xf
+ 1891 00c4 898201   		.uleb128 0x4109
+ 1892 00c7 01       		.byte	0x1
+ 1893 00c8 11       		.uleb128 0x11
+ 1894 00c9 01       		.uleb128 0x1
+ 1895 00ca 31       		.uleb128 0x31
+ 1896 00cb 13       		.uleb128 0x13
+ 1897 00cc 01       		.uleb128 0x1
+ 1898 00cd 13       		.uleb128 0x13
+ 1899 00ce 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 40
+
+
+ 1900 00cf 00       		.byte	0
+ 1901 00d0 10       		.uleb128 0x10
+ 1902 00d1 2E       		.uleb128 0x2e
+ 1903 00d2 01       		.byte	0x1
+ 1904 00d3 3F       		.uleb128 0x3f
+ 1905 00d4 19       		.uleb128 0x19
+ 1906 00d5 03       		.uleb128 0x3
+ 1907 00d6 0E       		.uleb128 0xe
+ 1908 00d7 3A       		.uleb128 0x3a
+ 1909 00d8 0B       		.uleb128 0xb
+ 1910 00d9 3B       		.uleb128 0x3b
+ 1911 00da 0B       		.uleb128 0xb
+ 1912 00db 27       		.uleb128 0x27
+ 1913 00dc 19       		.uleb128 0x19
+ 1914 00dd 11       		.uleb128 0x11
+ 1915 00de 01       		.uleb128 0x1
+ 1916 00df 12       		.uleb128 0x12
+ 1917 00e0 06       		.uleb128 0x6
+ 1918 00e1 40       		.uleb128 0x40
+ 1919 00e2 18       		.uleb128 0x18
+ 1920 00e3 9742     		.uleb128 0x2117
+ 1921 00e5 19       		.uleb128 0x19
+ 1922 00e6 01       		.uleb128 0x1
+ 1923 00e7 13       		.uleb128 0x13
+ 1924 00e8 00       		.byte	0
+ 1925 00e9 00       		.byte	0
+ 1926 00ea 11       		.uleb128 0x11
+ 1927 00eb 34       		.uleb128 0x34
+ 1928 00ec 00       		.byte	0
+ 1929 00ed 03       		.uleb128 0x3
+ 1930 00ee 0E       		.uleb128 0xe
+ 1931 00ef 3A       		.uleb128 0x3a
+ 1932 00f0 0B       		.uleb128 0xb
+ 1933 00f1 3B       		.uleb128 0x3b
+ 1934 00f2 0B       		.uleb128 0xb
+ 1935 00f3 49       		.uleb128 0x49
+ 1936 00f4 13       		.uleb128 0x13
+ 1937 00f5 02       		.uleb128 0x2
+ 1938 00f6 17       		.uleb128 0x17
+ 1939 00f7 00       		.byte	0
+ 1940 00f8 00       		.byte	0
+ 1941 00f9 12       		.uleb128 0x12
+ 1942 00fa 34       		.uleb128 0x34
+ 1943 00fb 00       		.byte	0
+ 1944 00fc 03       		.uleb128 0x3
+ 1945 00fd 08       		.uleb128 0x8
+ 1946 00fe 3A       		.uleb128 0x3a
+ 1947 00ff 0B       		.uleb128 0xb
+ 1948 0100 3B       		.uleb128 0x3b
+ 1949 0101 0B       		.uleb128 0xb
+ 1950 0102 49       		.uleb128 0x49
+ 1951 0103 13       		.uleb128 0x13
+ 1952 0104 02       		.uleb128 0x2
+ 1953 0105 17       		.uleb128 0x17
+ 1954 0106 00       		.byte	0
+ 1955 0107 00       		.byte	0
+ 1956 0108 13       		.uleb128 0x13
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 41
+
+
+ 1957 0109 898201   		.uleb128 0x4109
+ 1958 010c 00       		.byte	0
+ 1959 010d 11       		.uleb128 0x11
+ 1960 010e 01       		.uleb128 0x1
+ 1961 010f 31       		.uleb128 0x31
+ 1962 0110 13       		.uleb128 0x13
+ 1963 0111 00       		.byte	0
+ 1964 0112 00       		.byte	0
+ 1965 0113 14       		.uleb128 0x14
+ 1966 0114 2E       		.uleb128 0x2e
+ 1967 0115 01       		.byte	0x1
+ 1968 0116 3F       		.uleb128 0x3f
+ 1969 0117 19       		.uleb128 0x19
+ 1970 0118 03       		.uleb128 0x3
+ 1971 0119 0E       		.uleb128 0xe
+ 1972 011a 3A       		.uleb128 0x3a
+ 1973 011b 0B       		.uleb128 0xb
+ 1974 011c 3B       		.uleb128 0x3b
+ 1975 011d 0B       		.uleb128 0xb
+ 1976 011e 27       		.uleb128 0x27
+ 1977 011f 19       		.uleb128 0x19
+ 1978 0120 49       		.uleb128 0x49
+ 1979 0121 13       		.uleb128 0x13
+ 1980 0122 11       		.uleb128 0x11
+ 1981 0123 01       		.uleb128 0x1
+ 1982 0124 12       		.uleb128 0x12
+ 1983 0125 06       		.uleb128 0x6
+ 1984 0126 40       		.uleb128 0x40
+ 1985 0127 18       		.uleb128 0x18
+ 1986 0128 9742     		.uleb128 0x2117
+ 1987 012a 19       		.uleb128 0x19
+ 1988 012b 01       		.uleb128 0x1
+ 1989 012c 13       		.uleb128 0x13
+ 1990 012d 00       		.byte	0
+ 1991 012e 00       		.byte	0
+ 1992 012f 15       		.uleb128 0x15
+ 1993 0130 05       		.uleb128 0x5
+ 1994 0131 00       		.byte	0
+ 1995 0132 03       		.uleb128 0x3
+ 1996 0133 08       		.uleb128 0x8
+ 1997 0134 3A       		.uleb128 0x3a
+ 1998 0135 0B       		.uleb128 0xb
+ 1999 0136 3B       		.uleb128 0x3b
+ 2000 0137 0B       		.uleb128 0xb
+ 2001 0138 49       		.uleb128 0x49
+ 2002 0139 13       		.uleb128 0x13
+ 2003 013a 02       		.uleb128 0x2
+ 2004 013b 17       		.uleb128 0x17
+ 2005 013c 00       		.byte	0
+ 2006 013d 00       		.byte	0
+ 2007 013e 16       		.uleb128 0x16
+ 2008 013f 2E       		.uleb128 0x2e
+ 2009 0140 01       		.byte	0x1
+ 2010 0141 3F       		.uleb128 0x3f
+ 2011 0142 19       		.uleb128 0x19
+ 2012 0143 03       		.uleb128 0x3
+ 2013 0144 0E       		.uleb128 0xe
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 42
+
+
+ 2014 0145 3A       		.uleb128 0x3a
+ 2015 0146 0B       		.uleb128 0xb
+ 2016 0147 3B       		.uleb128 0x3b
+ 2017 0148 0B       		.uleb128 0xb
+ 2018 0149 27       		.uleb128 0x27
+ 2019 014a 19       		.uleb128 0x19
+ 2020 014b 49       		.uleb128 0x49
+ 2021 014c 13       		.uleb128 0x13
+ 2022 014d 11       		.uleb128 0x11
+ 2023 014e 01       		.uleb128 0x1
+ 2024 014f 12       		.uleb128 0x12
+ 2025 0150 06       		.uleb128 0x6
+ 2026 0151 40       		.uleb128 0x40
+ 2027 0152 18       		.uleb128 0x18
+ 2028 0153 9642     		.uleb128 0x2116
+ 2029 0155 19       		.uleb128 0x19
+ 2030 0156 01       		.uleb128 0x1
+ 2031 0157 13       		.uleb128 0x13
+ 2032 0158 00       		.byte	0
+ 2033 0159 00       		.byte	0
+ 2034 015a 17       		.uleb128 0x17
+ 2035 015b 34       		.uleb128 0x34
+ 2036 015c 00       		.byte	0
+ 2037 015d 03       		.uleb128 0x3
+ 2038 015e 0E       		.uleb128 0xe
+ 2039 015f 3A       		.uleb128 0x3a
+ 2040 0160 0B       		.uleb128 0xb
+ 2041 0161 3B       		.uleb128 0x3b
+ 2042 0162 0B       		.uleb128 0xb
+ 2043 0163 49       		.uleb128 0x49
+ 2044 0164 13       		.uleb128 0x13
+ 2045 0165 02       		.uleb128 0x2
+ 2046 0166 18       		.uleb128 0x18
+ 2047 0167 00       		.byte	0
+ 2048 0168 00       		.byte	0
+ 2049 0169 18       		.uleb128 0x18
+ 2050 016a 01       		.uleb128 0x1
+ 2051 016b 01       		.byte	0x1
+ 2052 016c 49       		.uleb128 0x49
+ 2053 016d 13       		.uleb128 0x13
+ 2054 016e 01       		.uleb128 0x1
+ 2055 016f 13       		.uleb128 0x13
+ 2056 0170 00       		.byte	0
+ 2057 0171 00       		.byte	0
+ 2058 0172 19       		.uleb128 0x19
+ 2059 0173 21       		.uleb128 0x21
+ 2060 0174 00       		.byte	0
+ 2061 0175 49       		.uleb128 0x49
+ 2062 0176 13       		.uleb128 0x13
+ 2063 0177 2F       		.uleb128 0x2f
+ 2064 0178 0B       		.uleb128 0xb
+ 2065 0179 00       		.byte	0
+ 2066 017a 00       		.byte	0
+ 2067 017b 1A       		.uleb128 0x1a
+ 2068 017c 2E       		.uleb128 0x2e
+ 2069 017d 00       		.byte	0
+ 2070 017e 3F       		.uleb128 0x3f
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 43
+
+
+ 2071 017f 19       		.uleb128 0x19
+ 2072 0180 3C       		.uleb128 0x3c
+ 2073 0181 19       		.uleb128 0x19
+ 2074 0182 6E       		.uleb128 0x6e
+ 2075 0183 0E       		.uleb128 0xe
+ 2076 0184 03       		.uleb128 0x3
+ 2077 0185 0E       		.uleb128 0xe
+ 2078 0186 3A       		.uleb128 0x3a
+ 2079 0187 0B       		.uleb128 0xb
+ 2080 0188 3B       		.uleb128 0x3b
+ 2081 0189 05       		.uleb128 0x5
+ 2082 018a 00       		.byte	0
+ 2083 018b 00       		.byte	0
+ 2084 018c 1B       		.uleb128 0x1b
+ 2085 018d 2E       		.uleb128 0x2e
+ 2086 018e 00       		.byte	0
+ 2087 018f 3F       		.uleb128 0x3f
+ 2088 0190 19       		.uleb128 0x19
+ 2089 0191 3C       		.uleb128 0x3c
+ 2090 0192 19       		.uleb128 0x19
+ 2091 0193 6E       		.uleb128 0x6e
+ 2092 0194 0E       		.uleb128 0xe
+ 2093 0195 03       		.uleb128 0x3
+ 2094 0196 0E       		.uleb128 0xe
+ 2095 0197 3A       		.uleb128 0x3a
+ 2096 0198 0B       		.uleb128 0xb
+ 2097 0199 3B       		.uleb128 0x3b
+ 2098 019a 0B       		.uleb128 0xb
+ 2099 019b 00       		.byte	0
+ 2100 019c 00       		.byte	0
+ 2101 019d 00       		.byte	0
+ 2102              		.section	.debug_loc,"",%progbits
+ 2103              	.Ldebug_loc0:
+ 2104              	.LLST0:
+ 2105 0000 00000000 		.4byte	.LVL2
+ 2106 0004 08000000 		.4byte	.LVL3
+ 2107 0008 0100     		.2byte	0x1
+ 2108 000a 50       		.byte	0x50
+ 2109 000b 08000000 		.4byte	.LVL3
+ 2110 000f 36000000 		.4byte	.LVL9
+ 2111 0013 0400     		.2byte	0x4
+ 2112 0015 F3       		.byte	0xf3
+ 2113 0016 01       		.uleb128 0x1
+ 2114 0017 50       		.byte	0x50
+ 2115 0018 9F       		.byte	0x9f
+ 2116 0019 36000000 		.4byte	.LVL9
+ 2117 001d 3A000000 		.4byte	.LVL10
+ 2118 0021 0100     		.2byte	0x1
+ 2119 0023 50       		.byte	0x50
+ 2120 0024 3A000000 		.4byte	.LVL10
+ 2121 0028 5C000000 		.4byte	.LFE43
+ 2122 002c 0400     		.2byte	0x4
+ 2123 002e F3       		.byte	0xf3
+ 2124 002f 01       		.uleb128 0x1
+ 2125 0030 50       		.byte	0x50
+ 2126 0031 9F       		.byte	0x9f
+ 2127 0032 00000000 		.4byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 44
+
+
+ 2128 0036 00000000 		.4byte	0
+ 2129              	.LLST1:
+ 2130 003a 00000000 		.4byte	.LVL12
+ 2131 003e 14000000 		.4byte	.LVL14
+ 2132 0042 0100     		.2byte	0x1
+ 2133 0044 50       		.byte	0x50
+ 2134 0045 14000000 		.4byte	.LVL14
+ 2135 0049 1A000000 		.4byte	.LVL16
+ 2136 004d 0400     		.2byte	0x4
+ 2137 004f F3       		.byte	0xf3
+ 2138 0050 01       		.uleb128 0x1
+ 2139 0051 50       		.byte	0x50
+ 2140 0052 9F       		.byte	0x9f
+ 2141 0053 1A000000 		.4byte	.LVL16
+ 2142 0057 22000000 		.4byte	.LVL18
+ 2143 005b 0100     		.2byte	0x1
+ 2144 005d 50       		.byte	0x50
+ 2145 005e 22000000 		.4byte	.LVL18
+ 2146 0062 28000000 		.4byte	.LVL21
+ 2147 0066 0400     		.2byte	0x4
+ 2148 0068 F3       		.byte	0xf3
+ 2149 0069 01       		.uleb128 0x1
+ 2150 006a 50       		.byte	0x50
+ 2151 006b 9F       		.byte	0x9f
+ 2152 006c 28000000 		.4byte	.LVL21
+ 2153 0070 2A000000 		.4byte	.LVL22
+ 2154 0074 0100     		.2byte	0x1
+ 2155 0076 50       		.byte	0x50
+ 2156 0077 2A000000 		.4byte	.LVL22
+ 2157 007b 40000000 		.4byte	.LFE34
+ 2158 007f 0400     		.2byte	0x4
+ 2159 0081 F3       		.byte	0xf3
+ 2160 0082 01       		.uleb128 0x1
+ 2161 0083 50       		.byte	0x50
+ 2162 0084 9F       		.byte	0x9f
+ 2163 0085 00000000 		.4byte	0
+ 2164 0089 00000000 		.4byte	0
+ 2165              	.LLST2:
+ 2166 008d 08000000 		.4byte	.LVL13
+ 2167 0091 17000000 		.4byte	.LVL15-1
+ 2168 0095 0100     		.2byte	0x1
+ 2169 0097 53       		.byte	0x53
+ 2170 0098 1A000000 		.4byte	.LVL16
+ 2171 009c 24000000 		.4byte	.LVL19
+ 2172 00a0 0100     		.2byte	0x1
+ 2173 00a2 53       		.byte	0x53
+ 2174 00a3 24000000 		.4byte	.LVL19
+ 2175 00a7 28000000 		.4byte	.LVL21
+ 2176 00ab 0B00     		.2byte	0xb
+ 2177 00ad 03       		.byte	0x3
+ 2178 00ae 04000000 		.4byte	volume
+ 2179 00b2 06       		.byte	0x6
+ 2180 00b3 31       		.byte	0x31
+ 2181 00b4 25       		.byte	0x25
+ 2182 00b5 23       		.byte	0x23
+ 2183 00b6 01       		.uleb128 0x1
+ 2184 00b7 9F       		.byte	0x9f
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 45
+
+
+ 2185 00b8 28000000 		.4byte	.LVL21
+ 2186 00bc 2A000000 		.4byte	.LVL22
+ 2187 00c0 0100     		.2byte	0x1
+ 2188 00c2 53       		.byte	0x53
+ 2189 00c3 00000000 		.4byte	0
+ 2190 00c7 00000000 		.4byte	0
+ 2191              	.LLST3:
+ 2192 00cb 08000000 		.4byte	.LVL13
+ 2193 00cf 22000000 		.4byte	.LVL18
+ 2194 00d3 0200     		.2byte	0x2
+ 2195 00d5 30       		.byte	0x30
+ 2196 00d6 9F       		.byte	0x9f
+ 2197 00d7 22000000 		.4byte	.LVL18
+ 2198 00db 28000000 		.4byte	.LVL21
+ 2199 00df 0100     		.2byte	0x1
+ 2200 00e1 50       		.byte	0x50
+ 2201 00e2 28000000 		.4byte	.LVL21
+ 2202 00e6 2A000000 		.4byte	.LVL22
+ 2203 00ea 0200     		.2byte	0x2
+ 2204 00ec 30       		.byte	0x30
+ 2205 00ed 9F       		.byte	0x9f
+ 2206 00ee 2A000000 		.4byte	.LVL22
+ 2207 00f2 2E000000 		.4byte	.LVL23
+ 2208 00f6 0100     		.2byte	0x1
+ 2209 00f8 50       		.byte	0x50
+ 2210 00f9 00000000 		.4byte	0
+ 2211 00fd 00000000 		.4byte	0
+ 2212              	.LLST4:
+ 2213 0101 00000000 		.4byte	.LVL30
+ 2214 0105 10000000 		.4byte	.LVL32
+ 2215 0109 0100     		.2byte	0x1
+ 2216 010b 50       		.byte	0x50
+ 2217 010c 10000000 		.4byte	.LVL32
+ 2218 0110 16000000 		.4byte	.LVL34
+ 2219 0114 0400     		.2byte	0x4
+ 2220 0116 F3       		.byte	0xf3
+ 2221 0117 01       		.uleb128 0x1
+ 2222 0118 50       		.byte	0x50
+ 2223 0119 9F       		.byte	0x9f
+ 2224 011a 16000000 		.4byte	.LVL34
+ 2225 011e 21000000 		.4byte	.LVL36-1
+ 2226 0122 0100     		.2byte	0x1
+ 2227 0124 50       		.byte	0x50
+ 2228 0125 21000000 		.4byte	.LVL36-1
+ 2229 0129 52000000 		.4byte	.LVL42
+ 2230 012d 0400     		.2byte	0x4
+ 2231 012f F3       		.byte	0xf3
+ 2232 0130 01       		.uleb128 0x1
+ 2233 0131 50       		.byte	0x50
+ 2234 0132 9F       		.byte	0x9f
+ 2235 0133 52000000 		.4byte	.LVL42
+ 2236 0137 54000000 		.4byte	.LVL43
+ 2237 013b 0100     		.2byte	0x1
+ 2238 013d 50       		.byte	0x50
+ 2239 013e 54000000 		.4byte	.LVL43
+ 2240 0142 6C000000 		.4byte	.LFE37
+ 2241 0146 0400     		.2byte	0x4
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 46
+
+
+ 2242 0148 F3       		.byte	0xf3
+ 2243 0149 01       		.uleb128 0x1
+ 2244 014a 50       		.byte	0x50
+ 2245 014b 9F       		.byte	0x9f
+ 2246 014c 00000000 		.4byte	0
+ 2247 0150 00000000 		.4byte	0
+ 2248              	.LLST5:
+ 2249 0154 02000000 		.4byte	.LVL31
+ 2250 0158 1A000000 		.4byte	.LVL35
+ 2251 015c 0200     		.2byte	0x2
+ 2252 015e 30       		.byte	0x30
+ 2253 015f 9F       		.byte	0x9f
+ 2254 0160 1A000000 		.4byte	.LVL35
+ 2255 0164 52000000 		.4byte	.LVL42
+ 2256 0168 0200     		.2byte	0x2
+ 2257 016a 31       		.byte	0x31
+ 2258 016b 9F       		.byte	0x9f
+ 2259 016c 52000000 		.4byte	.LVL42
+ 2260 0170 54000000 		.4byte	.LVL43
+ 2261 0174 0200     		.2byte	0x2
+ 2262 0176 30       		.byte	0x30
+ 2263 0177 9F       		.byte	0x9f
+ 2264 0178 54000000 		.4byte	.LVL43
+ 2265 017c 6C000000 		.4byte	.LFE37
+ 2266 0180 0100     		.2byte	0x1
+ 2267 0182 50       		.byte	0x50
+ 2268 0183 00000000 		.4byte	0
+ 2269 0187 00000000 		.4byte	0
+ 2270              	.LLST6:
+ 2271 018b 00000000 		.4byte	.LVL45
+ 2272 018f 10000000 		.4byte	.LVL46
+ 2273 0193 0100     		.2byte	0x1
+ 2274 0195 50       		.byte	0x50
+ 2275 0196 10000000 		.4byte	.LVL46
+ 2276 019a 16000000 		.4byte	.LVL48
+ 2277 019e 0400     		.2byte	0x4
+ 2278 01a0 F3       		.byte	0xf3
+ 2279 01a1 01       		.uleb128 0x1
+ 2280 01a2 50       		.byte	0x50
+ 2281 01a3 9F       		.byte	0x9f
+ 2282 01a4 16000000 		.4byte	.LVL48
+ 2283 01a8 20000000 		.4byte	.LVL50
+ 2284 01ac 0100     		.2byte	0x1
+ 2285 01ae 50       		.byte	0x50
+ 2286 01af 20000000 		.4byte	.LVL50
+ 2287 01b3 23000000 		.4byte	.LVL51-1
+ 2288 01b7 0500     		.2byte	0x5
+ 2289 01b9 03       		.byte	0x3
+ 2290 01ba 00000000 		.4byte	audio_OnTimerCb
+ 2291 01be 23000000 		.4byte	.LVL51-1
+ 2292 01c2 28000000 		.4byte	.LVL52
+ 2293 01c6 0400     		.2byte	0x4
+ 2294 01c8 F3       		.byte	0xf3
+ 2295 01c9 01       		.uleb128 0x1
+ 2296 01ca 50       		.byte	0x50
+ 2297 01cb 9F       		.byte	0x9f
+ 2298 01cc 28000000 		.4byte	.LVL52
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 47
+
+
+ 2299 01d0 2A000000 		.4byte	.LVL53
+ 2300 01d4 0100     		.2byte	0x1
+ 2301 01d6 50       		.byte	0x50
+ 2302 01d7 2A000000 		.4byte	.LVL53
+ 2303 01db 3C000000 		.4byte	.LFE39
+ 2304 01df 0400     		.2byte	0x4
+ 2305 01e1 F3       		.byte	0xf3
+ 2306 01e2 01       		.uleb128 0x1
+ 2307 01e3 50       		.byte	0x50
+ 2308 01e4 9F       		.byte	0x9f
+ 2309 01e5 00000000 		.4byte	0
+ 2310 01e9 00000000 		.4byte	0
+ 2311              	.LLST7:
+ 2312 01ed 16000000 		.4byte	.LVL48
+ 2313 01f1 1A000000 		.4byte	.LVL49
+ 2314 01f5 0200     		.2byte	0x2
+ 2315 01f7 30       		.byte	0x30
+ 2316 01f8 9F       		.byte	0x9f
+ 2317 01f9 1A000000 		.4byte	.LVL49
+ 2318 01fd 28000000 		.4byte	.LVL52
+ 2319 0201 0200     		.2byte	0x2
+ 2320 0203 31       		.byte	0x31
+ 2321 0204 9F       		.byte	0x9f
+ 2322 0205 28000000 		.4byte	.LVL52
+ 2323 0209 2A000000 		.4byte	.LVL53
+ 2324 020d 0200     		.2byte	0x2
+ 2325 020f 30       		.byte	0x30
+ 2326 0210 9F       		.byte	0x9f
+ 2327 0211 2A000000 		.4byte	.LVL53
+ 2328 0215 3C000000 		.4byte	.LFE39
+ 2329 0219 0100     		.2byte	0x1
+ 2330 021b 50       		.byte	0x50
+ 2331 021c 00000000 		.4byte	0
+ 2332 0220 00000000 		.4byte	0
+ 2333              	.LLST8:
+ 2334 0224 00000000 		.4byte	.LVL54
+ 2335 0228 12000000 		.4byte	.LVL56
+ 2336 022c 0100     		.2byte	0x1
+ 2337 022e 50       		.byte	0x50
+ 2338 022f 12000000 		.4byte	.LVL56
+ 2339 0233 18000000 		.4byte	.LVL58
+ 2340 0237 0400     		.2byte	0x4
+ 2341 0239 F3       		.byte	0xf3
+ 2342 023a 01       		.uleb128 0x1
+ 2343 023b 50       		.byte	0x50
+ 2344 023c 9F       		.byte	0x9f
+ 2345 023d 18000000 		.4byte	.LVL58
+ 2346 0241 28000000 		.4byte	.LVL60
+ 2347 0245 0100     		.2byte	0x1
+ 2348 0247 50       		.byte	0x50
+ 2349 0248 28000000 		.4byte	.LVL60
+ 2350 024c 2D000000 		.4byte	.LVL61-1
+ 2351 0250 0500     		.2byte	0x5
+ 2352 0252 03       		.byte	0x3
+ 2353 0253 20000000 		.4byte	volumePerc
+ 2354 0257 2D000000 		.4byte	.LVL61-1
+ 2355 025b 40000000 		.4byte	.LVL63
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 48
+
+
+ 2356 025f 0400     		.2byte	0x4
+ 2357 0261 F3       		.byte	0xf3
+ 2358 0262 01       		.uleb128 0x1
+ 2359 0263 50       		.byte	0x50
+ 2360 0264 9F       		.byte	0x9f
+ 2361 0265 40000000 		.4byte	.LVL63
+ 2362 0269 42000000 		.4byte	.LVL64
+ 2363 026d 0100     		.2byte	0x1
+ 2364 026f 50       		.byte	0x50
+ 2365 0270 42000000 		.4byte	.LVL64
+ 2366 0274 54000000 		.4byte	.LFE41
+ 2367 0278 0400     		.2byte	0x4
+ 2368 027a F3       		.byte	0xf3
+ 2369 027b 01       		.uleb128 0x1
+ 2370 027c 50       		.byte	0x50
+ 2371 027d 9F       		.byte	0x9f
+ 2372 027e 00000000 		.4byte	0
+ 2373 0282 00000000 		.4byte	0
+ 2374              	.LLST9:
+ 2375 0286 04000000 		.4byte	.LVL55
+ 2376 028a 1C000000 		.4byte	.LVL59
+ 2377 028e 0200     		.2byte	0x2
+ 2378 0290 30       		.byte	0x30
+ 2379 0291 9F       		.byte	0x9f
+ 2380 0292 1C000000 		.4byte	.LVL59
+ 2381 0296 40000000 		.4byte	.LVL63
+ 2382 029a 0200     		.2byte	0x2
+ 2383 029c 31       		.byte	0x31
+ 2384 029d 9F       		.byte	0x9f
+ 2385 029e 40000000 		.4byte	.LVL63
+ 2386 02a2 42000000 		.4byte	.LVL64
+ 2387 02a6 0200     		.2byte	0x2
+ 2388 02a8 30       		.byte	0x30
+ 2389 02a9 9F       		.byte	0x9f
+ 2390 02aa 42000000 		.4byte	.LVL64
+ 2391 02ae 54000000 		.4byte	.LFE41
+ 2392 02b2 0100     		.2byte	0x1
+ 2393 02b4 50       		.byte	0x50
+ 2394 02b5 00000000 		.4byte	0
+ 2395 02b9 00000000 		.4byte	0
+ 2396              	.LLST10:
+ 2397 02bd 08000000 		.4byte	.LVL72
+ 2398 02c1 14000000 		.4byte	.LVL73
+ 2399 02c5 0100     		.2byte	0x1
+ 2400 02c7 50       		.byte	0x50
+ 2401 02c8 14000000 		.4byte	.LVL73
+ 2402 02cc 17000000 		.4byte	.LVL74-1
+ 2403 02d0 0500     		.2byte	0x5
+ 2404 02d2 03       		.byte	0x3
+ 2405 02d3 20000000 		.4byte	volumePerc
+ 2406 02d7 1A000000 		.4byte	.LVL75
+ 2407 02db 28000000 		.4byte	.LFE42
+ 2408 02df 0100     		.2byte	0x1
+ 2409 02e1 50       		.byte	0x50
+ 2410 02e2 00000000 		.4byte	0
+ 2411 02e6 00000000 		.4byte	0
+ 2412              		.section	.debug_aranges,"",%progbits
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 49
+
+
+ 2413 0000 6C000000 		.4byte	0x6c
+ 2414 0004 0200     		.2byte	0x2
+ 2415 0006 00000000 		.4byte	.Ldebug_info0
+ 2416 000a 04       		.byte	0x4
+ 2417 000b 00       		.byte	0
+ 2418 000c 0000     		.2byte	0
+ 2419 000e 0000     		.2byte	0
+ 2420 0010 00000000 		.4byte	.LFB33
+ 2421 0014 24000000 		.4byte	.LFE33-.LFB33
+ 2422 0018 00000000 		.4byte	.LFB43
+ 2423 001c 5C000000 		.4byte	.LFE43-.LFB43
+ 2424 0020 00000000 		.4byte	.LFB34
+ 2425 0024 40000000 		.4byte	.LFE34-.LFB34
+ 2426 0028 00000000 		.4byte	.LFB35
+ 2427 002c 38000000 		.4byte	.LFE35-.LFB35
+ 2428 0030 00000000 		.4byte	.LFB36
+ 2429 0034 40000000 		.4byte	.LFE36-.LFB36
+ 2430 0038 00000000 		.4byte	.LFB37
+ 2431 003c 6C000000 		.4byte	.LFE37-.LFB37
+ 2432 0040 00000000 		.4byte	.LFB38
+ 2433 0044 2C000000 		.4byte	.LFE38-.LFB38
+ 2434 0048 00000000 		.4byte	.LFB39
+ 2435 004c 3C000000 		.4byte	.LFE39-.LFB39
+ 2436 0050 00000000 		.4byte	.LFB41
+ 2437 0054 54000000 		.4byte	.LFE41-.LFB41
+ 2438 0058 00000000 		.4byte	.LFB40
+ 2439 005c 64000000 		.4byte	.LFE40-.LFB40
+ 2440 0060 00000000 		.4byte	.LFB42
+ 2441 0064 28000000 		.4byte	.LFE42-.LFB42
+ 2442 0068 00000000 		.4byte	0
+ 2443 006c 00000000 		.4byte	0
+ 2444              		.section	.debug_ranges,"",%progbits
+ 2445              	.Ldebug_ranges0:
+ 2446 0000 00000000 		.4byte	.LFB33
+ 2447 0004 24000000 		.4byte	.LFE33
+ 2448 0008 00000000 		.4byte	.LFB43
+ 2449 000c 5C000000 		.4byte	.LFE43
+ 2450 0010 00000000 		.4byte	.LFB34
+ 2451 0014 40000000 		.4byte	.LFE34
+ 2452 0018 00000000 		.4byte	.LFB35
+ 2453 001c 38000000 		.4byte	.LFE35
+ 2454 0020 00000000 		.4byte	.LFB36
+ 2455 0024 40000000 		.4byte	.LFE36
+ 2456 0028 00000000 		.4byte	.LFB37
+ 2457 002c 6C000000 		.4byte	.LFE37
+ 2458 0030 00000000 		.4byte	.LFB38
+ 2459 0034 2C000000 		.4byte	.LFE38
+ 2460 0038 00000000 		.4byte	.LFB39
+ 2461 003c 3C000000 		.4byte	.LFE39
+ 2462 0040 00000000 		.4byte	.LFB41
+ 2463 0044 54000000 		.4byte	.LFE41
+ 2464 0048 00000000 		.4byte	.LFB40
+ 2465 004c 64000000 		.4byte	.LFE40
+ 2466 0050 00000000 		.4byte	.LFB42
+ 2467 0054 28000000 		.4byte	.LFE42
+ 2468 0058 00000000 		.4byte	0
+ 2469 005c 00000000 		.4byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 50
+
+
+ 2470              		.section	.debug_line,"",%progbits
+ 2471              	.Ldebug_line0:
+ 2472 0000 D0020000 		.section	.debug_str,"MS",%progbits,1
+ 2472      02007F01 
+ 2472      00000201 
+ 2472      FB0E0D00 
+ 2472      01010101 
+ 2473              	.LASF35:
+ 2474 0000 72657375 		.ascii	"result\000"
+ 2474      6C7400
+ 2475              	.LASF39:
+ 2476 0007 61756469 		.ascii	"audio_SetCallback\000"
+ 2476      6F5F5365 
+ 2476      7443616C 
+ 2476      6C626163 
+ 2476      6B00
+ 2477              	.LASF62:
+ 2478 0019 433A5C55 		.ascii	"C:\\Users\\dmytro.fedorchenko\\Documents\\PSoC Crea"
+ 2478      73657273 
+ 2478      5C646D79 
+ 2478      74726F2E 
+ 2478      6665646F 
+ 2479 0048 746F725C 		.ascii	"tor\\PWM01\\midiPlayer.cydsn\000"
+ 2479      50574D30 
+ 2479      315C6D69 
+ 2479      6469506C 
+ 2479      61796572 
+ 2480              	.LASF31:
+ 2481 0063 73616D70 		.ascii	"sample\000"
+ 2481      6C6500
+ 2482              	.LASF23:
+ 2483 006a 41554449 		.ascii	"AUDIO_SAMPLE_RATE_32K\000"
+ 2483      4F5F5341 
+ 2483      4D504C45 
+ 2483      5F524154 
+ 2483      455F3332 
+ 2484              	.LASF40:
+ 2485 0080 61756469 		.ascii	"audio_SetVolume\000"
+ 2485      6F5F5365 
+ 2485      74566F6C 
+ 2485      756D6500 
+ 2486              	.LASF14:
+ 2487 0090 73697A65 		.ascii	"sizetype\000"
+ 2487      74797065 
+ 2487      00
+ 2488              	.LASF46:
+ 2489 0099 6973496E 		.ascii	"isInit\000"
+ 2489      697400
+ 2490              	.LASF26:
+ 2491 00a0 41554449 		.ascii	"AUDIO_SAMPLE_RATE_DEFAULT\000"
+ 2491      4F5F5341 
+ 2491      4D504C45 
+ 2491      5F524154 
+ 2491      455F4445 
+ 2492              	.LASF59:
+ 2493 00ba 50574D5F 		.ascii	"PWM_Start\000"
+ 2493      53746172 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 51
+
+
+ 2493      7400
+ 2494              	.LASF6:
+ 2495 00c4 5F5F7569 		.ascii	"__uint32_t\000"
+ 2495      6E743332 
+ 2495      5F7400
+ 2496              	.LASF51:
+ 2497 00cf 61756469 		.ascii	"audio_OnTimerCb\000"
+ 2497      6F5F4F6E 
+ 2497      54696D65 
+ 2497      72436200 
+ 2498              	.LASF44:
+ 2499 00df 72657476 		.ascii	"retval\000"
+ 2499      616C00
+ 2500              	.LASF2:
+ 2501 00e6 73686F72 		.ascii	"short int\000"
+ 2501      7420696E 
+ 2501      7400
+ 2502              	.LASF38:
+ 2503 00f0 61756469 		.ascii	"audio_GetSampleRate\000"
+ 2503      6F5F4765 
+ 2503      7453616D 
+ 2503      706C6552 
+ 2503      61746500 
+ 2504              	.LASF11:
+ 2505 0104 75696E74 		.ascii	"uint8_t\000"
+ 2505      385F7400 
+ 2506              	.LASF52:
+ 2507 010c 54696D65 		.ascii	"Timer_audio_ClearInterrupt\000"
+ 2507      725F6175 
+ 2507      64696F5F 
+ 2507      436C6561 
+ 2507      72496E74 
+ 2508              	.LASF24:
+ 2509 0127 41554449 		.ascii	"AUDIO_SAMPLE_RATE_64K\000"
+ 2509      4F5F5341 
+ 2509      4D504C45 
+ 2509      5F524154 
+ 2509      455F3634 
+ 2510              	.LASF25:
+ 2511 013d 41554449 		.ascii	"AUDIO_SAMPLE_RATE_COUNT\000"
+ 2511      4F5F5341 
+ 2511      4D504C45 
+ 2511      5F524154 
+ 2511      455F434F 
+ 2512              	.LASF17:
+ 2513 0155 666C6F61 		.ascii	"float\000"
+ 2513      7400
+ 2514              	.LASF19:
+ 2515 015b 61756469 		.ascii	"audio_SampleCb_t\000"
+ 2515      6F5F5361 
+ 2515      6D706C65 
+ 2515      43625F74 
+ 2515      00
+ 2516              	.LASF8:
+ 2517 016c 6C6F6E67 		.ascii	"long long int\000"
+ 2517      206C6F6E 
+ 2517      6720696E 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 52
+
+
+ 2517      7400
+ 2518              	.LASF4:
+ 2519 017a 6C6F6E67 		.ascii	"long int\000"
+ 2519      20696E74 
+ 2519      00
+ 2520              	.LASF22:
+ 2521 0183 41554449 		.ascii	"AUDIO_SAMPLE_RATE_16K\000"
+ 2521      4F5F5341 
+ 2521      4D504C45 
+ 2521      5F524154 
+ 2521      455F3136 
+ 2522              	.LASF47:
+ 2523 0199 766F6C75 		.ascii	"volume\000"
+ 2523      6D6500
+ 2524              	.LASF27:
+ 2525 01a0 61756469 		.ascii	"audio_SampleRate_t\000"
+ 2525      6F5F5361 
+ 2525      6D706C65 
+ 2525      52617465 
+ 2525      5F7400
+ 2526              	.LASF29:
+ 2527 01b3 61756469 		.ascii	"audio_Play\000"
+ 2527      6F5F506C 
+ 2527      617900
+ 2528              	.LASF5:
+ 2529 01be 5F5F7569 		.ascii	"__uint8_t\000"
+ 2529      6E74385F 
+ 2529      7400
+ 2530              	.LASF63:
+ 2531 01c8 61756469 		.ascii	"audio_PrintSampleRate\000"
+ 2531      6F5F5072 
+ 2531      696E7453 
+ 2531      616D706C 
+ 2531      65526174 
+ 2532              	.LASF58:
+ 2533 01de 4973725F 		.ascii	"Isr_TC_StartEx\000"
+ 2533      54435F53 
+ 2533      74617274 
+ 2533      457800
+ 2534              	.LASF13:
+ 2535 01ed 6C6F6E67 		.ascii	"long double\000"
+ 2535      20646F75 
+ 2535      626C6500 
+ 2536              	.LASF42:
+ 2537 01f9 61756469 		.ascii	"audio_Init\000"
+ 2537      6F5F496E 
+ 2537      697400
+ 2538              	.LASF1:
+ 2539 0204 756E7369 		.ascii	"unsigned char\000"
+ 2539      676E6564 
+ 2539      20636861 
+ 2539      7200
+ 2540              	.LASF56:
+ 2541 0212 54696D65 		.ascii	"Timer_audio_WritePeriod\000"
+ 2541      725F6175 
+ 2541      64696F5F 
+ 2541      57726974 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 53
+
+
+ 2541      65506572 
+ 2542              	.LASF37:
+ 2543 022a 61756469 		.ascii	"audio_SetSampleRate\000"
+ 2543      6F5F5365 
+ 2543      7453616D 
+ 2543      706C6552 
+ 2543      61746500 
+ 2544              	.LASF0:
+ 2545 023e 7369676E 		.ascii	"signed char\000"
+ 2545      65642063 
+ 2545      68617200 
+ 2546              	.LASF9:
+ 2547 024a 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2547      206C6F6E 
+ 2547      6720756E 
+ 2547      7369676E 
+ 2547      65642069 
+ 2548              	.LASF12:
+ 2549 0261 75696E74 		.ascii	"uint32_t\000"
+ 2549      33325F74 
+ 2549      00
+ 2550              	.LASF10:
+ 2551 026a 756E7369 		.ascii	"unsigned int\000"
+ 2551      676E6564 
+ 2551      20696E74 
+ 2551      00
+ 2552              	.LASF45:
+ 2553 0277 706C6179 		.ascii	"play\000"
+ 2553      00
+ 2554              	.LASF54:
+ 2555 027c 50574D5F 		.ascii	"PWM_WriteCompare\000"
+ 2555      57726974 
+ 2555      65436F6D 
+ 2555      70617265 
+ 2555      00
+ 2556              	.LASF53:
+ 2557 028d 75617274 		.ascii	"uartPrintf\000"
+ 2557      5072696E 
+ 2557      746600
+ 2558              	.LASF3:
+ 2559 0298 73686F72 		.ascii	"short unsigned int\000"
+ 2559      7420756E 
+ 2559      7369676E 
+ 2559      65642069 
+ 2559      6E7400
+ 2560              	.LASF15:
+ 2561 02ab 63686172 		.ascii	"char\000"
+ 2561      00
+ 2562              	.LASF43:
+ 2563 02b0 61756469 		.ascii	"audio_GetVolume\000"
+ 2563      6F5F4765 
+ 2563      74566F6C 
+ 2563      756D6500 
+ 2564              	.LASF36:
+ 2565 02c0 5F426F6F 		.ascii	"_Bool\000"
+ 2565      6C00
+ 2566              	.LASF49:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 54
+
+
+ 2567 02c6 73616D70 		.ascii	"sampleRate\000"
+ 2567      6C655261 
+ 2567      746500
+ 2568              	.LASF57:
+ 2569 02d1 54696D65 		.ascii	"Timer_audio_Start\000"
+ 2569      725F6175 
+ 2569      64696F5F 
+ 2569      53746172 
+ 2569      7400
+ 2570              	.LASF48:
+ 2571 02e3 766F6C75 		.ascii	"volumePerc\000"
+ 2571      6D655065 
+ 2571      726300
+ 2572              	.LASF7:
+ 2573 02ee 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2573      20756E73 
+ 2573      69676E65 
+ 2573      6420696E 
+ 2573      7400
+ 2574              	.LASF32:
+ 2575 0300 766F6C75 		.ascii	"volumeChange\000"
+ 2575      6D654368 
+ 2575      616E6765 
+ 2575      00
+ 2576              	.LASF16:
+ 2577 030d 75696E74 		.ascii	"uint32\000"
+ 2577      333200
+ 2578              	.LASF60:
+ 2579 0314 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 2579      43313120 
+ 2579      352E342E 
+ 2579      31203230 
+ 2579      31363036 
+ 2580 0347 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0plus -mthumb -"
+ 2580      20726576 
+ 2580      6973696F 
+ 2580      6E203233 
+ 2580      37373135 
+ 2581 037a 67202D4F 		.ascii	"g -Og -ffunction-sections -ffat-lto-objects\000"
+ 2581      67202D66 
+ 2581      66756E63 
+ 2581      74696F6E 
+ 2581      2D736563 
+ 2582              	.LASF50:
+ 2583 03a6 61756469 		.ascii	"audio_SampleRateTPeriods\000"
+ 2583      6F5F5361 
+ 2583      6D706C65 
+ 2583      52617465 
+ 2583      54506572 
+ 2584              	.LASF61:
+ 2585 03bf 61756469 		.ascii	"audio.c\000"
+ 2585      6F2E6300 
+ 2586              	.LASF41:
+ 2587 03c7 70657263 		.ascii	"perc\000"
+ 2587      00
+ 2588              	.LASF33:
+ 2589 03cc 61756469 		.ascii	"audio_Start\000"
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccpn1oA7.s 			page 55
+
+
+ 2589      6F5F5374 
+ 2589      61727400 
+ 2590              	.LASF30:
+ 2591 03d8 72617465 		.ascii	"rate\000"
+ 2591      00
+ 2592              	.LASF20:
+ 2593 03dd 41554449 		.ascii	"AUDIO_SAMPLE_RATE_4K\000"
+ 2593      4F5F5341 
+ 2593      4D504C45 
+ 2593      5F524154 
+ 2593      455F344B 
+ 2594              	.LASF18:
+ 2595 03f2 646F7562 		.ascii	"double\000"
+ 2595      6C6500
+ 2596              	.LASF21:
+ 2597 03f9 41554449 		.ascii	"AUDIO_SAMPLE_RATE_8K\000"
+ 2597      4F5F5341 
+ 2597      4D504C45 
+ 2597      5F524154 
+ 2597      455F384B 
+ 2598              	.LASF55:
+ 2599 040e 54696D65 		.ascii	"Timer_audio_Stop\000"
+ 2599      725F6175 
+ 2599      64696F5F 
+ 2599      53746F70 
+ 2599      00
+ 2600              	.LASF34:
+ 2601 041f 61756469 		.ascii	"audio_Stop\000"
+ 2601      6F5F5374 
+ 2601      6F7000
+ 2602              	.LASF28:
+ 2603 042a 4973725F 		.ascii	"Isr_TC_Handler\000"
+ 2603      54435F48 
+ 2603      616E646C 
+ 2603      657200
+ 2604              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

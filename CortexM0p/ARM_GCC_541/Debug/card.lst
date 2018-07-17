@@ -1,0 +1,3288 @@
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0plus
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"card.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.cardInit,"ax",%progbits
+  20              		.align	2
+  21              		.global	cardInit
+  22              		.code	16
+  23              		.thumb_func
+  24              		.type	cardInit, %function
+  25              	cardInit:
+  26              	.LFB35:
+  27              		.file 1 "card.c"
+   1:card.c        **** /** @file
+   2:card.c        ****  *  @brief Source file for fatfs managment functions
+   3:card.c        ****  */  
+   4:card.c        **** #include "project.h"
+   5:card.c        **** #include "card.h"
+   6:card.c        **** #include "assert.h"
+   7:card.c        **** 
+   8:card.c        **** #define SD_CARD_DISABLE 1U
+   9:card.c        **** #define SD_CARD_ENABLE  0U
+  10:card.c        **** 
+  11:card.c        **** const unsigned long rtcYear = 2018;
+  12:card.c        **** const unsigned long rtcMonth = 10;
+  13:card.c        **** const unsigned long rtcDay = 16;
+  14:card.c        **** const unsigned long rtcHour = 10;
+  15:card.c        **** const unsigned long rtcMinutes = 32;
+  16:card.c        **** const unsigned long rtcSeconds = 0;
+  17:card.c        **** FATFS fatFs;
+  18:card.c        **** static bool isInit = false;
+  19:card.c        **** static bool isMounted = false;
+  20:card.c        **** 
+  21:card.c        **** bool cardMount(void)
+  22:card.c        **** {
+  23:card.c        ****     char label[128] = {0};
+  24:card.c        ****     DWORD freeclusters;
+  25:card.c        ****     DWORD freesectors;
+  26:card.c        ****     DWORD totalsectors;
+  27:card.c        ****     
+  28:card.c        ****     FATFS *fatFsPtr;
+  29:card.c        ****     uint8 resultF;
+  30:card.c        ****     bool result = false;
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 2
+
+
+  31:card.c        ****     
+  32:card.c        ****     ASSERT(isInit);
+  33:card.c        ****     
+  34:card.c        ****     if (isMounted)
+  35:card.c        ****     {
+  36:card.c        ****         uartPrintf("SD: Already mounted!\r\n");
+  37:card.c        ****         result = true;
+  38:card.c        ****     } else
+  39:card.c        ****     {
+  40:card.c        ****         do {
+  41:card.c        ****             resultF = f_mount(&fatFs, "", 1);
+  42:card.c        ****             if (RES_OK != resultF)
+  43:card.c        ****             {
+  44:card.c        ****                 uartPrintf("SD: f_mount failed %d\r\n", resultF);
+  45:card.c        ****                 break;
+  46:card.c        ****             }
+  47:card.c        ****        
+  48:card.c        ****             resultF = f_getlabel("", label, 0);
+  49:card.c        ****             if (RES_OK != resultF)
+  50:card.c        ****             {
+  51:card.c        ****                 uartPrintf("SD: f_getlabel failed %d\r\n", resultF);
+  52:card.c        ****                 break;
+  53:card.c        ****             }
+  54:card.c        ****             
+  55:card.c        ****            resultF = f_getfree("", &freeclusters, &fatFsPtr);
+  56:card.c        ****            if (RES_OK != resultF)
+  57:card.c        ****            {
+  58:card.c        ****                uartPrintf("SD: f_getfree failed %d\r\n", resultF);
+  59:card.c        ****                break;
+  60:card.c        ****            }
+  61:card.c        ****           
+  62:card.c        ****            totalsectors = (fatFsPtr->n_fatent - 2) * fatFsPtr->csize;
+  63:card.c        ****            freesectors = freeclusters * fatFsPtr->csize;  
+  64:card.c        ****            result = true;
+  65:card.c        ****            isMounted = true;
+  66:card.c        ****         } while (false); 
+  67:card.c        ****         
+  68:card.c        ****         if (result)
+  69:card.c        ****         {
+  70:card.c        ****             uartPrintf("SD: Mounted!\r\n");
+  71:card.c        ****             uartPrintf("SD: Label: %s\r\n", label);
+  72:card.c        ****             uartPrintf("SD: Free clusters: %d\r\n", freeclusters);
+  73:card.c        ****             uartPrintf("SD: Total sectors: %d\r\n", totalsectors);
+  74:card.c        ****             uartPrintf("SD: Free sectors: %d\r\n", freesectors);
+  75:card.c        ****         }
+  76:card.c        ****     }
+  77:card.c        ****     
+  78:card.c        ****     if (!result)
+  79:card.c        ****     {
+  80:card.c        ****         cardErrorPrint(resultF);
+  81:card.c        ****     } 
+  82:card.c        ****     
+  83:card.c        ****     return result;
+  84:card.c        **** }
+  85:card.c        **** 
+  86:card.c        **** void cardUmount(void)
+  87:card.c        **** {
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 3
+
+
+  88:card.c        ****     uint8 resultF;
+  89:card.c        ****     
+  90:card.c        ****     ASSERT(isInit);
+  91:card.c        **** 
+  92:card.c        ****     if (isMounted)
+  93:card.c        ****     {
+  94:card.c        ****         resultF = f_mount(NULL, "", 1);
+  95:card.c        ****         if (RES_OK != resultF)
+  96:card.c        ****         {
+  97:card.c        ****             cardErrorPrint(resultF);
+  98:card.c        ****         }
+  99:card.c        ****         
+ 100:card.c        ****         uartPrintf("SD: Unmounted!\r\n");
+ 101:card.c        ****         isMounted = false;   
+ 102:card.c        ****     } else
+ 103:card.c        ****     {
+ 104:card.c        ****         uartPrintf("SD: Unmount - not mounted!\r\n");
+ 105:card.c        ****     }
+ 106:card.c        **** }
+ 107:card.c        **** 
+ 108:card.c        **** void cardInit(void)
+ 109:card.c        **** {
+  28              		.loc 1 109 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 10B5     		push	{r4, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 4, -8
+  35              		.cfi_offset 14, -4
+ 110:card.c        ****     isInit = true;
+  36              		.loc 1 110 0
+  37 0002 0122     		movs	r2, #1
+  38 0004 054B     		ldr	r3, .L2
+  39 0006 1A70     		strb	r2, [r3]
+ 111:card.c        ****     
+ 112:card.c        ****     SPI_Start();
+  40              		.loc 1 112 0
+  41 0008 FFF7FEFF 		bl	SPI_Start
+  42              	.LVL0:
+ 113:card.c        ****     SPI_ss0_m_Write(SD_CARD_DISABLE);
+  43              		.loc 1 113 0
+  44 000c 0120     		movs	r0, #1
+  45 000e FFF7FEFF 		bl	SPI_ss0_m_Write
+  46              	.LVL1:
+ 114:card.c        ****     uartPrintf("SD: Inited\r\n");
+  47              		.loc 1 114 0
+  48 0012 0348     		ldr	r0, .L2+4
+  49 0014 FFF7FEFF 		bl	uartPrintf
+  50              	.LVL2:
+ 115:card.c        **** }
+  51              		.loc 1 115 0
+  52              		@ sp needed
+  53 0018 10BD     		pop	{r4, pc}
+  54              	.L3:
+  55 001a C046     		.align	2
+  56              	.L2:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 4
+
+
+  57 001c 00000000 		.word	.LANCHOR0
+  58 0020 00000000 		.word	.LC1
+  59              		.cfi_endproc
+  60              	.LFE35:
+  61              		.size	cardInit, .-cardInit
+  62              		.section	.text.cardErrorPrint,"ax",%progbits
+  63              		.align	2
+  64              		.global	cardErrorPrint
+  65              		.code	16
+  66              		.thumb_func
+  67              		.type	cardErrorPrint, %function
+  68              	cardErrorPrint:
+  69              	.LFB36:
+ 116:card.c        **** 
+ 117:card.c        **** void cardErrorPrint(FRESULT result)
+ 118:card.c        **** {
+  70              		.loc 1 118 0
+  71              		.cfi_startproc
+  72              		@ args = 0, pretend = 0, frame = 0
+  73              		@ frame_needed = 0, uses_anonymous_args = 0
+  74              	.LVL3:
+  75 0000 10B5     		push	{r4, lr}
+  76              		.cfi_def_cfa_offset 8
+  77              		.cfi_offset 4, -8
+  78              		.cfi_offset 14, -4
+ 119:card.c        ****     switch (result)
+  79              		.loc 1 119 0
+  80 0002 1328     		cmp	r0, #19
+  81 0004 4ED8     		bhi	.L4
+  82 0006 8000     		lsls	r0, r0, #2
+  83              	.LVL4:
+  84 0008 274B     		ldr	r3, .L26
+  85 000a 1B58     		ldr	r3, [r3, r0]
+  86 000c 9F46     		mov	pc, r3
+  87              		.section	.rodata
+  88              		.align	2
+  89              	.L7:
+  90 0000 A4000000 		.word	.L4
+  91 0004 0E000000 		.word	.L6
+  92 0008 16000000 		.word	.L8
+  93 000c 1E000000 		.word	.L9
+  94 0010 26000000 		.word	.L10
+  95 0014 2E000000 		.word	.L11
+  96 0018 36000000 		.word	.L12
+  97 001c 3E000000 		.word	.L13
+  98 0020 46000000 		.word	.L14
+  99 0024 4E000000 		.word	.L15
+ 100 0028 56000000 		.word	.L16
+ 101 002c 5E000000 		.word	.L17
+ 102 0030 66000000 		.word	.L18
+ 103 0034 6E000000 		.word	.L19
+ 104 0038 76000000 		.word	.L20
+ 105 003c 7E000000 		.word	.L21
+ 106 0040 86000000 		.word	.L22
+ 107 0044 8E000000 		.word	.L23
+ 108 0048 96000000 		.word	.L24
+ 109 004c 9E000000 		.word	.L25
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 5
+
+
+ 110              		.section	.text.cardErrorPrint
+ 111              	.L6:
+ 120:card.c        ****     {
+ 121:card.c        ****         case FR_DISK_ERR:
+ 122:card.c        ****             uartPrintf("SD: error: (FR_DISK_ERR) low level error.\r\n");
+ 112              		.loc 1 122 0
+ 113 000e 2748     		ldr	r0, .L26+4
+ 114 0010 FFF7FEFF 		bl	uartPrintf
+ 115              	.LVL5:
+ 123:card.c        ****             break;
+ 116              		.loc 1 123 0
+ 117 0014 46E0     		b	.L4
+ 118              	.L8:
+ 124:card.c        ****             
+ 125:card.c        ****         case FR_INT_ERR:
+ 126:card.c        ****             uartPrintf("SD: error: (FR_INT_ERR)\r\n");
+ 119              		.loc 1 126 0
+ 120 0016 2648     		ldr	r0, .L26+8
+ 121 0018 FFF7FEFF 		bl	uartPrintf
+ 122              	.LVL6:
+ 127:card.c        ****             break; 
+ 123              		.loc 1 127 0
+ 124 001c 42E0     		b	.L4
+ 125              	.L9:
+ 128:card.c        ****             
+ 129:card.c        ****         case FR_NOT_READY:
+ 130:card.c        ****             uartPrintf("SD: error: (FR_NOT_READY) card not ready.\r\n");
+ 126              		.loc 1 130 0
+ 127 001e 2548     		ldr	r0, .L26+12
+ 128 0020 FFF7FEFF 		bl	uartPrintf
+ 129              	.LVL7:
+ 131:card.c        ****             break;
+ 130              		.loc 1 131 0
+ 131 0024 3EE0     		b	.L4
+ 132              	.L10:
+ 132:card.c        ****             
+ 133:card.c        ****         case FR_NO_FILE:
+ 134:card.c        ****             uartPrintf("SD: error: (FR_NO_FILE) invalid file.\r\n");
+ 133              		.loc 1 134 0
+ 134 0026 2448     		ldr	r0, .L26+16
+ 135 0028 FFF7FEFF 		bl	uartPrintf
+ 136              	.LVL8:
+ 135:card.c        ****             break;
+ 137              		.loc 1 135 0
+ 138 002c 3AE0     		b	.L4
+ 139              	.L11:
+ 136:card.c        ****             
+ 137:card.c        ****         case FR_NO_PATH:
+ 138:card.c        ****             uartPrintf("SD: error: (FR_NO_PATH) invalid path.\r\n");
+ 140              		.loc 1 138 0
+ 141 002e 2348     		ldr	r0, .L26+20
+ 142 0030 FFF7FEFF 		bl	uartPrintf
+ 143              	.LVL9:
+ 139:card.c        ****             break;
+ 144              		.loc 1 139 0
+ 145 0034 36E0     		b	.L4
+ 146              	.L12:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 6
+
+
+ 140:card.c        ****             
+ 141:card.c        ****         case FR_INVALID_NAME:
+ 142:card.c        ****             uartPrintf("SD: error: (FR_INVALID_NAME) invalid name.\r\n");
+ 147              		.loc 1 142 0
+ 148 0036 2248     		ldr	r0, .L26+24
+ 149 0038 FFF7FEFF 		bl	uartPrintf
+ 150              	.LVL10:
+ 143:card.c        ****             break;
+ 151              		.loc 1 143 0
+ 152 003c 32E0     		b	.L4
+ 153              	.L13:
+ 144:card.c        ****             
+ 145:card.c        ****         case FR_DENIED:
+ 146:card.c        ****             uartPrintf("SD: error: (FR_DENIED) operation denied.\r\n");
+ 154              		.loc 1 146 0
+ 155 003e 2148     		ldr	r0, .L26+28
+ 156 0040 FFF7FEFF 		bl	uartPrintf
+ 157              	.LVL11:
+ 147:card.c        ****             break;
+ 158              		.loc 1 147 0
+ 159 0044 2EE0     		b	.L4
+ 160              	.L14:
+ 148:card.c        ****             
+ 149:card.c        ****         case FR_EXIST:
+ 150:card.c        ****             uartPrintf("SD: error: (FR_EXIST) it exists yet...\r\n");
+ 161              		.loc 1 150 0
+ 162 0046 2048     		ldr	r0, .L26+32
+ 163 0048 FFF7FEFF 		bl	uartPrintf
+ 164              	.LVL12:
+ 151:card.c        ****             break;
+ 165              		.loc 1 151 0
+ 166 004c 2AE0     		b	.L4
+ 167              	.L15:
+ 152:card.c        ****             
+ 153:card.c        ****         case FR_INVALID_OBJECT:
+ 154:card.c        ****             uartPrintf("SD: error: (FR_INVALID_OBJECT)\r\n");
+ 168              		.loc 1 154 0
+ 169 004e 1F48     		ldr	r0, .L26+36
+ 170 0050 FFF7FEFF 		bl	uartPrintf
+ 171              	.LVL13:
+ 155:card.c        ****             break;
+ 172              		.loc 1 155 0
+ 173 0054 26E0     		b	.L4
+ 174              	.L16:
+ 156:card.c        ****             
+ 157:card.c        ****         case FR_WRITE_PROTECTED:
+ 158:card.c        ****             uartPrintf("SD: error: (FR_WRITE_PROTECTED)\r\n");
+ 175              		.loc 1 158 0
+ 176 0056 1E48     		ldr	r0, .L26+40
+ 177 0058 FFF7FEFF 		bl	uartPrintf
+ 178              	.LVL14:
+ 159:card.c        ****             break;
+ 179              		.loc 1 159 0
+ 180 005c 22E0     		b	.L4
+ 181              	.L17:
+ 160:card.c        ****             
+ 161:card.c        ****         case FR_INVALID_DRIVE:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 7
+
+
+ 162:card.c        ****             uartPrintf("SD: error: (FR_INVALID_DRIVE)\r\n");
+ 182              		.loc 1 162 0
+ 183 005e 1D48     		ldr	r0, .L26+44
+ 184 0060 FFF7FEFF 		bl	uartPrintf
+ 185              	.LVL15:
+ 163:card.c        ****             break;
+ 186              		.loc 1 163 0
+ 187 0064 1EE0     		b	.L4
+ 188              	.L18:
+ 164:card.c        ****             
+ 165:card.c        ****         case FR_NOT_ENABLED:
+ 166:card.c        ****             uartPrintf("SD: error: (FR_NOT_ENABLED) card unmounted.\r\n");
+ 189              		.loc 1 166 0
+ 190 0066 1C48     		ldr	r0, .L26+48
+ 191 0068 FFF7FEFF 		bl	uartPrintf
+ 192              	.LVL16:
+ 167:card.c        ****             break;
+ 193              		.loc 1 167 0
+ 194 006c 1AE0     		b	.L4
+ 195              	.L19:
+ 168:card.c        ****             
+ 169:card.c        ****         case FR_NO_FILESYSTEM:
+ 170:card.c        ****             uartPrintf("SD: error: (FR_NO_FILESYSTEM) no valid FAT volume.\r\n");
+ 196              		.loc 1 170 0
+ 197 006e 1B48     		ldr	r0, .L26+52
+ 198 0070 FFF7FEFF 		bl	uartPrintf
+ 199              	.LVL17:
+ 171:card.c        ****             break;  
+ 200              		.loc 1 171 0
+ 201 0074 16E0     		b	.L4
+ 202              	.L20:
+ 172:card.c        ****             
+ 173:card.c        ****         case FR_MKFS_ABORTED:
+ 174:card.c        ****             uartPrintf("SD: error: (FR_MKFS_ABORTED)\r\n");
+ 203              		.loc 1 174 0
+ 204 0076 1A48     		ldr	r0, .L26+56
+ 205 0078 FFF7FEFF 		bl	uartPrintf
+ 206              	.LVL18:
+ 175:card.c        ****             break;
+ 207              		.loc 1 175 0
+ 208 007c 12E0     		b	.L4
+ 209              	.L21:
+ 176:card.c        ****             
+ 177:card.c        ****         case FR_TIMEOUT:
+ 178:card.c        ****             uartPrintf("SD: error: (FR_TIMEOUT)\r\n");
+ 210              		.loc 1 178 0
+ 211 007e 1948     		ldr	r0, .L26+60
+ 212 0080 FFF7FEFF 		bl	uartPrintf
+ 213              	.LVL19:
+ 179:card.c        ****             break;
+ 214              		.loc 1 179 0
+ 215 0084 0EE0     		b	.L4
+ 216              	.L22:
+ 180:card.c        ****             
+ 181:card.c        ****         case FR_LOCKED:
+ 182:card.c        ****             uartPrintf("SD: error: (FR_LOCKED)\r\n");
+ 217              		.loc 1 182 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 8
+
+
+ 218 0086 1848     		ldr	r0, .L26+64
+ 219 0088 FFF7FEFF 		bl	uartPrintf
+ 220              	.LVL20:
+ 183:card.c        ****             break;
+ 221              		.loc 1 183 0
+ 222 008c 0AE0     		b	.L4
+ 223              	.L23:
+ 184:card.c        ****             
+ 185:card.c        ****         case FR_NOT_ENOUGH_CORE:
+ 186:card.c        ****             uartPrintf("SD: error: (FR_NOT_ENOUGH_CORE)\r\n");
+ 224              		.loc 1 186 0
+ 225 008e 1748     		ldr	r0, .L26+68
+ 226 0090 FFF7FEFF 		bl	uartPrintf
+ 227              	.LVL21:
+ 187:card.c        ****             break;     
+ 228              		.loc 1 187 0
+ 229 0094 06E0     		b	.L4
+ 230              	.L24:
+ 188:card.c        ****             
+ 189:card.c        ****         case FR_TOO_MANY_OPEN_FILES:
+ 190:card.c        ****             uartPrintf("SD: error: (FR_TOO_MANY_OPEN_FILES)\r\n");
+ 231              		.loc 1 190 0
+ 232 0096 1648     		ldr	r0, .L26+72
+ 233 0098 FFF7FEFF 		bl	uartPrintf
+ 234              	.LVL22:
+ 191:card.c        ****             break;
+ 235              		.loc 1 191 0
+ 236 009c 02E0     		b	.L4
+ 237              	.L25:
+ 192:card.c        ****             
+ 193:card.c        ****         case FR_INVALID_PARAMETER:
+ 194:card.c        ****             uartPrintf("SD: error: (FR_INVALID_PARAMETER)\r\n"); 
+ 238              		.loc 1 194 0
+ 239 009e 1548     		ldr	r0, .L26+76
+ 240 00a0 FFF7FEFF 		bl	uartPrintf
+ 241              	.LVL23:
+ 242              	.L4:
+ 195:card.c        ****             break; 
+ 196:card.c        ****             
+ 197:card.c        ****         default: 
+ 198:card.c        ****             break;
+ 199:card.c        ****     }
+ 200:card.c        **** }
+ 243              		.loc 1 200 0
+ 244              		@ sp needed
+ 245 00a4 10BD     		pop	{r4, pc}
+ 246              	.L27:
+ 247 00a6 C046     		.align	2
+ 248              	.L26:
+ 249 00a8 00000000 		.word	.L7
+ 250 00ac 10000000 		.word	.LC4
+ 251 00b0 3C000000 		.word	.LC6
+ 252 00b4 58000000 		.word	.LC8
+ 253 00b8 84000000 		.word	.LC10
+ 254 00bc AC000000 		.word	.LC12
+ 255 00c0 D4000000 		.word	.LC14
+ 256 00c4 04010000 		.word	.LC16
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 9
+
+
+ 257 00c8 30010000 		.word	.LC18
+ 258 00cc 5C010000 		.word	.LC20
+ 259 00d0 80010000 		.word	.LC22
+ 260 00d4 A4010000 		.word	.LC24
+ 261 00d8 C4010000 		.word	.LC26
+ 262 00dc F4010000 		.word	.LC28
+ 263 00e0 2C020000 		.word	.LC30
+ 264 00e4 4C020000 		.word	.LC32
+ 265 00e8 68020000 		.word	.LC34
+ 266 00ec 84020000 		.word	.LC36
+ 267 00f0 A8020000 		.word	.LC38
+ 268 00f4 D0020000 		.word	.LC40
+ 269              		.cfi_endproc
+ 270              	.LFE36:
+ 271              		.size	cardErrorPrint, .-cardErrorPrint
+ 272              		.section	.text.cardMount,"ax",%progbits
+ 273              		.align	2
+ 274              		.global	cardMount
+ 275              		.code	16
+ 276              		.thumb_func
+ 277              		.type	cardMount, %function
+ 278              	cardMount:
+ 279              	.LFB33:
+  22:card.c        ****     char label[128] = {0};
+ 280              		.loc 1 22 0
+ 281              		.cfi_startproc
+ 282              		@ args = 0, pretend = 0, frame = 136
+ 283              		@ frame_needed = 0, uses_anonymous_args = 0
+ 284 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 285              		.cfi_def_cfa_offset 20
+ 286              		.cfi_offset 4, -20
+ 287              		.cfi_offset 5, -16
+ 288              		.cfi_offset 6, -12
+ 289              		.cfi_offset 7, -8
+ 290              		.cfi_offset 14, -4
+ 291 0002 A3B0     		sub	sp, sp, #140
+ 292              		.cfi_def_cfa_offset 160
+  23:card.c        ****     DWORD freeclusters;
+ 293              		.loc 1 23 0
+ 294 0004 8022     		movs	r2, #128
+ 295 0006 0021     		movs	r1, #0
+ 296 0008 02A8     		add	r0, sp, #8
+ 297 000a FFF7FEFF 		bl	memset
+ 298              	.LVL24:
+  32:card.c        ****     
+ 299              		.loc 1 32 0
+ 300 000e 314B     		ldr	r3, .L38
+ 301 0010 1B78     		ldrb	r3, [r3]
+ 302 0012 002B     		cmp	r3, #0
+ 303 0014 05D1     		bne	.L29
+  32:card.c        ****     
+ 304              		.loc 1 32 0 is_stmt 0 discriminator 1
+ 305 0016 2022     		movs	r2, #32
+ 306 0018 2F49     		ldr	r1, .L38+4
+ 307 001a 3048     		ldr	r0, .L38+8
+ 308 001c FFF7FEFF 		bl	uartPrintf
+ 309              	.LVL25:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 10
+
+
+ 310              	.L30:
+ 311 0020 FEE7     		b	.L30
+ 312              	.L29:
+  34:card.c        ****     {
+ 313              		.loc 1 34 0 is_stmt 1
+ 314 0022 2C4B     		ldr	r3, .L38
+ 315 0024 5B78     		ldrb	r3, [r3, #1]
+ 316 0026 002B     		cmp	r3, #0
+ 317 0028 04D0     		beq	.L31
+  36:card.c        ****         result = true;
+ 318              		.loc 1 36 0
+ 319 002a 2D48     		ldr	r0, .L38+12
+ 320 002c FFF7FEFF 		bl	uartPrintf
+ 321              	.LVL26:
+  37:card.c        ****     } else
+ 322              		.loc 1 37 0
+ 323 0030 0124     		movs	r4, #1
+ 324 0032 46E0     		b	.L32
+ 325              	.LVL27:
+ 326              	.L31:
+  41:card.c        ****             if (RES_OK != resultF)
+ 327              		.loc 1 41 0
+ 328 0034 0122     		movs	r2, #1
+ 329 0036 2B49     		ldr	r1, .L38+16
+ 330 0038 2B48     		ldr	r0, .L38+20
+ 331 003a FFF7FEFF 		bl	f_mount
+ 332              	.LVL28:
+ 333 003e 0100     		movs	r1, r0
+ 334 0040 051E     		subs	r5, r0, #0
+ 335              	.LVL29:
+  42:card.c        ****             {
+ 336              		.loc 1 42 0
+ 337 0042 04D0     		beq	.L33
+  44:card.c        ****                 break;
+ 338              		.loc 1 44 0
+ 339 0044 2948     		ldr	r0, .L38+24
+ 340              	.LVL30:
+ 341 0046 FFF7FEFF 		bl	uartPrintf
+ 342              	.LVL31:
+  30:card.c        ****     
+ 343              		.loc 1 30 0
+ 344 004a 0024     		movs	r4, #0
+  45:card.c        ****             }
+ 345              		.loc 1 45 0
+ 346 004c 24E0     		b	.L34
+ 347              	.LVL32:
+ 348              	.L33:
+  48:card.c        ****             if (RES_OK != resultF)
+ 349              		.loc 1 48 0
+ 350 004e 0022     		movs	r2, #0
+ 351 0050 02A9     		add	r1, sp, #8
+ 352 0052 2448     		ldr	r0, .L38+16
+ 353              	.LVL33:
+ 354 0054 FFF7FEFF 		bl	f_getlabel
+ 355              	.LVL34:
+ 356 0058 0100     		movs	r1, r0
+ 357 005a 051E     		subs	r5, r0, #0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 11
+
+
+ 358              	.LVL35:
+  49:card.c        ****             {
+ 359              		.loc 1 49 0
+ 360 005c 04D0     		beq	.L35
+  51:card.c        ****                 break;
+ 361              		.loc 1 51 0
+ 362 005e 2448     		ldr	r0, .L38+28
+ 363              	.LVL36:
+ 364 0060 FFF7FEFF 		bl	uartPrintf
+ 365              	.LVL37:
+  30:card.c        ****     
+ 366              		.loc 1 30 0
+ 367 0064 0024     		movs	r4, #0
+  52:card.c        ****             }
+ 368              		.loc 1 52 0
+ 369 0066 17E0     		b	.L34
+ 370              	.LVL38:
+ 371              	.L35:
+  55:card.c        ****            if (RES_OK != resultF)
+ 372              		.loc 1 55 0
+ 373 0068 6A46     		mov	r2, sp
+ 374 006a 01A9     		add	r1, sp, #4
+ 375 006c 1D48     		ldr	r0, .L38+16
+ 376              	.LVL39:
+ 377 006e FFF7FEFF 		bl	f_getfree
+ 378              	.LVL40:
+ 379 0072 0100     		movs	r1, r0
+ 380 0074 051E     		subs	r5, r0, #0
+ 381              	.LVL41:
+  56:card.c        ****            {
+ 382              		.loc 1 56 0
+ 383 0076 04D0     		beq	.L36
+  58:card.c        ****                break;
+ 384              		.loc 1 58 0
+ 385 0078 1E48     		ldr	r0, .L38+32
+ 386              	.LVL42:
+ 387 007a FFF7FEFF 		bl	uartPrintf
+ 388              	.LVL43:
+  30:card.c        ****     
+ 389              		.loc 1 30 0
+ 390 007e 0024     		movs	r4, #0
+  59:card.c        ****            }
+ 391              		.loc 1 59 0
+ 392 0080 0AE0     		b	.L34
+ 393              	.LVL44:
+ 394              	.L36:
+  62:card.c        ****            freesectors = freeclusters * fatFsPtr->csize;  
+ 395              		.loc 1 62 0
+ 396 0082 009B     		ldr	r3, [sp]
+ 397 0084 9A69     		ldr	r2, [r3, #24]
+ 398 0086 961E     		subs	r6, r2, #2
+ 399 0088 9F78     		ldrb	r7, [r3, #2]
+ 400 008a 7E43     		muls	r6, r7
+ 401              	.LVL45:
+  63:card.c        ****            result = true;
+ 402              		.loc 1 63 0
+ 403 008c 019B     		ldr	r3, [sp, #4]
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 12
+
+
+ 404 008e 5F43     		muls	r7, r3
+ 405              	.LVL46:
+  65:card.c        ****         } while (false); 
+ 406              		.loc 1 65 0
+ 407 0090 0122     		movs	r2, #1
+ 408 0092 104B     		ldr	r3, .L38
+ 409 0094 5A70     		strb	r2, [r3, #1]
+  64:card.c        ****            isMounted = true;
+ 410              		.loc 1 64 0
+ 411 0096 0124     		movs	r4, #1
+ 412              	.LVL47:
+ 413              	.L34:
+  68:card.c        ****         {
+ 414              		.loc 1 68 0
+ 415 0098 002C     		cmp	r4, #0
+ 416 009a 12D0     		beq	.L32
+  70:card.c        ****             uartPrintf("SD: Label: %s\r\n", label);
+ 417              		.loc 1 70 0
+ 418 009c 1648     		ldr	r0, .L38+36
+ 419 009e FFF7FEFF 		bl	uartPrintf
+ 420              	.LVL48:
+  71:card.c        ****             uartPrintf("SD: Free clusters: %d\r\n", freeclusters);
+ 421              		.loc 1 71 0
+ 422 00a2 02A9     		add	r1, sp, #8
+ 423 00a4 1548     		ldr	r0, .L38+40
+ 424 00a6 FFF7FEFF 		bl	uartPrintf
+ 425              	.LVL49:
+  72:card.c        ****             uartPrintf("SD: Total sectors: %d\r\n", totalsectors);
+ 426              		.loc 1 72 0
+ 427 00aa 0199     		ldr	r1, [sp, #4]
+ 428 00ac 1448     		ldr	r0, .L38+44
+ 429 00ae FFF7FEFF 		bl	uartPrintf
+ 430              	.LVL50:
+  73:card.c        ****             uartPrintf("SD: Free sectors: %d\r\n", freesectors);
+ 431              		.loc 1 73 0
+ 432 00b2 3100     		movs	r1, r6
+ 433 00b4 1348     		ldr	r0, .L38+48
+ 434 00b6 FFF7FEFF 		bl	uartPrintf
+ 435              	.LVL51:
+  74:card.c        ****         }
+ 436              		.loc 1 74 0
+ 437 00ba 3900     		movs	r1, r7
+ 438 00bc 1248     		ldr	r0, .L38+52
+ 439 00be FFF7FEFF 		bl	uartPrintf
+ 440              	.LVL52:
+ 441              	.L32:
+  78:card.c        ****     {
+ 442              		.loc 1 78 0
+ 443 00c2 002C     		cmp	r4, #0
+ 444 00c4 02D1     		bne	.L37
+  80:card.c        ****     } 
+ 445              		.loc 1 80 0
+ 446 00c6 2800     		movs	r0, r5
+ 447 00c8 FFF7FEFF 		bl	cardErrorPrint
+ 448              	.LVL53:
+ 449              	.L37:
+  84:card.c        **** 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 13
+
+
+ 450              		.loc 1 84 0
+ 451 00cc 2000     		movs	r0, r4
+ 452 00ce 23B0     		add	sp, sp, #140
+ 453              		@ sp needed
+ 454              	.LVL54:
+ 455              	.LVL55:
+ 456 00d0 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 457              	.L39:
+ 458 00d2 C046     		.align	2
+ 459              	.L38:
+ 460 00d4 00000000 		.word	.LANCHOR0
+ 461 00d8 F4020000 		.word	.LC43
+ 462 00dc FC020000 		.word	.LC45
+ 463 00e0 28030000 		.word	.LC47
+ 464 00e4 40030000 		.word	.LC49
+ 465 00e8 00000000 		.word	fatFs
+ 466 00ec 44030000 		.word	.LC52
+ 467 00f0 5C030000 		.word	.LC54
+ 468 00f4 78030000 		.word	.LC56
+ 469 00f8 94030000 		.word	.LC58
+ 470 00fc A4030000 		.word	.LC60
+ 471 0100 B4030000 		.word	.LC62
+ 472 0104 CC030000 		.word	.LC64
+ 473 0108 E4030000 		.word	.LC66
+ 474              		.cfi_endproc
+ 475              	.LFE33:
+ 476              		.size	cardMount, .-cardMount
+ 477              		.section	.text.cardUmount,"ax",%progbits
+ 478              		.align	2
+ 479              		.global	cardUmount
+ 480              		.code	16
+ 481              		.thumb_func
+ 482              		.type	cardUmount, %function
+ 483              	cardUmount:
+ 484              	.LFB34:
+  87:card.c        ****     uint8 resultF;
+ 485              		.loc 1 87 0
+ 486              		.cfi_startproc
+ 487              		@ args = 0, pretend = 0, frame = 0
+ 488              		@ frame_needed = 0, uses_anonymous_args = 0
+ 489 0000 10B5     		push	{r4, lr}
+ 490              		.cfi_def_cfa_offset 8
+ 491              		.cfi_offset 4, -8
+ 492              		.cfi_offset 14, -4
+  90:card.c        **** 
+ 493              		.loc 1 90 0
+ 494 0002 114B     		ldr	r3, .L46
+ 495 0004 1B78     		ldrb	r3, [r3]
+ 496 0006 002B     		cmp	r3, #0
+ 497 0008 05D1     		bne	.L41
+  90:card.c        **** 
+ 498              		.loc 1 90 0 is_stmt 0 discriminator 1
+ 499 000a 5A22     		movs	r2, #90
+ 500 000c 0F49     		ldr	r1, .L46+4
+ 501 000e 1048     		ldr	r0, .L46+8
+ 502 0010 FFF7FEFF 		bl	uartPrintf
+ 503              	.LVL56:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 14
+
+
+ 504              	.L42:
+ 505 0014 FEE7     		b	.L42
+ 506              	.L41:
+  92:card.c        ****     {
+ 507              		.loc 1 92 0 is_stmt 1
+ 508 0016 0C4B     		ldr	r3, .L46
+ 509 0018 5B78     		ldrb	r3, [r3, #1]
+ 510 001a 002B     		cmp	r3, #0
+ 511 001c 0FD0     		beq	.L43
+  94:card.c        ****         if (RES_OK != resultF)
+ 512              		.loc 1 94 0
+ 513 001e 0122     		movs	r2, #1
+ 514 0020 0C49     		ldr	r1, .L46+12
+ 515 0022 0020     		movs	r0, #0
+ 516 0024 FFF7FEFF 		bl	f_mount
+ 517              	.LVL57:
+  95:card.c        ****         {
+ 518              		.loc 1 95 0
+ 519 0028 0028     		cmp	r0, #0
+ 520 002a 01D0     		beq	.L44
+  97:card.c        ****         }
+ 521              		.loc 1 97 0
+ 522 002c FFF7FEFF 		bl	cardErrorPrint
+ 523              	.LVL58:
+ 524              	.L44:
+ 100:card.c        ****         isMounted = false;   
+ 525              		.loc 1 100 0
+ 526 0030 0948     		ldr	r0, .L46+16
+ 527 0032 FFF7FEFF 		bl	uartPrintf
+ 528              	.LVL59:
+ 101:card.c        ****     } else
+ 529              		.loc 1 101 0
+ 530 0036 0022     		movs	r2, #0
+ 531 0038 034B     		ldr	r3, .L46
+ 532 003a 5A70     		strb	r2, [r3, #1]
+ 533 003c 02E0     		b	.L40
+ 534              	.L43:
+ 104:card.c        ****     }
+ 535              		.loc 1 104 0
+ 536 003e 0748     		ldr	r0, .L46+20
+ 537 0040 FFF7FEFF 		bl	uartPrintf
+ 538              	.LVL60:
+ 539              	.L40:
+ 106:card.c        **** 
+ 540              		.loc 1 106 0
+ 541              		@ sp needed
+ 542 0044 10BD     		pop	{r4, pc}
+ 543              	.L47:
+ 544 0046 C046     		.align	2
+ 545              	.L46:
+ 546 0048 00000000 		.word	.LANCHOR0
+ 547 004c F4020000 		.word	.LC43
+ 548 0050 FC020000 		.word	.LC45
+ 549 0054 40030000 		.word	.LC49
+ 550 0058 FC030000 		.word	.LC72
+ 551 005c 10040000 		.word	.LC74
+ 552              		.cfi_endproc
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 15
+
+
+ 553              	.LFE34:
+ 554              		.size	cardUmount, .-cardUmount
+ 555              		.section	.text.get_fattime,"ax",%progbits
+ 556              		.align	2
+ 557              		.global	get_fattime
+ 558              		.code	16
+ 559              		.thumb_func
+ 560              		.type	get_fattime, %function
+ 561              	get_fattime:
+ 562              	.LFB37:
+ 201:card.c        **** 
+ 202:card.c        **** DWORD get_fattime()
+ 203:card.c        **** {
+ 563              		.loc 1 203 0
+ 564              		.cfi_startproc
+ 565              		@ args = 0, pretend = 0, frame = 0
+ 566              		@ frame_needed = 0, uses_anonymous_args = 0
+ 567              		@ link register save eliminated.
+ 204:card.c        **** 	return (((DWORD)rtcYear - 1980) << 25) | ((DWORD)rtcMonth << 21) | ((DWORD)rtcDay << 16)| (WORD)(r
+ 205:card.c        ****             (WORD)(rtcMinutes << 5)	| (WORD)(rtcSeconds >> 1);;
+ 206:card.c        **** }...
+ 568              		.loc 1 206 0
+ 569 0000 0048     		ldr	r0, .L49
+ 570              		@ sp needed
+ 571 0002 7047     		bx	lr
+ 572              	.L50:
+ 573              		.align	2
+ 574              	.L49:
+ 575 0004 0054504D 		.word	1297110016
+ 576              		.cfi_endproc
+ 577              	.LFE37:
+ 578              		.size	get_fattime, .-get_fattime
+ 579              		.comm	fatFs,564,4
+ 580              		.global	rtcSeconds
+ 581              		.global	rtcMinutes
+ 582              		.global	rtcHour
+ 583              		.global	rtcDay
+ 584              		.global	rtcMonth
+ 585              		.global	rtcYear
+ 586              		.section	.rodata
+ 587              		.align	2
+ 588              		.type	rtcSeconds, %object
+ 589              		.size	rtcSeconds, 4
+ 590              	rtcSeconds:
+ 591 0050 00000000 		.space	4
+ 592              		.type	rtcMinutes, %object
+ 593              		.size	rtcMinutes, 4
+ 594              	rtcMinutes:
+ 595 0054 20000000 		.word	32
+ 596              		.type	rtcHour, %object
+ 597              		.size	rtcHour, 4
+ 598              	rtcHour:
+ 599 0058 0A000000 		.word	10
+ 600              		.type	rtcDay, %object
+ 601              		.size	rtcDay, 4
+ 602              	rtcDay:
+ 603 005c 10000000 		.word	16
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 16
+
+
+ 604              		.type	rtcMonth, %object
+ 605              		.size	rtcMonth, 4
+ 606              	rtcMonth:
+ 607 0060 0A000000 		.word	10
+ 608              		.type	rtcYear, %object
+ 609              		.size	rtcYear, 4
+ 610              	rtcYear:
+ 611 0064 E2070000 		.word	2018
+ 612              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 613              		.align	2
+ 614              	.LC1:
+ 615 0000 53443A20 		.ascii	"SD: Inited\015\012\000"
+ 615      496E6974 
+ 615      65640D0A 
+ 615      00
+ 616 000d 000000   		.space	3
+ 617              	.LC4:
+ 618 0010 53443A20 		.ascii	"SD: error: (FR_DISK_ERR) low level error.\015\012\000"
+ 618      6572726F 
+ 618      723A2028 
+ 618      46525F44 
+ 618      49534B5F 
+ 619              	.LC6:
+ 620 003c 53443A20 		.ascii	"SD: error: (FR_INT_ERR)\015\012\000"
+ 620      6572726F 
+ 620      723A2028 
+ 620      46525F49 
+ 620      4E545F45 
+ 621 0056 0000     		.space	2
+ 622              	.LC8:
+ 623 0058 53443A20 		.ascii	"SD: error: (FR_NOT_READY) card not ready.\015\012\000"
+ 623      6572726F 
+ 623      723A2028 
+ 623      46525F4E 
+ 623      4F545F52 
+ 624              	.LC10:
+ 625 0084 53443A20 		.ascii	"SD: error: (FR_NO_FILE) invalid file.\015\012\000"
+ 625      6572726F 
+ 625      723A2028 
+ 625      46525F4E 
+ 625      4F5F4649 
+ 626              	.LC12:
+ 627 00ac 53443A20 		.ascii	"SD: error: (FR_NO_PATH) invalid path.\015\012\000"
+ 627      6572726F 
+ 627      723A2028 
+ 627      46525F4E 
+ 627      4F5F5041 
+ 628              	.LC14:
+ 629 00d4 53443A20 		.ascii	"SD: error: (FR_INVALID_NAME) invalid name.\015\012\000"
+ 629      6572726F 
+ 629      723A2028 
+ 629      46525F49 
+ 629      4E56414C 
+ 630 0101 000000   		.space	3
+ 631              	.LC16:
+ 632 0104 53443A20 		.ascii	"SD: error: (FR_DENIED) operation denied.\015\012\000"
+ 632      6572726F 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 17
+
+
+ 632      723A2028 
+ 632      46525F44 
+ 632      454E4945 
+ 633 012f 00       		.space	1
+ 634              	.LC18:
+ 635 0130 53443A20 		.ascii	"SD: error: (FR_EXIST) it exists yet...\015\012\000"
+ 635      6572726F 
+ 635      723A2028 
+ 635      46525F45 
+ 635      58495354 
+ 636 0159 000000   		.space	3
+ 637              	.LC20:
+ 638 015c 53443A20 		.ascii	"SD: error: (FR_INVALID_OBJECT)\015\012\000"
+ 638      6572726F 
+ 638      723A2028 
+ 638      46525F49 
+ 638      4E56414C 
+ 639 017d 000000   		.space	3
+ 640              	.LC22:
+ 641 0180 53443A20 		.ascii	"SD: error: (FR_WRITE_PROTECTED)\015\012\000"
+ 641      6572726F 
+ 641      723A2028 
+ 641      46525F57 
+ 641      52495445 
+ 642 01a2 0000     		.space	2
+ 643              	.LC24:
+ 644 01a4 53443A20 		.ascii	"SD: error: (FR_INVALID_DRIVE)\015\012\000"
+ 644      6572726F 
+ 644      723A2028 
+ 644      46525F49 
+ 644      4E56414C 
+ 645              	.LC26:
+ 646 01c4 53443A20 		.ascii	"SD: error: (FR_NOT_ENABLED) card unmounted.\015\012"
+ 646      6572726F 
+ 646      723A2028 
+ 646      46525F4E 
+ 646      4F545F45 
+ 647 01f1 00       		.ascii	"\000"
+ 648 01f2 0000     		.space	2
+ 649              	.LC28:
+ 650 01f4 53443A20 		.ascii	"SD: error: (FR_NO_FILESYSTEM) no valid FAT volume.\015"
+ 650      6572726F 
+ 650      723A2028 
+ 650      46525F4E 
+ 650      4F5F4649 
+ 651 0227 0A00     		.ascii	"\012\000"
+ 652 0229 000000   		.space	3
+ 653              	.LC30:
+ 654 022c 53443A20 		.ascii	"SD: error: (FR_MKFS_ABORTED)\015\012\000"
+ 654      6572726F 
+ 654      723A2028 
+ 654      46525F4D 
+ 654      4B46535F 
+ 655 024b 00       		.space	1
+ 656              	.LC32:
+ 657 024c 53443A20 		.ascii	"SD: error: (FR_TIMEOUT)\015\012\000"
+ 657      6572726F 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 18
+
+
+ 657      723A2028 
+ 657      46525F54 
+ 657      494D454F 
+ 658 0266 0000     		.space	2
+ 659              	.LC34:
+ 660 0268 53443A20 		.ascii	"SD: error: (FR_LOCKED)\015\012\000"
+ 660      6572726F 
+ 660      723A2028 
+ 660      46525F4C 
+ 660      4F434B45 
+ 661 0281 000000   		.space	3
+ 662              	.LC36:
+ 663 0284 53443A20 		.ascii	"SD: error: (FR_NOT_ENOUGH_CORE)\015\012\000"
+ 663      6572726F 
+ 663      723A2028 
+ 663      46525F4E 
+ 663      4F545F45 
+ 664 02a6 0000     		.space	2
+ 665              	.LC38:
+ 666 02a8 53443A20 		.ascii	"SD: error: (FR_TOO_MANY_OPEN_FILES)\015\012\000"
+ 666      6572726F 
+ 666      723A2028 
+ 666      46525F54 
+ 666      4F4F5F4D 
+ 667 02ce 0000     		.space	2
+ 668              	.LC40:
+ 669 02d0 53443A20 		.ascii	"SD: error: (FR_INVALID_PARAMETER)\015\012\000"
+ 669      6572726F 
+ 669      723A2028 
+ 669      46525F49 
+ 669      4E56414C 
+ 670              	.LC43:
+ 671 02f4 63617264 		.ascii	"card.c\000"
+ 671      2E6300
+ 672 02fb 00       		.space	1
+ 673              	.LC45:
+ 674 02fc 52756E74 		.ascii	"RuntimeError: Assert in file: %s line: %d\015\012\000"
+ 674      696D6545 
+ 674      72726F72 
+ 674      3A204173 
+ 674      73657274 
+ 675              	.LC47:
+ 676 0328 53443A20 		.ascii	"SD: Already mounted!\015\012\000"
+ 676      416C7265 
+ 676      61647920 
+ 676      6D6F756E 
+ 676      74656421 
+ 677 033f 00       		.space	1
+ 678              	.LC49:
+ 679 0340 00       		.ascii	"\000"
+ 680 0341 000000   		.space	3
+ 681              	.LC52:
+ 682 0344 53443A20 		.ascii	"SD: f_mount failed %d\015\012\000"
+ 682      665F6D6F 
+ 682      756E7420 
+ 682      6661696C 
+ 682      65642025 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 19
+
+
+ 683              	.LC54:
+ 684 035c 53443A20 		.ascii	"SD: f_getlabel failed %d\015\012\000"
+ 684      665F6765 
+ 684      746C6162 
+ 684      656C2066 
+ 684      61696C65 
+ 685 0377 00       		.space	1
+ 686              	.LC56:
+ 687 0378 53443A20 		.ascii	"SD: f_getfree failed %d\015\012\000"
+ 687      665F6765 
+ 687      74667265 
+ 687      65206661 
+ 687      696C6564 
+ 688 0392 0000     		.space	2
+ 689              	.LC58:
+ 690 0394 53443A20 		.ascii	"SD: Mounted!\015\012\000"
+ 690      4D6F756E 
+ 690      74656421 
+ 690      0D0A00
+ 691 03a3 00       		.space	1
+ 692              	.LC60:
+ 693 03a4 53443A20 		.ascii	"SD: Label: %s\015\012\000"
+ 693      4C616265 
+ 693      6C3A2025 
+ 693      730D0A00 
+ 694              	.LC62:
+ 695 03b4 53443A20 		.ascii	"SD: Free clusters: %d\015\012\000"
+ 695      46726565 
+ 695      20636C75 
+ 695      73746572 
+ 695      733A2025 
+ 696              	.LC64:
+ 697 03cc 53443A20 		.ascii	"SD: Total sectors: %d\015\012\000"
+ 697      546F7461 
+ 697      6C207365 
+ 697      63746F72 
+ 697      733A2025 
+ 698              	.LC66:
+ 699 03e4 53443A20 		.ascii	"SD: Free sectors: %d\015\012\000"
+ 699      46726565 
+ 699      20736563 
+ 699      746F7273 
+ 699      3A202564 
+ 700 03fb 00       		.space	1
+ 701              	.LC72:
+ 702 03fc 53443A20 		.ascii	"SD: Unmounted!\015\012\000"
+ 702      556E6D6F 
+ 702      756E7465 
+ 702      64210D0A 
+ 702      00
+ 703 040d 000000   		.space	3
+ 704              	.LC74:
+ 705 0410 53443A20 		.ascii	"SD: Unmount - not mounted!\015\012\000"
+ 705      556E6D6F 
+ 705      756E7420 
+ 705      2D206E6F 
+ 705      74206D6F 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 20
+
+
+ 706              		.bss
+ 707              		.set	.LANCHOR0,. + 0
+ 708              		.type	isInit, %object
+ 709              		.size	isInit, 1
+ 710              	isInit:
+ 711 0000 00       		.space	1
+ 712              		.type	isMounted, %object
+ 713              		.size	isMounted, 1
+ 714              	isMounted:
+ 715 0001 00       		.space	1
+ 716              		.text
+ 717              	.Letext0:
+ 718              		.file 2 "Generated_Source\\PSoC4/cytypes.h"
+ 719              		.file 3 "fatfs\\integer.h"
+ 720              		.file 4 "fatfs\\ff.h"
+ 721              		.file 5 "fatfs\\diskio.h"
+ 722              		.file 6 "Generated_Source\\PSoC4/SPI.h"
+ 723              		.file 7 "Generated_Source\\PSoC4/SPI_ss0_m.h"
+ 724              		.file 8 "uartPrint.h"
+ 725              		.section	.debug_info,"",%progbits
+ 726              	.Ldebug_info0:
+ 727 0000 8A080000 		.4byte	0x88a
+ 728 0004 0400     		.2byte	0x4
+ 729 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 730 000a 04       		.byte	0x4
+ 731 000b 01       		.uleb128 0x1
+ 732 000c AD000000 		.4byte	.LASF87
+ 733 0010 0C       		.byte	0xc
+ 734 0011 CD030000 		.4byte	.LASF88
+ 735 0015 33000000 		.4byte	.LASF89
+ 736 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 737 001d 00000000 		.4byte	0
+ 738 0021 00000000 		.4byte	.Ldebug_line0
+ 739 0025 02       		.uleb128 0x2
+ 740 0026 01       		.byte	0x1
+ 741 0027 06       		.byte	0x6
+ 742 0028 A9010000 		.4byte	.LASF0
+ 743 002c 02       		.uleb128 0x2
+ 744 002d 01       		.byte	0x1
+ 745 002e 08       		.byte	0x8
+ 746 002f 5A020000 		.4byte	.LASF1
+ 747 0033 02       		.uleb128 0x2
+ 748 0034 02       		.byte	0x2
+ 749 0035 05       		.byte	0x5
+ 750 0036 8D000000 		.4byte	.LASF2
+ 751 003a 02       		.uleb128 0x2
+ 752 003b 02       		.byte	0x2
+ 753 003c 07       		.byte	0x7
+ 754 003d 5E030000 		.4byte	.LASF3
+ 755 0041 02       		.uleb128 0x2
+ 756 0042 04       		.byte	0x4
+ 757 0043 05       		.byte	0x5
+ 758 0044 F2010000 		.4byte	.LASF4
+ 759 0048 02       		.uleb128 0x2
+ 760 0049 04       		.byte	0x4
+ 761 004a 07       		.byte	0x7
+ 762 004b 94030000 		.4byte	.LASF5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 21
+
+
+ 763 004f 02       		.uleb128 0x2
+ 764 0050 08       		.byte	0x8
+ 765 0051 05       		.byte	0x5
+ 766 0052 C6010000 		.4byte	.LASF6
+ 767 0056 02       		.uleb128 0x2
+ 768 0057 08       		.byte	0x8
+ 769 0058 07       		.byte	0x7
+ 770 0059 D4010000 		.4byte	.LASF7
+ 771 005d 03       		.uleb128 0x3
+ 772 005e 04       		.byte	0x4
+ 773 005f 05       		.byte	0x5
+ 774 0060 696E7400 		.ascii	"int\000"
+ 775 0064 02       		.uleb128 0x2
+ 776 0065 04       		.byte	0x4
+ 777 0066 07       		.byte	0x7
+ 778 0067 C4020000 		.4byte	.LASF8
+ 779 006b 04       		.uleb128 0x4
+ 780 006c 92010000 		.4byte	.LASF14
+ 781 0070 02       		.byte	0x2
+ 782 0071 E401     		.2byte	0x1e4
+ 783 0073 2C000000 		.4byte	0x2c
+ 784 0077 02       		.uleb128 0x2
+ 785 0078 04       		.byte	0x4
+ 786 0079 04       		.byte	0x4
+ 787 007a B5010000 		.4byte	.LASF9
+ 788 007e 02       		.uleb128 0x2
+ 789 007f 08       		.byte	0x8
+ 790 0080 04       		.byte	0x4
+ 791 0081 4F010000 		.4byte	.LASF10
+ 792 0085 02       		.uleb128 0x2
+ 793 0086 01       		.byte	0x1
+ 794 0087 08       		.byte	0x8
+ 795 0088 32030000 		.4byte	.LASF11
+ 796 008c 02       		.uleb128 0x2
+ 797 008d 08       		.byte	0x8
+ 798 008e 04       		.byte	0x4
+ 799 008f 82020000 		.4byte	.LASF12
+ 800 0093 02       		.uleb128 0x2
+ 801 0094 04       		.byte	0x4
+ 802 0095 07       		.byte	0x7
+ 803 0096 9D000000 		.4byte	.LASF13
+ 804 009a 05       		.uleb128 0x5
+ 805 009b 4A010000 		.4byte	.LASF15
+ 806 009f 03       		.byte	0x3
+ 807 00a0 10       		.byte	0x10
+ 808 00a1 2C000000 		.4byte	0x2c
+ 809 00a5 05       		.uleb128 0x5
+ 810 00a6 75010000 		.4byte	.LASF16
+ 811 00aa 03       		.byte	0x3
+ 812 00ab 14       		.byte	0x14
+ 813 00ac 3A000000 		.4byte	0x3a
+ 814 00b0 05       		.uleb128 0x5
+ 815 00b1 68020000 		.4byte	.LASF17
+ 816 00b5 03       		.byte	0x3
+ 817 00b6 1D       		.byte	0x1d
+ 818 00b7 48000000 		.4byte	0x48
+ 819 00bb 06       		.uleb128 0x6
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 22
+
+
+ 820 00bc 01       		.byte	0x1
+ 821 00bd 2C000000 		.4byte	0x2c
+ 822 00c1 05       		.byte	0x5
+ 823 00c2 16       		.byte	0x16
+ 824 00c3 E6000000 		.4byte	0xe6
+ 825 00c7 07       		.uleb128 0x7
+ 826 00c8 86000000 		.4byte	.LASF18
+ 827 00cc 00       		.byte	0
+ 828 00cd 07       		.uleb128 0x7
+ 829 00ce 0E000000 		.4byte	.LASF19
+ 830 00d2 01       		.byte	0x1
+ 831 00d3 07       		.uleb128 0x7
+ 832 00d4 01020000 		.4byte	.LASF20
+ 833 00d8 02       		.byte	0x2
+ 834 00d9 07       		.uleb128 0x7
+ 835 00da 3F030000 		.4byte	.LASF21
+ 836 00de 03       		.byte	0x3
+ 837 00df 07       		.uleb128 0x7
+ 838 00e0 60010000 		.4byte	.LASF22
+ 839 00e4 04       		.byte	0x4
+ 840 00e5 00       		.byte	0
+ 841 00e6 08       		.uleb128 0x8
+ 842 00e7 3402     		.2byte	0x234
+ 843 00e9 04       		.byte	0x4
+ 844 00ea 4E       		.byte	0x4e
+ 845 00eb D3010000 		.4byte	0x1d3
+ 846 00ef 09       		.uleb128 0x9
+ 847 00f0 2B000000 		.4byte	.LASF23
+ 848 00f4 04       		.byte	0x4
+ 849 00f5 4F       		.byte	0x4f
+ 850 00f6 9A000000 		.4byte	0x9a
+ 851 00fa 00       		.byte	0
+ 852 00fb 0A       		.uleb128 0xa
+ 853 00fc 64727600 		.ascii	"drv\000"
+ 854 0100 04       		.byte	0x4
+ 855 0101 50       		.byte	0x50
+ 856 0102 9A000000 		.4byte	0x9a
+ 857 0106 01       		.byte	0x1
+ 858 0107 09       		.uleb128 0x9
+ 859 0108 FB010000 		.4byte	.LASF24
+ 860 010c 04       		.byte	0x4
+ 861 010d 51       		.byte	0x51
+ 862 010e 9A000000 		.4byte	0x9a
+ 863 0112 02       		.byte	0x2
+ 864 0113 09       		.uleb128 0x9
+ 865 0114 00000000 		.4byte	.LASF25
+ 866 0118 04       		.byte	0x4
+ 867 0119 52       		.byte	0x52
+ 868 011a 9A000000 		.4byte	0x9a
+ 869 011e 03       		.byte	0x3
+ 870 011f 09       		.uleb128 0x9
+ 871 0120 AD020000 		.4byte	.LASF26
+ 872 0124 04       		.byte	0x4
+ 873 0125 53       		.byte	0x53
+ 874 0126 9A000000 		.4byte	0x9a
+ 875 012a 04       		.byte	0x4
+ 876 012b 09       		.uleb128 0x9
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 23
+
+
+ 877 012c 79020000 		.4byte	.LASF27
+ 878 0130 04       		.byte	0x4
+ 879 0131 54       		.byte	0x54
+ 880 0132 9A000000 		.4byte	0x9a
+ 881 0136 05       		.byte	0x5
+ 882 0137 0A       		.uleb128 0xa
+ 883 0138 696400   		.ascii	"id\000"
+ 884 013b 04       		.byte	0x4
+ 885 013c 55       		.byte	0x55
+ 886 013d A5000000 		.4byte	0xa5
+ 887 0141 06       		.byte	0x6
+ 888 0142 09       		.uleb128 0x9
+ 889 0143 56010000 		.4byte	.LASF28
+ 890 0147 04       		.byte	0x4
+ 891 0148 56       		.byte	0x56
+ 892 0149 A5000000 		.4byte	0xa5
+ 893 014d 08       		.byte	0x8
+ 894 014e 09       		.uleb128 0x9
+ 895 014f BB010000 		.4byte	.LASF29
+ 896 0153 04       		.byte	0x4
+ 897 0154 5E       		.byte	0x5e
+ 898 0155 B0000000 		.4byte	0xb0
+ 899 0159 0C       		.byte	0xc
+ 900 015a 09       		.uleb128 0x9
+ 901 015b 96020000 		.4byte	.LASF30
+ 902 015f 04       		.byte	0x4
+ 903 0160 5F       		.byte	0x5f
+ 904 0161 B0000000 		.4byte	0xb0
+ 905 0165 10       		.byte	0x10
+ 906 0166 09       		.uleb128 0x9
+ 907 0167 86040000 		.4byte	.LASF31
+ 908 016b 04       		.byte	0x4
+ 909 016c 62       		.byte	0x62
+ 910 016d B0000000 		.4byte	0xb0
+ 911 0171 14       		.byte	0x14
+ 912 0172 09       		.uleb128 0x9
+ 913 0173 22000000 		.4byte	.LASF32
+ 914 0177 04       		.byte	0x4
+ 915 0178 64       		.byte	0x64
+ 916 0179 B0000000 		.4byte	0xb0
+ 917 017d 18       		.byte	0x18
+ 918 017e 09       		.uleb128 0x9
+ 919 017f EA030000 		.4byte	.LASF33
+ 920 0183 04       		.byte	0x4
+ 921 0184 65       		.byte	0x65
+ 922 0185 B0000000 		.4byte	0xb0
+ 923 0189 1C       		.byte	0x1c
+ 924 018a 09       		.uleb128 0x9
+ 925 018b 2A040000 		.4byte	.LASF34
+ 926 018f 04       		.byte	0x4
+ 927 0190 66       		.byte	0x66
+ 928 0191 B0000000 		.4byte	0xb0
+ 929 0195 20       		.byte	0x20
+ 930 0196 09       		.uleb128 0x9
+ 931 0197 37030000 		.4byte	.LASF35
+ 932 019b 04       		.byte	0x4
+ 933 019c 67       		.byte	0x67
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 24
+
+
+ 934 019d B0000000 		.4byte	0xb0
+ 935 01a1 24       		.byte	0x24
+ 936 01a2 09       		.uleb128 0x9
+ 937 01a3 7E040000 		.4byte	.LASF36
+ 938 01a7 04       		.byte	0x4
+ 939 01a8 68       		.byte	0x68
+ 940 01a9 B0000000 		.4byte	0xb0
+ 941 01ad 28       		.byte	0x28
+ 942 01ae 09       		.uleb128 0x9
+ 943 01af A6030000 		.4byte	.LASF37
+ 944 01b3 04       		.byte	0x4
+ 945 01b4 69       		.byte	0x69
+ 946 01b5 B0000000 		.4byte	0xb0
+ 947 01b9 2C       		.byte	0x2c
+ 948 01ba 09       		.uleb128 0x9
+ 949 01bb 3C040000 		.4byte	.LASF38
+ 950 01bf 04       		.byte	0x4
+ 951 01c0 6A       		.byte	0x6a
+ 952 01c1 B0000000 		.4byte	0xb0
+ 953 01c5 30       		.byte	0x30
+ 954 01c6 0A       		.uleb128 0xa
+ 955 01c7 77696E00 		.ascii	"win\000"
+ 956 01cb 04       		.byte	0x4
+ 957 01cc 6B       		.byte	0x6b
+ 958 01cd D3010000 		.4byte	0x1d3
+ 959 01d1 34       		.byte	0x34
+ 960 01d2 00       		.byte	0
+ 961 01d3 0B       		.uleb128 0xb
+ 962 01d4 9A000000 		.4byte	0x9a
+ 963 01d8 E4010000 		.4byte	0x1e4
+ 964 01dc 0C       		.uleb128 0xc
+ 965 01dd 93000000 		.4byte	0x93
+ 966 01e1 FF01     		.2byte	0x1ff
+ 967 01e3 00       		.byte	0
+ 968 01e4 05       		.uleb128 0x5
+ 969 01e5 71030000 		.4byte	.LASF39
+ 970 01e9 04       		.byte	0x4
+ 971 01ea 6C       		.byte	0x6c
+ 972 01eb E6000000 		.4byte	0xe6
+ 973 01ef 0D       		.uleb128 0xd
+ 974 01f0 04       		.byte	0x4
+ 975 01f1 E4010000 		.4byte	0x1e4
+ 976 01f5 06       		.uleb128 0x6
+ 977 01f6 01       		.byte	0x1
+ 978 01f7 2C000000 		.4byte	0x2c
+ 979 01fb 04       		.byte	0x4
+ 980 01fc B8       		.byte	0xb8
+ 981 01fd 7A020000 		.4byte	0x27a
+ 982 0201 07       		.uleb128 0x7
+ 983 0202 8C010000 		.4byte	.LASF40
+ 984 0206 00       		.byte	0
+ 985 0207 07       		.uleb128 0x7
+ 986 0208 A1020000 		.4byte	.LASF41
+ 987 020c 01       		.byte	0x1
+ 988 020d 07       		.uleb128 0x7
+ 989 020e DF030000 		.4byte	.LASF42
+ 990 0212 02       		.byte	0x2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 25
+
+
+ 991 0213 07       		.uleb128 0x7
+ 992 0214 3A020000 		.4byte	.LASF43
+ 993 0218 03       		.byte	0x3
+ 994 0219 07       		.uleb128 0x7
+ 995 021a C2030000 		.4byte	.LASF44
+ 996 021e 04       		.byte	0x4
+ 997 021f 07       		.uleb128 0x7
+ 998 0220 6E020000 		.4byte	.LASF45
+ 999 0224 05       		.byte	0x5
+ 1000 0225 07       		.uleb128 0x7
+ 1001 0226 6E040000 		.4byte	.LASF46
+ 1002 022a 06       		.byte	0x6
+ 1003 022b 07       		.uleb128 0x7
+ 1004 022c 18000000 		.4byte	.LASF47
+ 1005 0230 07       		.byte	0x7
+ 1006 0231 07       		.uleb128 0x7
+ 1007 0232 29030000 		.4byte	.LASF48
+ 1008 0236 08       		.byte	0x8
+ 1009 0237 07       		.uleb128 0x7
+ 1010 0238 7A010000 		.4byte	.LASF49
+ 1011 023c 09       		.byte	0x9
+ 1012 023d 07       		.uleb128 0x7
+ 1013 023e 47020000 		.4byte	.LASF50
+ 1014 0242 0A       		.byte	0xa
+ 1015 0243 07       		.uleb128 0x7
+ 1016 0244 10040000 		.4byte	.LASF51
+ 1017 0248 0B       		.byte	0xb
+ 1018 0249 07       		.uleb128 0x7
+ 1019 024a 05030000 		.4byte	.LASF52
+ 1020 024e 0C       		.byte	0xc
+ 1021 024f 07       		.uleb128 0x7
+ 1022 0250 98010000 		.4byte	.LASF53
+ 1023 0254 0D       		.byte	0xd
+ 1024 0255 07       		.uleb128 0x7
+ 1025 0256 1F020000 		.4byte	.LASF54
+ 1026 025a 0E       		.byte	0xe
+ 1027 025b 07       		.uleb128 0x7
+ 1028 025c AF030000 		.4byte	.LASF55
+ 1029 0260 0F       		.byte	0xf
+ 1030 0261 07       		.uleb128 0x7
+ 1031 0262 32040000 		.4byte	.LASF56
+ 1032 0266 10       		.byte	0x10
+ 1033 0267 07       		.uleb128 0x7
+ 1034 0268 5B040000 		.4byte	.LASF57
+ 1035 026c 11       		.byte	0x11
+ 1036 026d 07       		.uleb128 0x7
+ 1037 026e D1020000 		.4byte	.LASF58
+ 1038 0272 12       		.byte	0x12
+ 1039 0273 07       		.uleb128 0x7
+ 1040 0274 F0020000 		.4byte	.LASF59
+ 1041 0278 13       		.byte	0x13
+ 1042 0279 00       		.byte	0
+ 1043 027a 05       		.uleb128 0x5
+ 1044 027b BC020000 		.4byte	.LASF60
+ 1045 027f 04       		.byte	0x4
+ 1046 0280 CD       		.byte	0xcd
+ 1047 0281 F5010000 		.4byte	0x1f5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 26
+
+
+ 1048 0285 0E       		.uleb128 0xe
+ 1049 0286 21040000 		.4byte	.LASF61
+ 1050 028a 01       		.byte	0x1
+ 1051 028b 6C       		.byte	0x6c
+ 1052 028c 00000000 		.4byte	.LFB35
+ 1053 0290 24000000 		.4byte	.LFE35-.LFB35
+ 1054 0294 01       		.uleb128 0x1
+ 1055 0295 9C       		.byte	0x9c
+ 1056 0296 CA020000 		.4byte	0x2ca
+ 1057 029a 0F       		.uleb128 0xf
+ 1058 029b 0C000000 		.4byte	.LVL0
+ 1059 029f 42080000 		.4byte	0x842
+ 1060 02a3 10       		.uleb128 0x10
+ 1061 02a4 12000000 		.4byte	.LVL1
+ 1062 02a8 4D080000 		.4byte	0x84d
+ 1063 02ac B6020000 		.4byte	0x2b6
+ 1064 02b0 11       		.uleb128 0x11
+ 1065 02b1 01       		.uleb128 0x1
+ 1066 02b2 50       		.byte	0x50
+ 1067 02b3 01       		.uleb128 0x1
+ 1068 02b4 31       		.byte	0x31
+ 1069 02b5 00       		.byte	0
+ 1070 02b6 12       		.uleb128 0x12
+ 1071 02b7 18000000 		.4byte	.LVL2
+ 1072 02bb 58080000 		.4byte	0x858
+ 1073 02bf 11       		.uleb128 0x11
+ 1074 02c0 01       		.uleb128 0x1
+ 1075 02c1 50       		.byte	0x50
+ 1076 02c2 05       		.uleb128 0x5
+ 1077 02c3 03       		.byte	0x3
+ 1078 02c4 00000000 		.4byte	.LC1
+ 1079 02c8 00       		.byte	0
+ 1080 02c9 00       		.byte	0
+ 1081 02ca 0E       		.uleb128 0xe
+ 1082 02cb 8B040000 		.4byte	.LASF62
+ 1083 02cf 01       		.byte	0x1
+ 1084 02d0 75       		.byte	0x75
+ 1085 02d1 00000000 		.4byte	.LFB36
+ 1086 02d5 F8000000 		.4byte	.LFE36-.LFB36
+ 1087 02d9 01       		.uleb128 0x1
+ 1088 02da 9C       		.byte	0x9c
+ 1089 02db A0040000 		.4byte	0x4a0
+ 1090 02df 13       		.uleb128 0x13
+ 1091 02e0 07000000 		.4byte	.LASF69
+ 1092 02e4 01       		.byte	0x1
+ 1093 02e5 75       		.byte	0x75
+ 1094 02e6 7A020000 		.4byte	0x27a
+ 1095 02ea 00000000 		.4byte	.LLST0
+ 1096 02ee 10       		.uleb128 0x10
+ 1097 02ef 14000000 		.4byte	.LVL5
+ 1098 02f3 58080000 		.4byte	0x858
+ 1099 02f7 05030000 		.4byte	0x305
+ 1100 02fb 11       		.uleb128 0x11
+ 1101 02fc 01       		.uleb128 0x1
+ 1102 02fd 50       		.byte	0x50
+ 1103 02fe 05       		.uleb128 0x5
+ 1104 02ff 03       		.byte	0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 27
+
+
+ 1105 0300 10000000 		.4byte	.LC4
+ 1106 0304 00       		.byte	0
+ 1107 0305 10       		.uleb128 0x10
+ 1108 0306 1C000000 		.4byte	.LVL6
+ 1109 030a 58080000 		.4byte	0x858
+ 1110 030e 1C030000 		.4byte	0x31c
+ 1111 0312 11       		.uleb128 0x11
+ 1112 0313 01       		.uleb128 0x1
+ 1113 0314 50       		.byte	0x50
+ 1114 0315 05       		.uleb128 0x5
+ 1115 0316 03       		.byte	0x3
+ 1116 0317 3C000000 		.4byte	.LC6
+ 1117 031b 00       		.byte	0
+ 1118 031c 10       		.uleb128 0x10
+ 1119 031d 24000000 		.4byte	.LVL7
+ 1120 0321 58080000 		.4byte	0x858
+ 1121 0325 33030000 		.4byte	0x333
+ 1122 0329 11       		.uleb128 0x11
+ 1123 032a 01       		.uleb128 0x1
+ 1124 032b 50       		.byte	0x50
+ 1125 032c 05       		.uleb128 0x5
+ 1126 032d 03       		.byte	0x3
+ 1127 032e 58000000 		.4byte	.LC8
+ 1128 0332 00       		.byte	0
+ 1129 0333 10       		.uleb128 0x10
+ 1130 0334 2C000000 		.4byte	.LVL8
+ 1131 0338 58080000 		.4byte	0x858
+ 1132 033c 4A030000 		.4byte	0x34a
+ 1133 0340 11       		.uleb128 0x11
+ 1134 0341 01       		.uleb128 0x1
+ 1135 0342 50       		.byte	0x50
+ 1136 0343 05       		.uleb128 0x5
+ 1137 0344 03       		.byte	0x3
+ 1138 0345 84000000 		.4byte	.LC10
+ 1139 0349 00       		.byte	0
+ 1140 034a 10       		.uleb128 0x10
+ 1141 034b 34000000 		.4byte	.LVL9
+ 1142 034f 58080000 		.4byte	0x858
+ 1143 0353 61030000 		.4byte	0x361
+ 1144 0357 11       		.uleb128 0x11
+ 1145 0358 01       		.uleb128 0x1
+ 1146 0359 50       		.byte	0x50
+ 1147 035a 05       		.uleb128 0x5
+ 1148 035b 03       		.byte	0x3
+ 1149 035c AC000000 		.4byte	.LC12
+ 1150 0360 00       		.byte	0
+ 1151 0361 10       		.uleb128 0x10
+ 1152 0362 3C000000 		.4byte	.LVL10
+ 1153 0366 58080000 		.4byte	0x858
+ 1154 036a 78030000 		.4byte	0x378
+ 1155 036e 11       		.uleb128 0x11
+ 1156 036f 01       		.uleb128 0x1
+ 1157 0370 50       		.byte	0x50
+ 1158 0371 05       		.uleb128 0x5
+ 1159 0372 03       		.byte	0x3
+ 1160 0373 D4000000 		.4byte	.LC14
+ 1161 0377 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 28
+
+
+ 1162 0378 10       		.uleb128 0x10
+ 1163 0379 44000000 		.4byte	.LVL11
+ 1164 037d 58080000 		.4byte	0x858
+ 1165 0381 8F030000 		.4byte	0x38f
+ 1166 0385 11       		.uleb128 0x11
+ 1167 0386 01       		.uleb128 0x1
+ 1168 0387 50       		.byte	0x50
+ 1169 0388 05       		.uleb128 0x5
+ 1170 0389 03       		.byte	0x3
+ 1171 038a 04010000 		.4byte	.LC16
+ 1172 038e 00       		.byte	0
+ 1173 038f 10       		.uleb128 0x10
+ 1174 0390 4C000000 		.4byte	.LVL12
+ 1175 0394 58080000 		.4byte	0x858
+ 1176 0398 A6030000 		.4byte	0x3a6
+ 1177 039c 11       		.uleb128 0x11
+ 1178 039d 01       		.uleb128 0x1
+ 1179 039e 50       		.byte	0x50
+ 1180 039f 05       		.uleb128 0x5
+ 1181 03a0 03       		.byte	0x3
+ 1182 03a1 30010000 		.4byte	.LC18
+ 1183 03a5 00       		.byte	0
+ 1184 03a6 10       		.uleb128 0x10
+ 1185 03a7 54000000 		.4byte	.LVL13
+ 1186 03ab 58080000 		.4byte	0x858
+ 1187 03af BD030000 		.4byte	0x3bd
+ 1188 03b3 11       		.uleb128 0x11
+ 1189 03b4 01       		.uleb128 0x1
+ 1190 03b5 50       		.byte	0x50
+ 1191 03b6 05       		.uleb128 0x5
+ 1192 03b7 03       		.byte	0x3
+ 1193 03b8 5C010000 		.4byte	.LC20
+ 1194 03bc 00       		.byte	0
+ 1195 03bd 10       		.uleb128 0x10
+ 1196 03be 5C000000 		.4byte	.LVL14
+ 1197 03c2 58080000 		.4byte	0x858
+ 1198 03c6 D4030000 		.4byte	0x3d4
+ 1199 03ca 11       		.uleb128 0x11
+ 1200 03cb 01       		.uleb128 0x1
+ 1201 03cc 50       		.byte	0x50
+ 1202 03cd 05       		.uleb128 0x5
+ 1203 03ce 03       		.byte	0x3
+ 1204 03cf 80010000 		.4byte	.LC22
+ 1205 03d3 00       		.byte	0
+ 1206 03d4 10       		.uleb128 0x10
+ 1207 03d5 64000000 		.4byte	.LVL15
+ 1208 03d9 58080000 		.4byte	0x858
+ 1209 03dd EB030000 		.4byte	0x3eb
+ 1210 03e1 11       		.uleb128 0x11
+ 1211 03e2 01       		.uleb128 0x1
+ 1212 03e3 50       		.byte	0x50
+ 1213 03e4 05       		.uleb128 0x5
+ 1214 03e5 03       		.byte	0x3
+ 1215 03e6 A4010000 		.4byte	.LC24
+ 1216 03ea 00       		.byte	0
+ 1217 03eb 10       		.uleb128 0x10
+ 1218 03ec 6C000000 		.4byte	.LVL16
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 29
+
+
+ 1219 03f0 58080000 		.4byte	0x858
+ 1220 03f4 02040000 		.4byte	0x402
+ 1221 03f8 11       		.uleb128 0x11
+ 1222 03f9 01       		.uleb128 0x1
+ 1223 03fa 50       		.byte	0x50
+ 1224 03fb 05       		.uleb128 0x5
+ 1225 03fc 03       		.byte	0x3
+ 1226 03fd C4010000 		.4byte	.LC26
+ 1227 0401 00       		.byte	0
+ 1228 0402 10       		.uleb128 0x10
+ 1229 0403 74000000 		.4byte	.LVL17
+ 1230 0407 58080000 		.4byte	0x858
+ 1231 040b 19040000 		.4byte	0x419
+ 1232 040f 11       		.uleb128 0x11
+ 1233 0410 01       		.uleb128 0x1
+ 1234 0411 50       		.byte	0x50
+ 1235 0412 05       		.uleb128 0x5
+ 1236 0413 03       		.byte	0x3
+ 1237 0414 F4010000 		.4byte	.LC28
+ 1238 0418 00       		.byte	0
+ 1239 0419 10       		.uleb128 0x10
+ 1240 041a 7C000000 		.4byte	.LVL18
+ 1241 041e 58080000 		.4byte	0x858
+ 1242 0422 30040000 		.4byte	0x430
+ 1243 0426 11       		.uleb128 0x11
+ 1244 0427 01       		.uleb128 0x1
+ 1245 0428 50       		.byte	0x50
+ 1246 0429 05       		.uleb128 0x5
+ 1247 042a 03       		.byte	0x3
+ 1248 042b 2C020000 		.4byte	.LC30
+ 1249 042f 00       		.byte	0
+ 1250 0430 10       		.uleb128 0x10
+ 1251 0431 84000000 		.4byte	.LVL19
+ 1252 0435 58080000 		.4byte	0x858
+ 1253 0439 47040000 		.4byte	0x447
+ 1254 043d 11       		.uleb128 0x11
+ 1255 043e 01       		.uleb128 0x1
+ 1256 043f 50       		.byte	0x50
+ 1257 0440 05       		.uleb128 0x5
+ 1258 0441 03       		.byte	0x3
+ 1259 0442 4C020000 		.4byte	.LC32
+ 1260 0446 00       		.byte	0
+ 1261 0447 10       		.uleb128 0x10
+ 1262 0448 8C000000 		.4byte	.LVL20
+ 1263 044c 58080000 		.4byte	0x858
+ 1264 0450 5E040000 		.4byte	0x45e
+ 1265 0454 11       		.uleb128 0x11
+ 1266 0455 01       		.uleb128 0x1
+ 1267 0456 50       		.byte	0x50
+ 1268 0457 05       		.uleb128 0x5
+ 1269 0458 03       		.byte	0x3
+ 1270 0459 68020000 		.4byte	.LC34
+ 1271 045d 00       		.byte	0
+ 1272 045e 10       		.uleb128 0x10
+ 1273 045f 94000000 		.4byte	.LVL21
+ 1274 0463 58080000 		.4byte	0x858
+ 1275 0467 75040000 		.4byte	0x475
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 30
+
+
+ 1276 046b 11       		.uleb128 0x11
+ 1277 046c 01       		.uleb128 0x1
+ 1278 046d 50       		.byte	0x50
+ 1279 046e 05       		.uleb128 0x5
+ 1280 046f 03       		.byte	0x3
+ 1281 0470 84020000 		.4byte	.LC36
+ 1282 0474 00       		.byte	0
+ 1283 0475 10       		.uleb128 0x10
+ 1284 0476 9C000000 		.4byte	.LVL22
+ 1285 047a 58080000 		.4byte	0x858
+ 1286 047e 8C040000 		.4byte	0x48c
+ 1287 0482 11       		.uleb128 0x11
+ 1288 0483 01       		.uleb128 0x1
+ 1289 0484 50       		.byte	0x50
+ 1290 0485 05       		.uleb128 0x5
+ 1291 0486 03       		.byte	0x3
+ 1292 0487 A8020000 		.4byte	.LC38
+ 1293 048b 00       		.byte	0
+ 1294 048c 12       		.uleb128 0x12
+ 1295 048d A4000000 		.4byte	.LVL23
+ 1296 0491 58080000 		.4byte	0x858
+ 1297 0495 11       		.uleb128 0x11
+ 1298 0496 01       		.uleb128 0x1
+ 1299 0497 50       		.byte	0x50
+ 1300 0498 05       		.uleb128 0x5
+ 1301 0499 03       		.byte	0x3
+ 1302 049a D0020000 		.4byte	.LC40
+ 1303 049e 00       		.byte	0
+ 1304 049f 00       		.byte	0
+ 1305 04a0 14       		.uleb128 0x14
+ 1306 04a1 6B010000 		.4byte	.LASF90
+ 1307 04a5 01       		.byte	0x1
+ 1308 04a6 15       		.byte	0x15
+ 1309 04a7 D9060000 		.4byte	0x6d9
+ 1310 04ab 00000000 		.4byte	.LFB33
+ 1311 04af 0C010000 		.4byte	.LFE33-.LFB33
+ 1312 04b3 01       		.uleb128 0x1
+ 1313 04b4 9C       		.byte	0x9c
+ 1314 04b5 D9060000 		.4byte	0x6d9
+ 1315 04b9 15       		.uleb128 0x15
+ 1316 04ba 97000000 		.4byte	.LASF63
+ 1317 04be 01       		.byte	0x1
+ 1318 04bf 17       		.byte	0x17
+ 1319 04c0 E0060000 		.4byte	0x6e0
+ 1320 04c4 03       		.uleb128 0x3
+ 1321 04c5 91       		.byte	0x91
+ 1322 04c6 E87E     		.sleb128 -152
+ 1323 04c8 15       		.uleb128 0x15
+ 1324 04c9 FC030000 		.4byte	.LASF64
+ 1325 04cd 01       		.byte	0x1
+ 1326 04ce 18       		.byte	0x18
+ 1327 04cf B0000000 		.4byte	0xb0
+ 1328 04d3 03       		.uleb128 0x3
+ 1329 04d4 91       		.byte	0x91
+ 1330 04d5 E47E     		.sleb128 -156
+ 1331 04d7 16       		.uleb128 0x16
+ 1332 04d8 44040000 		.4byte	.LASF65
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 31
+
+
+ 1333 04dc 01       		.byte	0x1
+ 1334 04dd 19       		.byte	0x19
+ 1335 04de B0000000 		.4byte	0xb0
+ 1336 04e2 21000000 		.4byte	.LLST1
+ 1337 04e6 16       		.uleb128 0x16
+ 1338 04e7 87030000 		.4byte	.LASF66
+ 1339 04eb 01       		.byte	0x1
+ 1340 04ec 1A       		.byte	0x1a
+ 1341 04ed B0000000 		.4byte	0xb0
+ 1342 04f1 34000000 		.4byte	.LLST2
+ 1343 04f5 15       		.uleb128 0x15
+ 1344 04f6 7D000000 		.4byte	.LASF67
+ 1345 04fa 01       		.byte	0x1
+ 1346 04fb 1C       		.byte	0x1c
+ 1347 04fc EF010000 		.4byte	0x1ef
+ 1348 0500 03       		.uleb128 0x3
+ 1349 0501 91       		.byte	0x91
+ 1350 0502 E07E     		.sleb128 -160
+ 1351 0504 16       		.uleb128 0x16
+ 1352 0505 E8020000 		.4byte	.LASF68
+ 1353 0509 01       		.byte	0x1
+ 1354 050a 1D       		.byte	0x1d
+ 1355 050b 6B000000 		.4byte	0x6b
+ 1356 050f 47000000 		.4byte	.LLST3
+ 1357 0513 16       		.uleb128 0x16
+ 1358 0514 07000000 		.4byte	.LASF69
+ 1359 0518 01       		.byte	0x1
+ 1360 0519 1E       		.byte	0x1e
+ 1361 051a D9060000 		.4byte	0x6d9
+ 1362 051e 9C000000 		.4byte	.LLST4
+ 1363 0522 10       		.uleb128 0x10
+ 1364 0523 0E000000 		.4byte	.LVL24
+ 1365 0527 63080000 		.4byte	0x863
+ 1366 052b 42050000 		.4byte	0x542
+ 1367 052f 11       		.uleb128 0x11
+ 1368 0530 01       		.uleb128 0x1
+ 1369 0531 50       		.byte	0x50
+ 1370 0532 03       		.uleb128 0x3
+ 1371 0533 91       		.byte	0x91
+ 1372 0534 E87E     		.sleb128 -152
+ 1373 0536 11       		.uleb128 0x11
+ 1374 0537 01       		.uleb128 0x1
+ 1375 0538 51       		.byte	0x51
+ 1376 0539 01       		.uleb128 0x1
+ 1377 053a 30       		.byte	0x30
+ 1378 053b 11       		.uleb128 0x11
+ 1379 053c 01       		.uleb128 0x1
+ 1380 053d 52       		.byte	0x52
+ 1381 053e 02       		.uleb128 0x2
+ 1382 053f 08       		.byte	0x8
+ 1383 0540 80       		.byte	0x80
+ 1384 0541 00       		.byte	0
+ 1385 0542 10       		.uleb128 0x10
+ 1386 0543 20000000 		.4byte	.LVL25
+ 1387 0547 58080000 		.4byte	0x858
+ 1388 054b 68050000 		.4byte	0x568
+ 1389 054f 11       		.uleb128 0x11
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 32
+
+
+ 1390 0550 01       		.uleb128 0x1
+ 1391 0551 50       		.byte	0x50
+ 1392 0552 05       		.uleb128 0x5
+ 1393 0553 03       		.byte	0x3
+ 1394 0554 FC020000 		.4byte	.LC45
+ 1395 0558 11       		.uleb128 0x11
+ 1396 0559 01       		.uleb128 0x1
+ 1397 055a 51       		.byte	0x51
+ 1398 055b 05       		.uleb128 0x5
+ 1399 055c 03       		.byte	0x3
+ 1400 055d F4020000 		.4byte	.LC43
+ 1401 0561 11       		.uleb128 0x11
+ 1402 0562 01       		.uleb128 0x1
+ 1403 0563 52       		.byte	0x52
+ 1404 0564 02       		.uleb128 0x2
+ 1405 0565 08       		.byte	0x8
+ 1406 0566 20       		.byte	0x20
+ 1407 0567 00       		.byte	0
+ 1408 0568 10       		.uleb128 0x10
+ 1409 0569 30000000 		.4byte	.LVL26
+ 1410 056d 58080000 		.4byte	0x858
+ 1411 0571 7F050000 		.4byte	0x57f
+ 1412 0575 11       		.uleb128 0x11
+ 1413 0576 01       		.uleb128 0x1
+ 1414 0577 50       		.byte	0x50
+ 1415 0578 05       		.uleb128 0x5
+ 1416 0579 03       		.byte	0x3
+ 1417 057a 28030000 		.4byte	.LC47
+ 1418 057e 00       		.byte	0
+ 1419 057f 10       		.uleb128 0x10
+ 1420 0580 3E000000 		.4byte	.LVL28
+ 1421 0584 6C080000 		.4byte	0x86c
+ 1422 0588 A4050000 		.4byte	0x5a4
+ 1423 058c 11       		.uleb128 0x11
+ 1424 058d 01       		.uleb128 0x1
+ 1425 058e 50       		.byte	0x50
+ 1426 058f 05       		.uleb128 0x5
+ 1427 0590 03       		.byte	0x3
+ 1428 0591 00000000 		.4byte	fatFs
+ 1429 0595 11       		.uleb128 0x11
+ 1430 0596 01       		.uleb128 0x1
+ 1431 0597 51       		.byte	0x51
+ 1432 0598 05       		.uleb128 0x5
+ 1433 0599 03       		.byte	0x3
+ 1434 059a 40030000 		.4byte	.LC49
+ 1435 059e 11       		.uleb128 0x11
+ 1436 059f 01       		.uleb128 0x1
+ 1437 05a0 52       		.byte	0x52
+ 1438 05a1 01       		.uleb128 0x1
+ 1439 05a2 31       		.byte	0x31
+ 1440 05a3 00       		.byte	0
+ 1441 05a4 10       		.uleb128 0x10
+ 1442 05a5 4A000000 		.4byte	.LVL31
+ 1443 05a9 58080000 		.4byte	0x858
+ 1444 05ad C1050000 		.4byte	0x5c1
+ 1445 05b1 11       		.uleb128 0x11
+ 1446 05b2 01       		.uleb128 0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 33
+
+
+ 1447 05b3 50       		.byte	0x50
+ 1448 05b4 05       		.uleb128 0x5
+ 1449 05b5 03       		.byte	0x3
+ 1450 05b6 44030000 		.4byte	.LC52
+ 1451 05ba 11       		.uleb128 0x11
+ 1452 05bb 01       		.uleb128 0x1
+ 1453 05bc 51       		.byte	0x51
+ 1454 05bd 02       		.uleb128 0x2
+ 1455 05be 75       		.byte	0x75
+ 1456 05bf 00       		.sleb128 0
+ 1457 05c0 00       		.byte	0
+ 1458 05c1 10       		.uleb128 0x10
+ 1459 05c2 58000000 		.4byte	.LVL34
+ 1460 05c6 77080000 		.4byte	0x877
+ 1461 05ca E4050000 		.4byte	0x5e4
+ 1462 05ce 11       		.uleb128 0x11
+ 1463 05cf 01       		.uleb128 0x1
+ 1464 05d0 50       		.byte	0x50
+ 1465 05d1 05       		.uleb128 0x5
+ 1466 05d2 03       		.byte	0x3
+ 1467 05d3 40030000 		.4byte	.LC49
+ 1468 05d7 11       		.uleb128 0x11
+ 1469 05d8 01       		.uleb128 0x1
+ 1470 05d9 51       		.byte	0x51
+ 1471 05da 03       		.uleb128 0x3
+ 1472 05db 91       		.byte	0x91
+ 1473 05dc E87E     		.sleb128 -152
+ 1474 05de 11       		.uleb128 0x11
+ 1475 05df 01       		.uleb128 0x1
+ 1476 05e0 52       		.byte	0x52
+ 1477 05e1 01       		.uleb128 0x1
+ 1478 05e2 30       		.byte	0x30
+ 1479 05e3 00       		.byte	0
+ 1480 05e4 10       		.uleb128 0x10
+ 1481 05e5 64000000 		.4byte	.LVL37
+ 1482 05e9 58080000 		.4byte	0x858
+ 1483 05ed 01060000 		.4byte	0x601
+ 1484 05f1 11       		.uleb128 0x11
+ 1485 05f2 01       		.uleb128 0x1
+ 1486 05f3 50       		.byte	0x50
+ 1487 05f4 05       		.uleb128 0x5
+ 1488 05f5 03       		.byte	0x3
+ 1489 05f6 5C030000 		.4byte	.LC54
+ 1490 05fa 11       		.uleb128 0x11
+ 1491 05fb 01       		.uleb128 0x1
+ 1492 05fc 51       		.byte	0x51
+ 1493 05fd 02       		.uleb128 0x2
+ 1494 05fe 75       		.byte	0x75
+ 1495 05ff 00       		.sleb128 0
+ 1496 0600 00       		.byte	0
+ 1497 0601 10       		.uleb128 0x10
+ 1498 0602 72000000 		.4byte	.LVL40
+ 1499 0606 82080000 		.4byte	0x882
+ 1500 060a 25060000 		.4byte	0x625
+ 1501 060e 11       		.uleb128 0x11
+ 1502 060f 01       		.uleb128 0x1
+ 1503 0610 50       		.byte	0x50
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 34
+
+
+ 1504 0611 05       		.uleb128 0x5
+ 1505 0612 03       		.byte	0x3
+ 1506 0613 40030000 		.4byte	.LC49
+ 1507 0617 11       		.uleb128 0x11
+ 1508 0618 01       		.uleb128 0x1
+ 1509 0619 51       		.byte	0x51
+ 1510 061a 03       		.uleb128 0x3
+ 1511 061b 91       		.byte	0x91
+ 1512 061c E47E     		.sleb128 -156
+ 1513 061e 11       		.uleb128 0x11
+ 1514 061f 01       		.uleb128 0x1
+ 1515 0620 52       		.byte	0x52
+ 1516 0621 02       		.uleb128 0x2
+ 1517 0622 7D       		.byte	0x7d
+ 1518 0623 00       		.sleb128 0
+ 1519 0624 00       		.byte	0
+ 1520 0625 10       		.uleb128 0x10
+ 1521 0626 7E000000 		.4byte	.LVL43
+ 1522 062a 58080000 		.4byte	0x858
+ 1523 062e 42060000 		.4byte	0x642
+ 1524 0632 11       		.uleb128 0x11
+ 1525 0633 01       		.uleb128 0x1
+ 1526 0634 50       		.byte	0x50
+ 1527 0635 05       		.uleb128 0x5
+ 1528 0636 03       		.byte	0x3
+ 1529 0637 78030000 		.4byte	.LC56
+ 1530 063b 11       		.uleb128 0x11
+ 1531 063c 01       		.uleb128 0x1
+ 1532 063d 51       		.byte	0x51
+ 1533 063e 02       		.uleb128 0x2
+ 1534 063f 75       		.byte	0x75
+ 1535 0640 00       		.sleb128 0
+ 1536 0641 00       		.byte	0
+ 1537 0642 10       		.uleb128 0x10
+ 1538 0643 A2000000 		.4byte	.LVL48
+ 1539 0647 58080000 		.4byte	0x858
+ 1540 064b 59060000 		.4byte	0x659
+ 1541 064f 11       		.uleb128 0x11
+ 1542 0650 01       		.uleb128 0x1
+ 1543 0651 50       		.byte	0x50
+ 1544 0652 05       		.uleb128 0x5
+ 1545 0653 03       		.byte	0x3
+ 1546 0654 94030000 		.4byte	.LC58
+ 1547 0658 00       		.byte	0
+ 1548 0659 10       		.uleb128 0x10
+ 1549 065a AA000000 		.4byte	.LVL49
+ 1550 065e 58080000 		.4byte	0x858
+ 1551 0662 77060000 		.4byte	0x677
+ 1552 0666 11       		.uleb128 0x11
+ 1553 0667 01       		.uleb128 0x1
+ 1554 0668 50       		.byte	0x50
+ 1555 0669 05       		.uleb128 0x5
+ 1556 066a 03       		.byte	0x3
+ 1557 066b A4030000 		.4byte	.LC60
+ 1558 066f 11       		.uleb128 0x11
+ 1559 0670 01       		.uleb128 0x1
+ 1560 0671 51       		.byte	0x51
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 35
+
+
+ 1561 0672 03       		.uleb128 0x3
+ 1562 0673 91       		.byte	0x91
+ 1563 0674 E87E     		.sleb128 -152
+ 1564 0676 00       		.byte	0
+ 1565 0677 10       		.uleb128 0x10
+ 1566 0678 B2000000 		.4byte	.LVL50
+ 1567 067c 58080000 		.4byte	0x858
+ 1568 0680 8E060000 		.4byte	0x68e
+ 1569 0684 11       		.uleb128 0x11
+ 1570 0685 01       		.uleb128 0x1
+ 1571 0686 50       		.byte	0x50
+ 1572 0687 05       		.uleb128 0x5
+ 1573 0688 03       		.byte	0x3
+ 1574 0689 B4030000 		.4byte	.LC62
+ 1575 068d 00       		.byte	0
+ 1576 068e 10       		.uleb128 0x10
+ 1577 068f BA000000 		.4byte	.LVL51
+ 1578 0693 58080000 		.4byte	0x858
+ 1579 0697 AB060000 		.4byte	0x6ab
+ 1580 069b 11       		.uleb128 0x11
+ 1581 069c 01       		.uleb128 0x1
+ 1582 069d 50       		.byte	0x50
+ 1583 069e 05       		.uleb128 0x5
+ 1584 069f 03       		.byte	0x3
+ 1585 06a0 CC030000 		.4byte	.LC64
+ 1586 06a4 11       		.uleb128 0x11
+ 1587 06a5 01       		.uleb128 0x1
+ 1588 06a6 51       		.byte	0x51
+ 1589 06a7 02       		.uleb128 0x2
+ 1590 06a8 76       		.byte	0x76
+ 1591 06a9 00       		.sleb128 0
+ 1592 06aa 00       		.byte	0
+ 1593 06ab 10       		.uleb128 0x10
+ 1594 06ac C2000000 		.4byte	.LVL52
+ 1595 06b0 58080000 		.4byte	0x858
+ 1596 06b4 C8060000 		.4byte	0x6c8
+ 1597 06b8 11       		.uleb128 0x11
+ 1598 06b9 01       		.uleb128 0x1
+ 1599 06ba 50       		.byte	0x50
+ 1600 06bb 05       		.uleb128 0x5
+ 1601 06bc 03       		.byte	0x3
+ 1602 06bd E4030000 		.4byte	.LC66
+ 1603 06c1 11       		.uleb128 0x11
+ 1604 06c2 01       		.uleb128 0x1
+ 1605 06c3 51       		.byte	0x51
+ 1606 06c4 02       		.uleb128 0x2
+ 1607 06c5 77       		.byte	0x77
+ 1608 06c6 00       		.sleb128 0
+ 1609 06c7 00       		.byte	0
+ 1610 06c8 12       		.uleb128 0x12
+ 1611 06c9 CC000000 		.4byte	.LVL53
+ 1612 06cd CA020000 		.4byte	0x2ca
+ 1613 06d1 11       		.uleb128 0x11
+ 1614 06d2 01       		.uleb128 0x1
+ 1615 06d3 50       		.byte	0x50
+ 1616 06d4 02       		.uleb128 0x2
+ 1617 06d5 75       		.byte	0x75
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 36
+
+
+ 1618 06d6 00       		.sleb128 0
+ 1619 06d7 00       		.byte	0
+ 1620 06d8 00       		.byte	0
+ 1621 06d9 02       		.uleb128 0x2
+ 1622 06da 01       		.byte	0x1
+ 1623 06db 02       		.byte	0x2
+ 1624 06dc 58030000 		.4byte	.LASF70
+ 1625 06e0 0B       		.uleb128 0xb
+ 1626 06e1 85000000 		.4byte	0x85
+ 1627 06e5 F0060000 		.4byte	0x6f0
+ 1628 06e9 17       		.uleb128 0x17
+ 1629 06ea 93000000 		.4byte	0x93
+ 1630 06ee 7F       		.byte	0x7f
+ 1631 06ef 00       		.byte	0
+ 1632 06f0 0E       		.uleb128 0xe
+ 1633 06f1 D4030000 		.4byte	.LASF71
+ 1634 06f5 01       		.byte	0x1
+ 1635 06f6 56       		.byte	0x56
+ 1636 06f7 00000000 		.4byte	.LFB34
+ 1637 06fb 60000000 		.4byte	.LFE34-.LFB34
+ 1638 06ff 01       		.uleb128 0x1
+ 1639 0700 9C       		.byte	0x9c
+ 1640 0701 8F070000 		.4byte	0x78f
+ 1641 0705 16       		.uleb128 0x16
+ 1642 0706 E8020000 		.4byte	.LASF68
+ 1643 070a 01       		.byte	0x1
+ 1644 070b 58       		.byte	0x58
+ 1645 070c 6B000000 		.4byte	0x6b
+ 1646 0710 DF000000 		.4byte	.LLST5
+ 1647 0714 10       		.uleb128 0x10
+ 1648 0715 14000000 		.4byte	.LVL56
+ 1649 0719 58080000 		.4byte	0x858
+ 1650 071d 3A070000 		.4byte	0x73a
+ 1651 0721 11       		.uleb128 0x11
+ 1652 0722 01       		.uleb128 0x1
+ 1653 0723 50       		.byte	0x50
+ 1654 0724 05       		.uleb128 0x5
+ 1655 0725 03       		.byte	0x3
+ 1656 0726 FC020000 		.4byte	.LC45
+ 1657 072a 11       		.uleb128 0x11
+ 1658 072b 01       		.uleb128 0x1
+ 1659 072c 51       		.byte	0x51
+ 1660 072d 05       		.uleb128 0x5
+ 1661 072e 03       		.byte	0x3
+ 1662 072f F4020000 		.4byte	.LC43
+ 1663 0733 11       		.uleb128 0x11
+ 1664 0734 01       		.uleb128 0x1
+ 1665 0735 52       		.byte	0x52
+ 1666 0736 02       		.uleb128 0x2
+ 1667 0737 08       		.byte	0x8
+ 1668 0738 5A       		.byte	0x5a
+ 1669 0739 00       		.byte	0
+ 1670 073a 10       		.uleb128 0x10
+ 1671 073b 28000000 		.4byte	.LVL57
+ 1672 073f 6C080000 		.4byte	0x86c
+ 1673 0743 5B070000 		.4byte	0x75b
+ 1674 0747 11       		.uleb128 0x11
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 37
+
+
+ 1675 0748 01       		.uleb128 0x1
+ 1676 0749 50       		.byte	0x50
+ 1677 074a 01       		.uleb128 0x1
+ 1678 074b 30       		.byte	0x30
+ 1679 074c 11       		.uleb128 0x11
+ 1680 074d 01       		.uleb128 0x1
+ 1681 074e 51       		.byte	0x51
+ 1682 074f 05       		.uleb128 0x5
+ 1683 0750 03       		.byte	0x3
+ 1684 0751 40030000 		.4byte	.LC49
+ 1685 0755 11       		.uleb128 0x11
+ 1686 0756 01       		.uleb128 0x1
+ 1687 0757 52       		.byte	0x52
+ 1688 0758 01       		.uleb128 0x1
+ 1689 0759 31       		.byte	0x31
+ 1690 075a 00       		.byte	0
+ 1691 075b 0F       		.uleb128 0xf
+ 1692 075c 30000000 		.4byte	.LVL58
+ 1693 0760 CA020000 		.4byte	0x2ca
+ 1694 0764 10       		.uleb128 0x10
+ 1695 0765 36000000 		.4byte	.LVL59
+ 1696 0769 58080000 		.4byte	0x858
+ 1697 076d 7B070000 		.4byte	0x77b
+ 1698 0771 11       		.uleb128 0x11
+ 1699 0772 01       		.uleb128 0x1
+ 1700 0773 50       		.byte	0x50
+ 1701 0774 05       		.uleb128 0x5
+ 1702 0775 03       		.byte	0x3
+ 1703 0776 FC030000 		.4byte	.LC72
+ 1704 077a 00       		.byte	0
+ 1705 077b 12       		.uleb128 0x12
+ 1706 077c 44000000 		.4byte	.LVL60
+ 1707 0780 58080000 		.4byte	0x858
+ 1708 0784 11       		.uleb128 0x11
+ 1709 0785 01       		.uleb128 0x1
+ 1710 0786 50       		.byte	0x50
+ 1711 0787 05       		.uleb128 0x5
+ 1712 0788 03       		.byte	0x3
+ 1713 0789 10040000 		.4byte	.LC74
+ 1714 078d 00       		.byte	0
+ 1715 078e 00       		.byte	0
+ 1716 078f 18       		.uleb128 0x18
+ 1717 0790 F0030000 		.4byte	.LASF91
+ 1718 0794 01       		.byte	0x1
+ 1719 0795 CA       		.byte	0xca
+ 1720 0796 B0000000 		.4byte	0xb0
+ 1721 079a 00000000 		.4byte	.LFB37
+ 1722 079e 08000000 		.4byte	.LFE37-.LFB37
+ 1723 07a2 01       		.uleb128 0x1
+ 1724 07a3 9C       		.byte	0x9c
+ 1725 07a4 15       		.uleb128 0x15
+ 1726 07a5 A6000000 		.4byte	.LASF72
+ 1727 07a9 01       		.byte	0x1
+ 1728 07aa 12       		.byte	0x12
+ 1729 07ab D9060000 		.4byte	0x6d9
+ 1730 07af 05       		.uleb128 0x5
+ 1731 07b0 03       		.byte	0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 38
+
+
+ 1732 07b1 00000000 		.4byte	isInit
+ 1733 07b5 15       		.uleb128 0x15
+ 1734 07b6 0B020000 		.4byte	.LASF73
+ 1735 07ba 01       		.byte	0x1
+ 1736 07bb 13       		.byte	0x13
+ 1737 07bc D9060000 		.4byte	0x6d9
+ 1738 07c0 05       		.uleb128 0x5
+ 1739 07c1 03       		.byte	0x3
+ 1740 07c2 01000000 		.4byte	isMounted
+ 1741 07c6 19       		.uleb128 0x19
+ 1742 07c7 50030000 		.4byte	.LASF74
+ 1743 07cb 01       		.byte	0x1
+ 1744 07cc 0B       		.byte	0xb
+ 1745 07cd D7070000 		.4byte	0x7d7
+ 1746 07d1 05       		.uleb128 0x5
+ 1747 07d2 03       		.byte	0x3
+ 1748 07d3 00000000 		.4byte	rtcYear
+ 1749 07d7 1A       		.uleb128 0x1a
+ 1750 07d8 48000000 		.4byte	0x48
+ 1751 07dc 19       		.uleb128 0x19
+ 1752 07dd B3020000 		.4byte	.LASF75
+ 1753 07e1 01       		.byte	0x1
+ 1754 07e2 0C       		.byte	0xc
+ 1755 07e3 D7070000 		.4byte	0x7d7
+ 1756 07e7 05       		.uleb128 0x5
+ 1757 07e8 03       		.byte	0x3
+ 1758 07e9 00000000 		.4byte	rtcMonth
+ 1759 07ed 19       		.uleb128 0x19
+ 1760 07ee 09040000 		.4byte	.LASF76
+ 1761 07f2 01       		.byte	0x1
+ 1762 07f3 0D       		.byte	0xd
+ 1763 07f4 D7070000 		.4byte	0x7d7
+ 1764 07f8 05       		.uleb128 0x5
+ 1765 07f9 03       		.byte	0x3
+ 1766 07fa 00000000 		.4byte	rtcDay
+ 1767 07fe 19       		.uleb128 0x19
+ 1768 07ff BA030000 		.4byte	.LASF77
+ 1769 0803 01       		.byte	0x1
+ 1770 0804 0E       		.byte	0xe
+ 1771 0805 D7070000 		.4byte	0x7d7
+ 1772 0809 05       		.uleb128 0x5
+ 1773 080a 03       		.byte	0x3
+ 1774 080b 00000000 		.4byte	rtcHour
+ 1775 080f 19       		.uleb128 0x19
+ 1776 0810 3F010000 		.4byte	.LASF78
+ 1777 0814 01       		.byte	0x1
+ 1778 0815 0F       		.byte	0xf
+ 1779 0816 D7070000 		.4byte	0x7d7
+ 1780 081a 05       		.uleb128 0x5
+ 1781 081b 03       		.byte	0x3
+ 1782 081c 00000000 		.4byte	rtcMinutes
+ 1783 0820 19       		.uleb128 0x19
+ 1784 0821 50040000 		.4byte	.LASF79
+ 1785 0825 01       		.byte	0x1
+ 1786 0826 10       		.byte	0x10
+ 1787 0827 D7070000 		.4byte	0x7d7
+ 1788 082b 05       		.uleb128 0x5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 39
+
+
+ 1789 082c 03       		.byte	0x3
+ 1790 082d 00000000 		.4byte	rtcSeconds
+ 1791 0831 19       		.uleb128 0x19
+ 1792 0832 4A030000 		.4byte	.LASF80
+ 1793 0836 01       		.byte	0x1
+ 1794 0837 11       		.byte	0x11
+ 1795 0838 E4010000 		.4byte	0x1e4
+ 1796 083c 05       		.uleb128 0x5
+ 1797 083d 03       		.byte	0x3
+ 1798 083e 00000000 		.4byte	fatFs
+ 1799 0842 1B       		.uleb128 0x1b
+ 1800 0843 15020000 		.4byte	.LASF81
+ 1801 0847 15020000 		.4byte	.LASF81
+ 1802 084b 06       		.byte	0x6
+ 1803 084c 72       		.byte	0x72
+ 1804 084d 1B       		.uleb128 0x1b
+ 1805 084e 77030000 		.4byte	.LASF82
+ 1806 0852 77030000 		.4byte	.LASF82
+ 1807 0856 07       		.byte	0x7
+ 1808 0857 33       		.byte	0x33
+ 1809 0858 1B       		.uleb128 0x1b
+ 1810 0859 14030000 		.4byte	.LASF83
+ 1811 085d 14030000 		.4byte	.LASF83
+ 1812 0861 08       		.byte	0x8
+ 1813 0862 18       		.byte	0x18
+ 1814 0863 1C       		.uleb128 0x1c
+ 1815 0864 EB010000 		.4byte	.LASF92
+ 1816 0868 EB010000 		.4byte	.LASF92
+ 1817 086c 1B       		.uleb128 0x1b
+ 1818 086d 8E020000 		.4byte	.LASF84
+ 1819 0871 8E020000 		.4byte	.LASF84
+ 1820 0875 04       		.byte	0x4
+ 1821 0876 ED       		.byte	0xed
+ 1822 0877 1B       		.uleb128 0x1b
+ 1823 0878 2F020000 		.4byte	.LASF85
+ 1824 087c 2F020000 		.4byte	.LASF85
+ 1825 0880 04       		.byte	0x4
+ 1826 0881 EB       		.byte	0xeb
+ 1827 0882 1B       		.uleb128 0x1b
+ 1828 0883 1F030000 		.4byte	.LASF86
+ 1829 0887 1F030000 		.4byte	.LASF86
+ 1830 088b 04       		.byte	0x4
+ 1831 088c EA       		.byte	0xea
+ 1832 088d 00       		.byte	0
+ 1833              		.section	.debug_abbrev,"",%progbits
+ 1834              	.Ldebug_abbrev0:
+ 1835 0000 01       		.uleb128 0x1
+ 1836 0001 11       		.uleb128 0x11
+ 1837 0002 01       		.byte	0x1
+ 1838 0003 25       		.uleb128 0x25
+ 1839 0004 0E       		.uleb128 0xe
+ 1840 0005 13       		.uleb128 0x13
+ 1841 0006 0B       		.uleb128 0xb
+ 1842 0007 03       		.uleb128 0x3
+ 1843 0008 0E       		.uleb128 0xe
+ 1844 0009 1B       		.uleb128 0x1b
+ 1845 000a 0E       		.uleb128 0xe
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 40
+
+
+ 1846 000b 55       		.uleb128 0x55
+ 1847 000c 17       		.uleb128 0x17
+ 1848 000d 11       		.uleb128 0x11
+ 1849 000e 01       		.uleb128 0x1
+ 1850 000f 10       		.uleb128 0x10
+ 1851 0010 17       		.uleb128 0x17
+ 1852 0011 00       		.byte	0
+ 1853 0012 00       		.byte	0
+ 1854 0013 02       		.uleb128 0x2
+ 1855 0014 24       		.uleb128 0x24
+ 1856 0015 00       		.byte	0
+ 1857 0016 0B       		.uleb128 0xb
+ 1858 0017 0B       		.uleb128 0xb
+ 1859 0018 3E       		.uleb128 0x3e
+ 1860 0019 0B       		.uleb128 0xb
+ 1861 001a 03       		.uleb128 0x3
+ 1862 001b 0E       		.uleb128 0xe
+ 1863 001c 00       		.byte	0
+ 1864 001d 00       		.byte	0
+ 1865 001e 03       		.uleb128 0x3
+ 1866 001f 24       		.uleb128 0x24
+ 1867 0020 00       		.byte	0
+ 1868 0021 0B       		.uleb128 0xb
+ 1869 0022 0B       		.uleb128 0xb
+ 1870 0023 3E       		.uleb128 0x3e
+ 1871 0024 0B       		.uleb128 0xb
+ 1872 0025 03       		.uleb128 0x3
+ 1873 0026 08       		.uleb128 0x8
+ 1874 0027 00       		.byte	0
+ 1875 0028 00       		.byte	0
+ 1876 0029 04       		.uleb128 0x4
+ 1877 002a 16       		.uleb128 0x16
+ 1878 002b 00       		.byte	0
+ 1879 002c 03       		.uleb128 0x3
+ 1880 002d 0E       		.uleb128 0xe
+ 1881 002e 3A       		.uleb128 0x3a
+ 1882 002f 0B       		.uleb128 0xb
+ 1883 0030 3B       		.uleb128 0x3b
+ 1884 0031 05       		.uleb128 0x5
+ 1885 0032 49       		.uleb128 0x49
+ 1886 0033 13       		.uleb128 0x13
+ 1887 0034 00       		.byte	0
+ 1888 0035 00       		.byte	0
+ 1889 0036 05       		.uleb128 0x5
+ 1890 0037 16       		.uleb128 0x16
+ 1891 0038 00       		.byte	0
+ 1892 0039 03       		.uleb128 0x3
+ 1893 003a 0E       		.uleb128 0xe
+ 1894 003b 3A       		.uleb128 0x3a
+ 1895 003c 0B       		.uleb128 0xb
+ 1896 003d 3B       		.uleb128 0x3b
+ 1897 003e 0B       		.uleb128 0xb
+ 1898 003f 49       		.uleb128 0x49
+ 1899 0040 13       		.uleb128 0x13
+ 1900 0041 00       		.byte	0
+ 1901 0042 00       		.byte	0
+ 1902 0043 06       		.uleb128 0x6
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 41
+
+
+ 1903 0044 04       		.uleb128 0x4
+ 1904 0045 01       		.byte	0x1
+ 1905 0046 0B       		.uleb128 0xb
+ 1906 0047 0B       		.uleb128 0xb
+ 1907 0048 49       		.uleb128 0x49
+ 1908 0049 13       		.uleb128 0x13
+ 1909 004a 3A       		.uleb128 0x3a
+ 1910 004b 0B       		.uleb128 0xb
+ 1911 004c 3B       		.uleb128 0x3b
+ 1912 004d 0B       		.uleb128 0xb
+ 1913 004e 01       		.uleb128 0x1
+ 1914 004f 13       		.uleb128 0x13
+ 1915 0050 00       		.byte	0
+ 1916 0051 00       		.byte	0
+ 1917 0052 07       		.uleb128 0x7
+ 1918 0053 28       		.uleb128 0x28
+ 1919 0054 00       		.byte	0
+ 1920 0055 03       		.uleb128 0x3
+ 1921 0056 0E       		.uleb128 0xe
+ 1922 0057 1C       		.uleb128 0x1c
+ 1923 0058 0B       		.uleb128 0xb
+ 1924 0059 00       		.byte	0
+ 1925 005a 00       		.byte	0
+ 1926 005b 08       		.uleb128 0x8
+ 1927 005c 13       		.uleb128 0x13
+ 1928 005d 01       		.byte	0x1
+ 1929 005e 0B       		.uleb128 0xb
+ 1930 005f 05       		.uleb128 0x5
+ 1931 0060 3A       		.uleb128 0x3a
+ 1932 0061 0B       		.uleb128 0xb
+ 1933 0062 3B       		.uleb128 0x3b
+ 1934 0063 0B       		.uleb128 0xb
+ 1935 0064 01       		.uleb128 0x1
+ 1936 0065 13       		.uleb128 0x13
+ 1937 0066 00       		.byte	0
+ 1938 0067 00       		.byte	0
+ 1939 0068 09       		.uleb128 0x9
+ 1940 0069 0D       		.uleb128 0xd
+ 1941 006a 00       		.byte	0
+ 1942 006b 03       		.uleb128 0x3
+ 1943 006c 0E       		.uleb128 0xe
+ 1944 006d 3A       		.uleb128 0x3a
+ 1945 006e 0B       		.uleb128 0xb
+ 1946 006f 3B       		.uleb128 0x3b
+ 1947 0070 0B       		.uleb128 0xb
+ 1948 0071 49       		.uleb128 0x49
+ 1949 0072 13       		.uleb128 0x13
+ 1950 0073 38       		.uleb128 0x38
+ 1951 0074 0B       		.uleb128 0xb
+ 1952 0075 00       		.byte	0
+ 1953 0076 00       		.byte	0
+ 1954 0077 0A       		.uleb128 0xa
+ 1955 0078 0D       		.uleb128 0xd
+ 1956 0079 00       		.byte	0
+ 1957 007a 03       		.uleb128 0x3
+ 1958 007b 08       		.uleb128 0x8
+ 1959 007c 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 42
+
+
+ 1960 007d 0B       		.uleb128 0xb
+ 1961 007e 3B       		.uleb128 0x3b
+ 1962 007f 0B       		.uleb128 0xb
+ 1963 0080 49       		.uleb128 0x49
+ 1964 0081 13       		.uleb128 0x13
+ 1965 0082 38       		.uleb128 0x38
+ 1966 0083 0B       		.uleb128 0xb
+ 1967 0084 00       		.byte	0
+ 1968 0085 00       		.byte	0
+ 1969 0086 0B       		.uleb128 0xb
+ 1970 0087 01       		.uleb128 0x1
+ 1971 0088 01       		.byte	0x1
+ 1972 0089 49       		.uleb128 0x49
+ 1973 008a 13       		.uleb128 0x13
+ 1974 008b 01       		.uleb128 0x1
+ 1975 008c 13       		.uleb128 0x13
+ 1976 008d 00       		.byte	0
+ 1977 008e 00       		.byte	0
+ 1978 008f 0C       		.uleb128 0xc
+ 1979 0090 21       		.uleb128 0x21
+ 1980 0091 00       		.byte	0
+ 1981 0092 49       		.uleb128 0x49
+ 1982 0093 13       		.uleb128 0x13
+ 1983 0094 2F       		.uleb128 0x2f
+ 1984 0095 05       		.uleb128 0x5
+ 1985 0096 00       		.byte	0
+ 1986 0097 00       		.byte	0
+ 1987 0098 0D       		.uleb128 0xd
+ 1988 0099 0F       		.uleb128 0xf
+ 1989 009a 00       		.byte	0
+ 1990 009b 0B       		.uleb128 0xb
+ 1991 009c 0B       		.uleb128 0xb
+ 1992 009d 49       		.uleb128 0x49
+ 1993 009e 13       		.uleb128 0x13
+ 1994 009f 00       		.byte	0
+ 1995 00a0 00       		.byte	0
+ 1996 00a1 0E       		.uleb128 0xe
+ 1997 00a2 2E       		.uleb128 0x2e
+ 1998 00a3 01       		.byte	0x1
+ 1999 00a4 3F       		.uleb128 0x3f
+ 2000 00a5 19       		.uleb128 0x19
+ 2001 00a6 03       		.uleb128 0x3
+ 2002 00a7 0E       		.uleb128 0xe
+ 2003 00a8 3A       		.uleb128 0x3a
+ 2004 00a9 0B       		.uleb128 0xb
+ 2005 00aa 3B       		.uleb128 0x3b
+ 2006 00ab 0B       		.uleb128 0xb
+ 2007 00ac 27       		.uleb128 0x27
+ 2008 00ad 19       		.uleb128 0x19
+ 2009 00ae 11       		.uleb128 0x11
+ 2010 00af 01       		.uleb128 0x1
+ 2011 00b0 12       		.uleb128 0x12
+ 2012 00b1 06       		.uleb128 0x6
+ 2013 00b2 40       		.uleb128 0x40
+ 2014 00b3 18       		.uleb128 0x18
+ 2015 00b4 9742     		.uleb128 0x2117
+ 2016 00b6 19       		.uleb128 0x19
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 43
+
+
+ 2017 00b7 01       		.uleb128 0x1
+ 2018 00b8 13       		.uleb128 0x13
+ 2019 00b9 00       		.byte	0
+ 2020 00ba 00       		.byte	0
+ 2021 00bb 0F       		.uleb128 0xf
+ 2022 00bc 898201   		.uleb128 0x4109
+ 2023 00bf 00       		.byte	0
+ 2024 00c0 11       		.uleb128 0x11
+ 2025 00c1 01       		.uleb128 0x1
+ 2026 00c2 31       		.uleb128 0x31
+ 2027 00c3 13       		.uleb128 0x13
+ 2028 00c4 00       		.byte	0
+ 2029 00c5 00       		.byte	0
+ 2030 00c6 10       		.uleb128 0x10
+ 2031 00c7 898201   		.uleb128 0x4109
+ 2032 00ca 01       		.byte	0x1
+ 2033 00cb 11       		.uleb128 0x11
+ 2034 00cc 01       		.uleb128 0x1
+ 2035 00cd 31       		.uleb128 0x31
+ 2036 00ce 13       		.uleb128 0x13
+ 2037 00cf 01       		.uleb128 0x1
+ 2038 00d0 13       		.uleb128 0x13
+ 2039 00d1 00       		.byte	0
+ 2040 00d2 00       		.byte	0
+ 2041 00d3 11       		.uleb128 0x11
+ 2042 00d4 8A8201   		.uleb128 0x410a
+ 2043 00d7 00       		.byte	0
+ 2044 00d8 02       		.uleb128 0x2
+ 2045 00d9 18       		.uleb128 0x18
+ 2046 00da 9142     		.uleb128 0x2111
+ 2047 00dc 18       		.uleb128 0x18
+ 2048 00dd 00       		.byte	0
+ 2049 00de 00       		.byte	0
+ 2050 00df 12       		.uleb128 0x12
+ 2051 00e0 898201   		.uleb128 0x4109
+ 2052 00e3 01       		.byte	0x1
+ 2053 00e4 11       		.uleb128 0x11
+ 2054 00e5 01       		.uleb128 0x1
+ 2055 00e6 31       		.uleb128 0x31
+ 2056 00e7 13       		.uleb128 0x13
+ 2057 00e8 00       		.byte	0
+ 2058 00e9 00       		.byte	0
+ 2059 00ea 13       		.uleb128 0x13
+ 2060 00eb 05       		.uleb128 0x5
+ 2061 00ec 00       		.byte	0
+ 2062 00ed 03       		.uleb128 0x3
+ 2063 00ee 0E       		.uleb128 0xe
+ 2064 00ef 3A       		.uleb128 0x3a
+ 2065 00f0 0B       		.uleb128 0xb
+ 2066 00f1 3B       		.uleb128 0x3b
+ 2067 00f2 0B       		.uleb128 0xb
+ 2068 00f3 49       		.uleb128 0x49
+ 2069 00f4 13       		.uleb128 0x13
+ 2070 00f5 02       		.uleb128 0x2
+ 2071 00f6 17       		.uleb128 0x17
+ 2072 00f7 00       		.byte	0
+ 2073 00f8 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 44
+
+
+ 2074 00f9 14       		.uleb128 0x14
+ 2075 00fa 2E       		.uleb128 0x2e
+ 2076 00fb 01       		.byte	0x1
+ 2077 00fc 3F       		.uleb128 0x3f
+ 2078 00fd 19       		.uleb128 0x19
+ 2079 00fe 03       		.uleb128 0x3
+ 2080 00ff 0E       		.uleb128 0xe
+ 2081 0100 3A       		.uleb128 0x3a
+ 2082 0101 0B       		.uleb128 0xb
+ 2083 0102 3B       		.uleb128 0x3b
+ 2084 0103 0B       		.uleb128 0xb
+ 2085 0104 27       		.uleb128 0x27
+ 2086 0105 19       		.uleb128 0x19
+ 2087 0106 49       		.uleb128 0x49
+ 2088 0107 13       		.uleb128 0x13
+ 2089 0108 11       		.uleb128 0x11
+ 2090 0109 01       		.uleb128 0x1
+ 2091 010a 12       		.uleb128 0x12
+ 2092 010b 06       		.uleb128 0x6
+ 2093 010c 40       		.uleb128 0x40
+ 2094 010d 18       		.uleb128 0x18
+ 2095 010e 9742     		.uleb128 0x2117
+ 2096 0110 19       		.uleb128 0x19
+ 2097 0111 01       		.uleb128 0x1
+ 2098 0112 13       		.uleb128 0x13
+ 2099 0113 00       		.byte	0
+ 2100 0114 00       		.byte	0
+ 2101 0115 15       		.uleb128 0x15
+ 2102 0116 34       		.uleb128 0x34
+ 2103 0117 00       		.byte	0
+ 2104 0118 03       		.uleb128 0x3
+ 2105 0119 0E       		.uleb128 0xe
+ 2106 011a 3A       		.uleb128 0x3a
+ 2107 011b 0B       		.uleb128 0xb
+ 2108 011c 3B       		.uleb128 0x3b
+ 2109 011d 0B       		.uleb128 0xb
+ 2110 011e 49       		.uleb128 0x49
+ 2111 011f 13       		.uleb128 0x13
+ 2112 0120 02       		.uleb128 0x2
+ 2113 0121 18       		.uleb128 0x18
+ 2114 0122 00       		.byte	0
+ 2115 0123 00       		.byte	0
+ 2116 0124 16       		.uleb128 0x16
+ 2117 0125 34       		.uleb128 0x34
+ 2118 0126 00       		.byte	0
+ 2119 0127 03       		.uleb128 0x3
+ 2120 0128 0E       		.uleb128 0xe
+ 2121 0129 3A       		.uleb128 0x3a
+ 2122 012a 0B       		.uleb128 0xb
+ 2123 012b 3B       		.uleb128 0x3b
+ 2124 012c 0B       		.uleb128 0xb
+ 2125 012d 49       		.uleb128 0x49
+ 2126 012e 13       		.uleb128 0x13
+ 2127 012f 02       		.uleb128 0x2
+ 2128 0130 17       		.uleb128 0x17
+ 2129 0131 00       		.byte	0
+ 2130 0132 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 45
+
+
+ 2131 0133 17       		.uleb128 0x17
+ 2132 0134 21       		.uleb128 0x21
+ 2133 0135 00       		.byte	0
+ 2134 0136 49       		.uleb128 0x49
+ 2135 0137 13       		.uleb128 0x13
+ 2136 0138 2F       		.uleb128 0x2f
+ 2137 0139 0B       		.uleb128 0xb
+ 2138 013a 00       		.byte	0
+ 2139 013b 00       		.byte	0
+ 2140 013c 18       		.uleb128 0x18
+ 2141 013d 2E       		.uleb128 0x2e
+ 2142 013e 00       		.byte	0
+ 2143 013f 3F       		.uleb128 0x3f
+ 2144 0140 19       		.uleb128 0x19
+ 2145 0141 03       		.uleb128 0x3
+ 2146 0142 0E       		.uleb128 0xe
+ 2147 0143 3A       		.uleb128 0x3a
+ 2148 0144 0B       		.uleb128 0xb
+ 2149 0145 3B       		.uleb128 0x3b
+ 2150 0146 0B       		.uleb128 0xb
+ 2151 0147 27       		.uleb128 0x27
+ 2152 0148 19       		.uleb128 0x19
+ 2153 0149 49       		.uleb128 0x49
+ 2154 014a 13       		.uleb128 0x13
+ 2155 014b 11       		.uleb128 0x11
+ 2156 014c 01       		.uleb128 0x1
+ 2157 014d 12       		.uleb128 0x12
+ 2158 014e 06       		.uleb128 0x6
+ 2159 014f 40       		.uleb128 0x40
+ 2160 0150 18       		.uleb128 0x18
+ 2161 0151 9742     		.uleb128 0x2117
+ 2162 0153 19       		.uleb128 0x19
+ 2163 0154 00       		.byte	0
+ 2164 0155 00       		.byte	0
+ 2165 0156 19       		.uleb128 0x19
+ 2166 0157 34       		.uleb128 0x34
+ 2167 0158 00       		.byte	0
+ 2168 0159 03       		.uleb128 0x3
+ 2169 015a 0E       		.uleb128 0xe
+ 2170 015b 3A       		.uleb128 0x3a
+ 2171 015c 0B       		.uleb128 0xb
+ 2172 015d 3B       		.uleb128 0x3b
+ 2173 015e 0B       		.uleb128 0xb
+ 2174 015f 49       		.uleb128 0x49
+ 2175 0160 13       		.uleb128 0x13
+ 2176 0161 3F       		.uleb128 0x3f
+ 2177 0162 19       		.uleb128 0x19
+ 2178 0163 02       		.uleb128 0x2
+ 2179 0164 18       		.uleb128 0x18
+ 2180 0165 00       		.byte	0
+ 2181 0166 00       		.byte	0
+ 2182 0167 1A       		.uleb128 0x1a
+ 2183 0168 26       		.uleb128 0x26
+ 2184 0169 00       		.byte	0
+ 2185 016a 49       		.uleb128 0x49
+ 2186 016b 13       		.uleb128 0x13
+ 2187 016c 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 46
+
+
+ 2188 016d 00       		.byte	0
+ 2189 016e 1B       		.uleb128 0x1b
+ 2190 016f 2E       		.uleb128 0x2e
+ 2191 0170 00       		.byte	0
+ 2192 0171 3F       		.uleb128 0x3f
+ 2193 0172 19       		.uleb128 0x19
+ 2194 0173 3C       		.uleb128 0x3c
+ 2195 0174 19       		.uleb128 0x19
+ 2196 0175 6E       		.uleb128 0x6e
+ 2197 0176 0E       		.uleb128 0xe
+ 2198 0177 03       		.uleb128 0x3
+ 2199 0178 0E       		.uleb128 0xe
+ 2200 0179 3A       		.uleb128 0x3a
+ 2201 017a 0B       		.uleb128 0xb
+ 2202 017b 3B       		.uleb128 0x3b
+ 2203 017c 0B       		.uleb128 0xb
+ 2204 017d 00       		.byte	0
+ 2205 017e 00       		.byte	0
+ 2206 017f 1C       		.uleb128 0x1c
+ 2207 0180 2E       		.uleb128 0x2e
+ 2208 0181 00       		.byte	0
+ 2209 0182 3F       		.uleb128 0x3f
+ 2210 0183 19       		.uleb128 0x19
+ 2211 0184 3C       		.uleb128 0x3c
+ 2212 0185 19       		.uleb128 0x19
+ 2213 0186 6E       		.uleb128 0x6e
+ 2214 0187 0E       		.uleb128 0xe
+ 2215 0188 03       		.uleb128 0x3
+ 2216 0189 0E       		.uleb128 0xe
+ 2217 018a 00       		.byte	0
+ 2218 018b 00       		.byte	0
+ 2219 018c 00       		.byte	0
+ 2220              		.section	.debug_loc,"",%progbits
+ 2221              	.Ldebug_loc0:
+ 2222              	.LLST0:
+ 2223 0000 00000000 		.4byte	.LVL3
+ 2224 0004 08000000 		.4byte	.LVL4
+ 2225 0008 0100     		.2byte	0x1
+ 2226 000a 50       		.byte	0x50
+ 2227 000b 08000000 		.4byte	.LVL4
+ 2228 000f F8000000 		.4byte	.LFE36
+ 2229 0013 0400     		.2byte	0x4
+ 2230 0015 F3       		.byte	0xf3
+ 2231 0016 01       		.uleb128 0x1
+ 2232 0017 50       		.byte	0x50
+ 2233 0018 9F       		.byte	0x9f
+ 2234 0019 00000000 		.4byte	0
+ 2235 001d 00000000 		.4byte	0
+ 2236              	.LLST1:
+ 2237 0021 90000000 		.4byte	.LVL46
+ 2238 0025 C2000000 		.4byte	.LVL52
+ 2239 0029 0100     		.2byte	0x1
+ 2240 002b 57       		.byte	0x57
+ 2241 002c 00000000 		.4byte	0
+ 2242 0030 00000000 		.4byte	0
+ 2243              	.LLST2:
+ 2244 0034 8C000000 		.4byte	.LVL45
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 47
+
+
+ 2245 0038 C2000000 		.4byte	.LVL52
+ 2246 003c 0100     		.2byte	0x1
+ 2247 003e 56       		.byte	0x56
+ 2248 003f 00000000 		.4byte	0
+ 2249 0043 00000000 		.4byte	0
+ 2250              	.LLST3:
+ 2251 0047 42000000 		.4byte	.LVL29
+ 2252 004b 46000000 		.4byte	.LVL30
+ 2253 004f 0100     		.2byte	0x1
+ 2254 0051 50       		.byte	0x50
+ 2255 0052 4E000000 		.4byte	.LVL32
+ 2256 0056 54000000 		.4byte	.LVL33
+ 2257 005a 0100     		.2byte	0x1
+ 2258 005c 50       		.byte	0x50
+ 2259 005d 5C000000 		.4byte	.LVL35
+ 2260 0061 60000000 		.4byte	.LVL36
+ 2261 0065 0100     		.2byte	0x1
+ 2262 0067 50       		.byte	0x50
+ 2263 0068 68000000 		.4byte	.LVL38
+ 2264 006c 6E000000 		.4byte	.LVL39
+ 2265 0070 0100     		.2byte	0x1
+ 2266 0072 50       		.byte	0x50
+ 2267 0073 76000000 		.4byte	.LVL41
+ 2268 0077 7A000000 		.4byte	.LVL42
+ 2269 007b 0100     		.2byte	0x1
+ 2270 007d 50       		.byte	0x50
+ 2271 007e 82000000 		.4byte	.LVL44
+ 2272 0082 98000000 		.4byte	.LVL47
+ 2273 0086 0100     		.2byte	0x1
+ 2274 0088 50       		.byte	0x50
+ 2275 0089 98000000 		.4byte	.LVL47
+ 2276 008d D0000000 		.4byte	.LVL55
+ 2277 0091 0100     		.2byte	0x1
+ 2278 0093 55       		.byte	0x55
+ 2279 0094 00000000 		.4byte	0
+ 2280 0098 00000000 		.4byte	0
+ 2281              	.LLST4:
+ 2282 009c 0E000000 		.4byte	.LVL24
+ 2283 00a0 30000000 		.4byte	.LVL26
+ 2284 00a4 0200     		.2byte	0x2
+ 2285 00a6 30       		.byte	0x30
+ 2286 00a7 9F       		.byte	0x9f
+ 2287 00a8 30000000 		.4byte	.LVL26
+ 2288 00ac 34000000 		.4byte	.LVL27
+ 2289 00b0 0200     		.2byte	0x2
+ 2290 00b2 31       		.byte	0x31
+ 2291 00b3 9F       		.byte	0x9f
+ 2292 00b4 34000000 		.4byte	.LVL27
+ 2293 00b8 90000000 		.4byte	.LVL46
+ 2294 00bc 0200     		.2byte	0x2
+ 2295 00be 30       		.byte	0x30
+ 2296 00bf 9F       		.byte	0x9f
+ 2297 00c0 90000000 		.4byte	.LVL46
+ 2298 00c4 98000000 		.4byte	.LVL47
+ 2299 00c8 0200     		.2byte	0x2
+ 2300 00ca 31       		.byte	0x31
+ 2301 00cb 9F       		.byte	0x9f
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 48
+
+
+ 2302 00cc 98000000 		.4byte	.LVL47
+ 2303 00d0 D0000000 		.4byte	.LVL54
+ 2304 00d4 0100     		.2byte	0x1
+ 2305 00d6 54       		.byte	0x54
+ 2306 00d7 00000000 		.4byte	0
+ 2307 00db 00000000 		.4byte	0
+ 2308              	.LLST5:
+ 2309 00df 28000000 		.4byte	.LVL57
+ 2310 00e3 2F000000 		.4byte	.LVL58-1
+ 2311 00e7 0100     		.2byte	0x1
+ 2312 00e9 50       		.byte	0x50
+ 2313 00ea 00000000 		.4byte	0
+ 2314 00ee 00000000 		.4byte	0
+ 2315              		.section	.debug_aranges,"",%progbits
+ 2316 0000 3C000000 		.4byte	0x3c
+ 2317 0004 0200     		.2byte	0x2
+ 2318 0006 00000000 		.4byte	.Ldebug_info0
+ 2319 000a 04       		.byte	0x4
+ 2320 000b 00       		.byte	0
+ 2321 000c 0000     		.2byte	0
+ 2322 000e 0000     		.2byte	0
+ 2323 0010 00000000 		.4byte	.LFB35
+ 2324 0014 24000000 		.4byte	.LFE35-.LFB35
+ 2325 0018 00000000 		.4byte	.LFB36
+ 2326 001c F8000000 		.4byte	.LFE36-.LFB36
+ 2327 0020 00000000 		.4byte	.LFB33
+ 2328 0024 0C010000 		.4byte	.LFE33-.LFB33
+ 2329 0028 00000000 		.4byte	.LFB34
+ 2330 002c 60000000 		.4byte	.LFE34-.LFB34
+ 2331 0030 00000000 		.4byte	.LFB37
+ 2332 0034 08000000 		.4byte	.LFE37-.LFB37
+ 2333 0038 00000000 		.4byte	0
+ 2334 003c 00000000 		.4byte	0
+ 2335              		.section	.debug_ranges,"",%progbits
+ 2336              	.Ldebug_ranges0:
+ 2337 0000 00000000 		.4byte	.LFB35
+ 2338 0004 24000000 		.4byte	.LFE35
+ 2339 0008 00000000 		.4byte	.LFB36
+ 2340 000c F8000000 		.4byte	.LFE36
+ 2341 0010 00000000 		.4byte	.LFB33
+ 2342 0014 0C010000 		.4byte	.LFE33
+ 2343 0018 00000000 		.4byte	.LFB34
+ 2344 001c 60000000 		.4byte	.LFE34
+ 2345 0020 00000000 		.4byte	.LFB37
+ 2346 0024 08000000 		.4byte	.LFE37
+ 2347 0028 00000000 		.4byte	0
+ 2348 002c 00000000 		.4byte	0
+ 2349              		.section	.debug_line,"",%progbits
+ 2350              	.Ldebug_line0:
+ 2351 0000 57010000 		.section	.debug_str,"MS",%progbits,1
+ 2351      02008F00 
+ 2351      00000201 
+ 2351      FB0E0D00 
+ 2351      01010101 
+ 2352              	.LASF25:
+ 2353 0000 6E5F6661 		.ascii	"n_fats\000"
+ 2353      747300
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 49
+
+
+ 2354              	.LASF69:
+ 2355 0007 72657375 		.ascii	"result\000"
+ 2355      6C7400
+ 2356              	.LASF19:
+ 2357 000e 5245535F 		.ascii	"RES_ERROR\000"
+ 2357      4552524F 
+ 2357      5200
+ 2358              	.LASF47:
+ 2359 0018 46525F44 		.ascii	"FR_DENIED\000"
+ 2359      454E4945 
+ 2359      4400
+ 2360              	.LASF32:
+ 2361 0022 6E5F6661 		.ascii	"n_fatent\000"
+ 2361      74656E74 
+ 2361      00
+ 2362              	.LASF23:
+ 2363 002b 66735F74 		.ascii	"fs_type\000"
+ 2363      79706500 
+ 2364              	.LASF89:
+ 2365 0033 433A5C55 		.ascii	"C:\\Users\\dmytro.fedorchenko\\Documents\\PSoC Crea"
+ 2365      73657273 
+ 2365      5C646D79 
+ 2365      74726F2E 
+ 2365      6665646F 
+ 2366 0062 746F725C 		.ascii	"tor\\PWM01\\midiPlayer.cydsn\000"
+ 2366      50574D30 
+ 2366      315C6D69 
+ 2366      6469506C 
+ 2366      61796572 
+ 2367              	.LASF67:
+ 2368 007d 66617446 		.ascii	"fatFsPtr\000"
+ 2368      73507472 
+ 2368      00
+ 2369              	.LASF18:
+ 2370 0086 5245535F 		.ascii	"RES_OK\000"
+ 2370      4F4B00
+ 2371              	.LASF2:
+ 2372 008d 73686F72 		.ascii	"short int\000"
+ 2372      7420696E 
+ 2372      7400
+ 2373              	.LASF63:
+ 2374 0097 6C616265 		.ascii	"label\000"
+ 2374      6C00
+ 2375              	.LASF13:
+ 2376 009d 73697A65 		.ascii	"sizetype\000"
+ 2376      74797065 
+ 2376      00
+ 2377              	.LASF72:
+ 2378 00a6 6973496E 		.ascii	"isInit\000"
+ 2378      697400
+ 2379              	.LASF87:
+ 2380 00ad 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 2380      43313120 
+ 2380      352E342E 
+ 2380      31203230 
+ 2380      31363036 
+ 2381 00e0 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0plus -mthumb -"
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 50
+
+
+ 2381      20726576 
+ 2381      6973696F 
+ 2381      6E203233 
+ 2381      37373135 
+ 2382 0113 67202D4F 		.ascii	"g -Og -ffunction-sections -ffat-lto-objects\000"
+ 2382      67202D66 
+ 2382      66756E63 
+ 2382      74696F6E 
+ 2382      2D736563 
+ 2383              	.LASF78:
+ 2384 013f 7274634D 		.ascii	"rtcMinutes\000"
+ 2384      696E7574 
+ 2384      657300
+ 2385              	.LASF15:
+ 2386 014a 42595445 		.ascii	"BYTE\000"
+ 2386      00
+ 2387              	.LASF10:
+ 2388 014f 646F7562 		.ascii	"double\000"
+ 2388      6C6500
+ 2389              	.LASF28:
+ 2390 0156 6E5F726F 		.ascii	"n_rootdir\000"
+ 2390      6F746469 
+ 2390      7200
+ 2391              	.LASF22:
+ 2392 0160 5245535F 		.ascii	"RES_PARERR\000"
+ 2392      50415245 
+ 2392      525200
+ 2393              	.LASF90:
+ 2394 016b 63617264 		.ascii	"cardMount\000"
+ 2394      4D6F756E 
+ 2394      7400
+ 2395              	.LASF16:
+ 2396 0175 574F5244 		.ascii	"WORD\000"
+ 2396      00
+ 2397              	.LASF49:
+ 2398 017a 46525F49 		.ascii	"FR_INVALID_OBJECT\000"
+ 2398      4E56414C 
+ 2398      49445F4F 
+ 2398      424A4543 
+ 2398      5400
+ 2399              	.LASF40:
+ 2400 018c 46525F4F 		.ascii	"FR_OK\000"
+ 2400      4B00
+ 2401              	.LASF14:
+ 2402 0192 75696E74 		.ascii	"uint8\000"
+ 2402      3800
+ 2403              	.LASF53:
+ 2404 0198 46525F4E 		.ascii	"FR_NO_FILESYSTEM\000"
+ 2404      4F5F4649 
+ 2404      4C455359 
+ 2404      5354454D 
+ 2404      00
+ 2405              	.LASF0:
+ 2406 01a9 7369676E 		.ascii	"signed char\000"
+ 2406      65642063 
+ 2406      68617200 
+ 2407              	.LASF9:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 51
+
+
+ 2408 01b5 666C6F61 		.ascii	"float\000"
+ 2408      7400
+ 2409              	.LASF29:
+ 2410 01bb 6C617374 		.ascii	"last_clust\000"
+ 2410      5F636C75 
+ 2410      737400
+ 2411              	.LASF6:
+ 2412 01c6 6C6F6E67 		.ascii	"long long int\000"
+ 2412      206C6F6E 
+ 2412      6720696E 
+ 2412      7400
+ 2413              	.LASF7:
+ 2414 01d4 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2414      206C6F6E 
+ 2414      6720756E 
+ 2414      7369676E 
+ 2414      65642069 
+ 2415              	.LASF92:
+ 2416 01eb 6D656D73 		.ascii	"memset\000"
+ 2416      657400
+ 2417              	.LASF4:
+ 2418 01f2 6C6F6E67 		.ascii	"long int\000"
+ 2418      20696E74 
+ 2418      00
+ 2419              	.LASF24:
+ 2420 01fb 6373697A 		.ascii	"csize\000"
+ 2420      6500
+ 2421              	.LASF20:
+ 2422 0201 5245535F 		.ascii	"RES_WRPRT\000"
+ 2422      57525052 
+ 2422      5400
+ 2423              	.LASF73:
+ 2424 020b 69734D6F 		.ascii	"isMounted\000"
+ 2424      756E7465 
+ 2424      6400
+ 2425              	.LASF81:
+ 2426 0215 5350495F 		.ascii	"SPI_Start\000"
+ 2426      53746172 
+ 2426      7400
+ 2427              	.LASF54:
+ 2428 021f 46525F4D 		.ascii	"FR_MKFS_ABORTED\000"
+ 2428      4B46535F 
+ 2428      41424F52 
+ 2428      54454400 
+ 2429              	.LASF85:
+ 2430 022f 665F6765 		.ascii	"f_getlabel\000"
+ 2430      746C6162 
+ 2430      656C00
+ 2431              	.LASF43:
+ 2432 023a 46525F4E 		.ascii	"FR_NOT_READY\000"
+ 2432      4F545F52 
+ 2432      45414459 
+ 2432      00
+ 2433              	.LASF50:
+ 2434 0247 46525F57 		.ascii	"FR_WRITE_PROTECTED\000"
+ 2434      52495445 
+ 2434      5F50524F 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 52
+
+
+ 2434      54454354 
+ 2434      454400
+ 2435              	.LASF1:
+ 2436 025a 756E7369 		.ascii	"unsigned char\000"
+ 2436      676E6564 
+ 2436      20636861 
+ 2436      7200
+ 2437              	.LASF17:
+ 2438 0268 44574F52 		.ascii	"DWORD\000"
+ 2438      4400
+ 2439              	.LASF45:
+ 2440 026e 46525F4E 		.ascii	"FR_NO_PATH\000"
+ 2440      4F5F5041 
+ 2440      544800
+ 2441              	.LASF27:
+ 2442 0279 6673695F 		.ascii	"fsi_flag\000"
+ 2442      666C6167 
+ 2442      00
+ 2443              	.LASF12:
+ 2444 0282 6C6F6E67 		.ascii	"long double\000"
+ 2444      20646F75 
+ 2444      626C6500 
+ 2445              	.LASF84:
+ 2446 028e 665F6D6F 		.ascii	"f_mount\000"
+ 2446      756E7400 
+ 2447              	.LASF30:
+ 2448 0296 66726565 		.ascii	"free_clust\000"
+ 2448      5F636C75 
+ 2448      737400
+ 2449              	.LASF41:
+ 2450 02a1 46525F44 		.ascii	"FR_DISK_ERR\000"
+ 2450      49534B5F 
+ 2450      45525200 
+ 2451              	.LASF26:
+ 2452 02ad 77666C61 		.ascii	"wflag\000"
+ 2452      6700
+ 2453              	.LASF75:
+ 2454 02b3 7274634D 		.ascii	"rtcMonth\000"
+ 2454      6F6E7468 
+ 2454      00
+ 2455              	.LASF60:
+ 2456 02bc 46524553 		.ascii	"FRESULT\000"
+ 2456      554C5400 
+ 2457              	.LASF8:
+ 2458 02c4 756E7369 		.ascii	"unsigned int\000"
+ 2458      676E6564 
+ 2458      20696E74 
+ 2458      00
+ 2459              	.LASF58:
+ 2460 02d1 46525F54 		.ascii	"FR_TOO_MANY_OPEN_FILES\000"
+ 2460      4F4F5F4D 
+ 2460      414E595F 
+ 2460      4F50454E 
+ 2460      5F46494C 
+ 2461              	.LASF68:
+ 2462 02e8 72657375 		.ascii	"resultF\000"
+ 2462      6C744600 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 53
+
+
+ 2463              	.LASF59:
+ 2464 02f0 46525F49 		.ascii	"FR_INVALID_PARAMETER\000"
+ 2464      4E56414C 
+ 2464      49445F50 
+ 2464      4152414D 
+ 2464      45544552 
+ 2465              	.LASF52:
+ 2466 0305 46525F4E 		.ascii	"FR_NOT_ENABLED\000"
+ 2466      4F545F45 
+ 2466      4E41424C 
+ 2466      454400
+ 2467              	.LASF83:
+ 2468 0314 75617274 		.ascii	"uartPrintf\000"
+ 2468      5072696E 
+ 2468      746600
+ 2469              	.LASF86:
+ 2470 031f 665F6765 		.ascii	"f_getfree\000"
+ 2470      74667265 
+ 2470      6500
+ 2471              	.LASF48:
+ 2472 0329 46525F45 		.ascii	"FR_EXIST\000"
+ 2472      58495354 
+ 2472      00
+ 2473              	.LASF11:
+ 2474 0332 63686172 		.ascii	"char\000"
+ 2474      00
+ 2475              	.LASF35:
+ 2476 0337 66617462 		.ascii	"fatbase\000"
+ 2476      61736500 
+ 2477              	.LASF21:
+ 2478 033f 5245535F 		.ascii	"RES_NOTRDY\000"
+ 2478      4E4F5452 
+ 2478      445900
+ 2479              	.LASF80:
+ 2480 034a 66617446 		.ascii	"fatFs\000"
+ 2480      7300
+ 2481              	.LASF74:
+ 2482 0350 72746359 		.ascii	"rtcYear\000"
+ 2482      65617200 
+ 2483              	.LASF70:
+ 2484 0358 5F426F6F 		.ascii	"_Bool\000"
+ 2484      6C00
+ 2485              	.LASF3:
+ 2486 035e 73686F72 		.ascii	"short unsigned int\000"
+ 2486      7420756E 
+ 2486      7369676E 
+ 2486      65642069 
+ 2486      6E7400
+ 2487              	.LASF39:
+ 2488 0371 46415446 		.ascii	"FATFS\000"
+ 2488      5300
+ 2489              	.LASF82:
+ 2490 0377 5350495F 		.ascii	"SPI_ss0_m_Write\000"
+ 2490      7373305F 
+ 2490      6D5F5772 
+ 2490      69746500 
+ 2491              	.LASF66:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 54
+
+
+ 2492 0387 746F7461 		.ascii	"totalsectors\000"
+ 2492      6C736563 
+ 2492      746F7273 
+ 2492      00
+ 2493              	.LASF5:
+ 2494 0394 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2494      20756E73 
+ 2494      69676E65 
+ 2494      6420696E 
+ 2494      7400
+ 2495              	.LASF37:
+ 2496 03a6 64617461 		.ascii	"database\000"
+ 2496      62617365 
+ 2496      00
+ 2497              	.LASF55:
+ 2498 03af 46525F54 		.ascii	"FR_TIMEOUT\000"
+ 2498      494D454F 
+ 2498      555400
+ 2499              	.LASF77:
+ 2500 03ba 72746348 		.ascii	"rtcHour\000"
+ 2500      6F757200 
+ 2501              	.LASF44:
+ 2502 03c2 46525F4E 		.ascii	"FR_NO_FILE\000"
+ 2502      4F5F4649 
+ 2502      4C4500
+ 2503              	.LASF88:
+ 2504 03cd 63617264 		.ascii	"card.c\000"
+ 2504      2E6300
+ 2505              	.LASF71:
+ 2506 03d4 63617264 		.ascii	"cardUmount\000"
+ 2506      556D6F75 
+ 2506      6E7400
+ 2507              	.LASF42:
+ 2508 03df 46525F49 		.ascii	"FR_INT_ERR\000"
+ 2508      4E545F45 
+ 2508      525200
+ 2509              	.LASF33:
+ 2510 03ea 6673697A 		.ascii	"fsize\000"
+ 2510      6500
+ 2511              	.LASF91:
+ 2512 03f0 6765745F 		.ascii	"get_fattime\000"
+ 2512      66617474 
+ 2512      696D6500 
+ 2513              	.LASF64:
+ 2514 03fc 66726565 		.ascii	"freeclusters\000"
+ 2514      636C7573 
+ 2514      74657273 
+ 2514      00
+ 2515              	.LASF76:
+ 2516 0409 72746344 		.ascii	"rtcDay\000"
+ 2516      617900
+ 2517              	.LASF51:
+ 2518 0410 46525F49 		.ascii	"FR_INVALID_DRIVE\000"
+ 2518      4E56414C 
+ 2518      49445F44 
+ 2518      52495645 
+ 2518      00
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccq0I45c.s 			page 55
+
+
+ 2519              	.LASF61:
+ 2520 0421 63617264 		.ascii	"cardInit\000"
+ 2520      496E6974 
+ 2520      00
+ 2521              	.LASF34:
+ 2522 042a 766F6C62 		.ascii	"volbase\000"
+ 2522      61736500 
+ 2523              	.LASF56:
+ 2524 0432 46525F4C 		.ascii	"FR_LOCKED\000"
+ 2524      4F434B45 
+ 2524      4400
+ 2525              	.LASF38:
+ 2526 043c 77696E73 		.ascii	"winsect\000"
+ 2526      65637400 
+ 2527              	.LASF65:
+ 2528 0444 66726565 		.ascii	"freesectors\000"
+ 2528      73656374 
+ 2528      6F727300 
+ 2529              	.LASF79:
+ 2530 0450 72746353 		.ascii	"rtcSeconds\000"
+ 2530      65636F6E 
+ 2530      647300
+ 2531              	.LASF57:
+ 2532 045b 46525F4E 		.ascii	"FR_NOT_ENOUGH_CORE\000"
+ 2532      4F545F45 
+ 2532      4E4F5547 
+ 2532      485F434F 
+ 2532      524500
+ 2533              	.LASF46:
+ 2534 046e 46525F49 		.ascii	"FR_INVALID_NAME\000"
+ 2534      4E56414C 
+ 2534      49445F4E 
+ 2534      414D4500 
+ 2535              	.LASF36:
+ 2536 047e 64697262 		.ascii	"dirbase\000"
+ 2536      61736500 
+ 2537              	.LASF31:
+ 2538 0486 63646972 		.ascii	"cdir\000"
+ 2538      00
+ 2539              	.LASF62:
+ 2540 048b 63617264 		.ascii	"cardErrorPrint\000"
+ 2540      4572726F 
+ 2540      72507269 
+ 2540      6E7400
+ 2541              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

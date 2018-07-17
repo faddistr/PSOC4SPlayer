@@ -1,0 +1,2492 @@
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0plus
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"CapSense_Tuner.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.CapSense_TuInitialize,"ax",%progbits
+  20              		.align	2
+  21              		.global	CapSense_TuInitialize
+  22              		.code	16
+  23              		.thumb_func
+  24              		.type	CapSense_TuInitialize, %function
+  25              	CapSense_TuInitialize:
+  26              	.LFB1:
+  27              		.file 1 "Generated_Source\\PSoC4\\CapSense_Tuner.c"
+   1:Generated_Source\PSoC4/CapSense_Tuner.c **** /***************************************************************************//**
+   2:Generated_Source\PSoC4/CapSense_Tuner.c **** * \file CapSense_Tuner.c
+   3:Generated_Source\PSoC4/CapSense_Tuner.c **** * \version 5.10
+   4:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+   5:Generated_Source\PSoC4/CapSense_Tuner.c **** * \brief
+   6:Generated_Source\PSoC4/CapSense_Tuner.c **** *   This file provides the source code for the Tuner module API of the Component.
+   7:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+   8:Generated_Source\PSoC4/CapSense_Tuner.c **** * \see CapSense v5.10 Datasheet
+   9:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+  10:Generated_Source\PSoC4/CapSense_Tuner.c **** *//*****************************************************************************
+  11:Generated_Source\PSoC4/CapSense_Tuner.c **** * Copyright (2016-2018), Cypress Semiconductor Corporation.
+  12:Generated_Source\PSoC4/CapSense_Tuner.c **** ********************************************************************************
+  13:Generated_Source\PSoC4/CapSense_Tuner.c **** * This software is owned by Cypress Semiconductor Corporation (Cypress) and is
+  14:Generated_Source\PSoC4/CapSense_Tuner.c **** * protected by and subject to worldwide patent protection (United States and
+  15:Generated_Source\PSoC4/CapSense_Tuner.c **** * foreign), United States copyright laws and international treaty provisions.
+  16:Generated_Source\PSoC4/CapSense_Tuner.c **** * Cypress hereby grants to licensee a personal, non-exclusive, non-transferable
+  17:Generated_Source\PSoC4/CapSense_Tuner.c **** * license to copy, use, modify, create derivative works of, and compile the
+  18:Generated_Source\PSoC4/CapSense_Tuner.c **** * Cypress Source Code and derivative works for the sole purpose of creating
+  19:Generated_Source\PSoC4/CapSense_Tuner.c **** * custom software in support of licensee product to be used only in conjunction
+  20:Generated_Source\PSoC4/CapSense_Tuner.c **** * with a Cypress integrated circuit as specified in the applicable agreement.
+  21:Generated_Source\PSoC4/CapSense_Tuner.c **** * Any reproduction, modification, translation, compilation, or representation of
+  22:Generated_Source\PSoC4/CapSense_Tuner.c **** * this software except as specified above is prohibited without the express
+  23:Generated_Source\PSoC4/CapSense_Tuner.c **** * written permission of Cypress.
+  24:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+  25:Generated_Source\PSoC4/CapSense_Tuner.c **** * Disclaimer: CYPRESS MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH
+  26:Generated_Source\PSoC4/CapSense_Tuner.c **** * REGARD TO THIS MATERIAL, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  27:Generated_Source\PSoC4/CapSense_Tuner.c **** * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+  28:Generated_Source\PSoC4/CapSense_Tuner.c **** * Cypress reserves the right to make changes without further notice to the
+  29:Generated_Source\PSoC4/CapSense_Tuner.c **** * materials described herein. Cypress does not assume any liability arising out
+  30:Generated_Source\PSoC4/CapSense_Tuner.c **** * of the application or use of any product or circuit described herein. Cypress
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 2
+
+
+  31:Generated_Source\PSoC4/CapSense_Tuner.c **** * does not authorize its products for use as critical components in life-support
+  32:Generated_Source\PSoC4/CapSense_Tuner.c **** * systems where a malfunction or failure may reasonably be expected to result in
+  33:Generated_Source\PSoC4/CapSense_Tuner.c **** * significant injury to the user. The inclusion of Cypress' product in a life-
+  34:Generated_Source\PSoC4/CapSense_Tuner.c **** * support systems application implies that the manufacturer assumes all risk of
+  35:Generated_Source\PSoC4/CapSense_Tuner.c **** * such use and in doing so indemnifies Cypress against all charges. Use may be
+  36:Generated_Source\PSoC4/CapSense_Tuner.c **** * limited by and subject to the applicable Cypress software license agreement.
+  37:Generated_Source\PSoC4/CapSense_Tuner.c **** *******************************************************************************/
+  38:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+  39:Generated_Source\PSoC4/CapSense_Tuner.c **** #include "cytypes.h"
+  40:Generated_Source\PSoC4/CapSense_Tuner.c **** #include "CyLib.h"
+  41:Generated_Source\PSoC4/CapSense_Tuner.c **** #include "CapSense_Structure.h"
+  42:Generated_Source\PSoC4/CapSense_Tuner.c **** #include "CapSense_Tuner.h"
+  43:Generated_Source\PSoC4/CapSense_Tuner.c **** #include "CapSense_Control.h"
+  44:Generated_Source\PSoC4/CapSense_Tuner.c **** #include "CapSense_Configuration.h"
+  45:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+  46:Generated_Source\PSoC4/CapSense_Tuner.c **** /* Tuner states definition */
+  47:Generated_Source\PSoC4/CapSense_Tuner.c **** #define TU_FSM_RUNNING      (0u)
+  48:Generated_Source\PSoC4/CapSense_Tuner.c **** #define TU_FSM_SUSPENDED    (1u)
+  49:Generated_Source\PSoC4/CapSense_Tuner.c **** #define TU_FSM_SNR_TEST     (2u)
+  50:Generated_Source\PSoC4/CapSense_Tuner.c **** #define TU_FSM_ONE_SCAN     (3u)
+  51:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+  52:Generated_Source\PSoC4/CapSense_Tuner.c **** /* Tuner state variable */
+  53:Generated_Source\PSoC4/CapSense_Tuner.c **** static uint32 tunerFsm = TU_FSM_RUNNING;
+  54:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+  55:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+  56:Generated_Source\PSoC4/CapSense_Tuner.c **** /*******************************************************************************
+  57:Generated_Source\PSoC4/CapSense_Tuner.c **** * Function Name: CapSense_TuInitialize
+  58:Generated_Source\PSoC4/CapSense_Tuner.c **** ****************************************************************************//**
+  59:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+  60:Generated_Source\PSoC4/CapSense_Tuner.c **** * \brief
+  61:Generated_Source\PSoC4/CapSense_Tuner.c **** *   This function initializes the communication interface with the Tuner GUI.
+  62:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+  63:Generated_Source\PSoC4/CapSense_Tuner.c **** * \details
+  64:Generated_Source\PSoC4/CapSense_Tuner.c **** *   This API sets the tuner state machine to the default state. It is called by
+  65:Generated_Source\PSoC4/CapSense_Tuner.c **** *   the CapSense_Start() API.
+  66:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+  67:Generated_Source\PSoC4/CapSense_Tuner.c **** *******************************************************************************/
+  68:Generated_Source\PSoC4/CapSense_Tuner.c **** void CapSense_TuInitialize(void)
+  69:Generated_Source\PSoC4/CapSense_Tuner.c **** {
+  28              		.loc 1 69 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  33              	.LVL0:
+  70:Generated_Source\PSoC4/CapSense_Tuner.c ****     volatile CapSense_RAM_STRUCT *ptrDsRam = &CapSense_dsRam;
+  71:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+  72:Generated_Source\PSoC4/CapSense_Tuner.c ****     ptrDsRam->tunerCmd = (uint16)CapSense_TU_CMD_NONE_E;
+  34              		.loc 1 72 0
+  35 0000 0023     		movs	r3, #0
+  36 0002 024A     		ldr	r2, .L2
+  37 0004 D380     		strh	r3, [r2, #6]
+  73:Generated_Source\PSoC4/CapSense_Tuner.c ****     tunerFsm = TU_FSM_RUNNING;
+  38              		.loc 1 73 0
+  39 0006 024A     		ldr	r2, .L2+4
+  40 0008 1360     		str	r3, [r2]
+  74:Generated_Source\PSoC4/CapSense_Tuner.c **** }
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 3
+
+
+  41              		.loc 1 74 0
+  42              		@ sp needed
+  43 000a 7047     		bx	lr
+  44              	.L3:
+  45              		.align	2
+  46              	.L2:
+  47 000c 00000000 		.word	CapSense_dsRam
+  48 0010 00000000 		.word	.LANCHOR0
+  49              		.cfi_endproc
+  50              	.LFE1:
+  51              		.size	CapSense_TuInitialize, .-CapSense_TuInitialize
+  52              		.section	.text.CapSense_RunTuner,"ax",%progbits
+  53              		.align	2
+  54              		.global	CapSense_RunTuner
+  55              		.code	16
+  56              		.thumb_func
+  57              		.type	CapSense_RunTuner, %function
+  58              	CapSense_RunTuner:
+  59              	.LFB2:
+  75:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+  76:Generated_Source\PSoC4/CapSense_Tuner.c **** /*******************************************************************************
+  77:Generated_Source\PSoC4/CapSense_Tuner.c **** * Function Name: CapSense_RunTuner
+  78:Generated_Source\PSoC4/CapSense_Tuner.c **** ****************************************************************************//**
+  79:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+  80:Generated_Source\PSoC4/CapSense_Tuner.c **** * \brief
+  81:Generated_Source\PSoC4/CapSense_Tuner.c **** *  Establishes synchronized communication with the Tuner application.
+  82:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+  83:Generated_Source\PSoC4/CapSense_Tuner.c **** * \details
+  84:Generated_Source\PSoC4/CapSense_Tuner.c **** *  This function is used to establish synchronized communication between the
+  85:Generated_Source\PSoC4/CapSense_Tuner.c **** *  CapSense Component and Tuner application (or other host controllers).
+  86:Generated_Source\PSoC4/CapSense_Tuner.c **** *  This function is called periodically in the application program loop
+  87:Generated_Source\PSoC4/CapSense_Tuner.c **** *  to serve the Tuner application (or host controller) requests and commands.
+  88:Generated_Source\PSoC4/CapSense_Tuner.c **** *  In most cases, the best place to call this function is after processing and
+  89:Generated_Source\PSoC4/CapSense_Tuner.c **** *  before next scanning.
+  90:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+  91:Generated_Source\PSoC4/CapSense_Tuner.c **** *  If this function is absent in the application program, then communication is
+  92:Generated_Source\PSoC4/CapSense_Tuner.c **** *  asynchronous and the following disadvantages are applicable:
+  93:Generated_Source\PSoC4/CapSense_Tuner.c **** *    - The raw counts displayed in the tuner may be filtered and/or unfiltered.
+  94:Generated_Source\PSoC4/CapSense_Tuner.c **** *      As a result, noise and SNR measurements will not be accurate.
+  95:Generated_Source\PSoC4/CapSense_Tuner.c **** *    - The Tuner tool may read the sensor data such as raw counts from a scan
+  96:Generated_Source\PSoC4/CapSense_Tuner.c **** *      multiple times, as a result, noise and SNR measurement will not be
+  97:Generated_Source\PSoC4/CapSense_Tuner.c **** *      accurate.
+  98:Generated_Source\PSoC4/CapSense_Tuner.c **** *    - The Tuner tool and host controller should not change the Component parameters
+  99:Generated_Source\PSoC4/CapSense_Tuner.c **** *      via the tuner interface. Changing the Component parameters via the tuner
+ 100:Generated_Source\PSoC4/CapSense_Tuner.c **** *      interface in the async mode will result in Component abnormal behavior.
+ 101:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+ 102:Generated_Source\PSoC4/CapSense_Tuner.c **** *  Note that calling this function is not mandatory for the application, but
+ 103:Generated_Source\PSoC4/CapSense_Tuner.c **** *  required only to synchronize the communication with the host controller or
+ 104:Generated_Source\PSoC4/CapSense_Tuner.c **** *  tuner application.
+ 105:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+ 106:Generated_Source\PSoC4/CapSense_Tuner.c **** * \return
+ 107:Generated_Source\PSoC4/CapSense_Tuner.c **** *  In some cases, the application program may need to know if the Component was
+ 108:Generated_Source\PSoC4/CapSense_Tuner.c **** *  re-initialized. The return indicates if a restart command was executed or not:
+ 109:Generated_Source\PSoC4/CapSense_Tuner.c **** *    - CapSense_STATUS_RESTART_DONE - Based on a received command, the
+ 110:Generated_Source\PSoC4/CapSense_Tuner.c **** *      Component was restarted.
+ 111:Generated_Source\PSoC4/CapSense_Tuner.c **** *    -  CapSense_STATUS_RESTART_NONE - No restart was executed by this
+ 112:Generated_Source\PSoC4/CapSense_Tuner.c **** *      function.
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 4
+
+
+ 113:Generated_Source\PSoC4/CapSense_Tuner.c **** *
+ 114:Generated_Source\PSoC4/CapSense_Tuner.c **** *******************************************************************************/
+ 115:Generated_Source\PSoC4/CapSense_Tuner.c **** uint32 CapSense_RunTuner(void)
+ 116:Generated_Source\PSoC4/CapSense_Tuner.c **** {
+  60              		.loc 1 116 0
+  61              		.cfi_startproc
+  62              		@ args = 0, pretend = 0, frame = 0
+  63              		@ frame_needed = 0, uses_anonymous_args = 0
+  64 0000 70B5     		push	{r4, r5, r6, lr}
+  65              		.cfi_def_cfa_offset 16
+  66              		.cfi_offset 4, -16
+  67              		.cfi_offset 5, -12
+  68              		.cfi_offset 6, -8
+  69              		.cfi_offset 14, -4
+  70              	.LVL1:
+ 117:Generated_Source\PSoC4/CapSense_Tuner.c ****     uint8 interruptState;
+ 118:Generated_Source\PSoC4/CapSense_Tuner.c ****     uint32 widgetId;
+ 119:Generated_Source\PSoC4/CapSense_Tuner.c ****     uint32 sensorId;
+ 120:Generated_Source\PSoC4/CapSense_Tuner.c ****     uint32 updateFlag = 0Lu;
+ 121:Generated_Source\PSoC4/CapSense_Tuner.c ****     CapSense_TU_CMD_ENUM command;
+ 122:Generated_Source\PSoC4/CapSense_Tuner.c ****     uint32 tunerStatus = CapSense_STATUS_RESTART_NONE;
+  71              		.loc 1 122 0
+  72 0002 0025     		movs	r5, #0
+ 120:Generated_Source\PSoC4/CapSense_Tuner.c ****     CapSense_TU_CMD_ENUM command;
+  73              		.loc 1 120 0
+  74 0004 0026     		movs	r6, #0
+  75              	.LVL2:
+  76              	.L16:
+ 123:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 124:Generated_Source\PSoC4/CapSense_Tuner.c ****     volatile CapSense_RAM_STRUCT *ptrDsRam;
+ 125:Generated_Source\PSoC4/CapSense_Tuner.c ****     volatile CapSense_RAM_SNS_STRUCT *ptrSnsTmp;
+ 126:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 127:Generated_Source\PSoC4/CapSense_Tuner.c ****     ptrDsRam = &CapSense_dsRam;
+ 128:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 129:Generated_Source\PSoC4/CapSense_Tuner.c ****     do
+ 130:Generated_Source\PSoC4/CapSense_Tuner.c ****     {
+ 131:Generated_Source\PSoC4/CapSense_Tuner.c ****         /* ONE_SCAN command could be interpreted as two commands:
+ 132:Generated_Source\PSoC4/CapSense_Tuner.c ****         * RESUME till next call of this function and then
+ 133:Generated_Source\PSoC4/CapSense_Tuner.c ****         * SUSPEND till next command receiving.
+ 134:Generated_Source\PSoC4/CapSense_Tuner.c ****         */
+ 135:Generated_Source\PSoC4/CapSense_Tuner.c ****         if (TU_FSM_ONE_SCAN == tunerFsm)
+  77              		.loc 1 135 0
+  78 0006 3E4B     		ldr	r3, .L18
+  79 0008 1B68     		ldr	r3, [r3]
+  80 000a 032B     		cmp	r3, #3
+  81 000c 06D1     		bne	.L5
+ 136:Generated_Source\PSoC4/CapSense_Tuner.c ****         {
+ 137:Generated_Source\PSoC4/CapSense_Tuner.c ****             interruptState = CyEnterCriticalSection();
+  82              		.loc 1 137 0
+  83 000e FFF7FEFF 		bl	CyEnterCriticalSection
+  84              	.LVL3:
+ 138:Generated_Source\PSoC4/CapSense_Tuner.c ****             ptrDsRam->tunerCmd = (uint16)CapSense_TU_CMD_SUSPEND_E;
+  85              		.loc 1 138 0
+  86 0012 0122     		movs	r2, #1
+  87 0014 3B4B     		ldr	r3, .L18+4
+  88 0016 DA80     		strh	r2, [r3, #6]
+ 139:Generated_Source\PSoC4/CapSense_Tuner.c ****             CyExitCriticalSection(interruptState);
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 5
+
+
+  89              		.loc 1 139 0
+  90 0018 FFF7FEFF 		bl	CyExitCriticalSection
+  91              	.LVL4:
+  92              	.L5:
+ 140:Generated_Source\PSoC4/CapSense_Tuner.c ****         }
+ 141:Generated_Source\PSoC4/CapSense_Tuner.c ****         command = (CapSense_TU_CMD_ENUM)ptrDsRam->tunerCmd;
+  93              		.loc 1 141 0
+  94 001c 394B     		ldr	r3, .L18+4
+  95 001e DC88     		ldrh	r4, [r3, #6]
+  96 0020 E4B2     		uxtb	r4, r4
+  97              	.LVL5:
+ 142:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 143:Generated_Source\PSoC4/CapSense_Tuner.c ****         /* Check command register */
+ 144:Generated_Source\PSoC4/CapSense_Tuner.c ****         switch (command)
+  98              		.loc 1 144 0
+  99 0022 062C     		cmp	r4, #6
+ 100 0024 23D8     		bhi	.L6
+ 101 0026 A300     		lsls	r3, r4, #2
+ 102 0028 374A     		ldr	r2, .L18+8
+ 103 002a D358     		ldr	r3, [r2, r3]
+ 104 002c 9F46     		mov	pc, r3
+ 105              		.section	.rodata
+ 106              		.align	2
+ 107              	.L8:
+ 108 0000 6E000000 		.word	.L6
+ 109 0004 2E000000 		.word	.L7
+ 110 0008 38000000 		.word	.L9
+ 111 000c 42000000 		.word	.L10
+ 112 0010 52000000 		.word	.L11
+ 113 0014 5C000000 		.word	.L12
+ 114 0018 66000000 		.word	.L13
+ 115              		.section	.text.CapSense_RunTuner
+ 116              	.L7:
+ 145:Generated_Source\PSoC4/CapSense_Tuner.c ****         {
+ 146:Generated_Source\PSoC4/CapSense_Tuner.c ****         case CapSense_TU_CMD_SUSPEND_E:
+ 147:Generated_Source\PSoC4/CapSense_Tuner.c ****             tunerFsm = TU_FSM_SUSPENDED;
+ 117              		.loc 1 147 0
+ 118 002e 0122     		movs	r2, #1
+ 119 0030 334B     		ldr	r3, .L18
+ 120 0032 1A60     		str	r2, [r3]
+ 121              	.LVL6:
+ 148:Generated_Source\PSoC4/CapSense_Tuner.c ****             updateFlag = 1Lu;
+ 122              		.loc 1 148 0
+ 123 0034 0126     		movs	r6, #1
+ 149:Generated_Source\PSoC4/CapSense_Tuner.c ****             break;
+ 124              		.loc 1 149 0
+ 125 0036 1AE0     		b	.L6
+ 126              	.LVL7:
+ 127              	.L9:
+ 150:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 151:Generated_Source\PSoC4/CapSense_Tuner.c ****         case CapSense_TU_CMD_RESUME_E:
+ 152:Generated_Source\PSoC4/CapSense_Tuner.c ****             tunerFsm = TU_FSM_RUNNING;
+ 128              		.loc 1 152 0
+ 129 0038 0022     		movs	r2, #0
+ 130 003a 314B     		ldr	r3, .L18
+ 131 003c 1A60     		str	r2, [r3]
+ 132              	.LVL8:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 6
+
+
+ 153:Generated_Source\PSoC4/CapSense_Tuner.c ****             updateFlag = 1Lu;
+ 133              		.loc 1 153 0
+ 134 003e 0126     		movs	r6, #1
+ 154:Generated_Source\PSoC4/CapSense_Tuner.c ****             break;
+ 135              		.loc 1 154 0
+ 136 0040 15E0     		b	.L6
+ 137              	.LVL9:
+ 138              	.L10:
+ 155:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 156:Generated_Source\PSoC4/CapSense_Tuner.c ****         case CapSense_TU_CMD_RESTART_E:
+ 157:Generated_Source\PSoC4/CapSense_Tuner.c ****             (void)CapSense_Start();
+ 139              		.loc 1 157 0
+ 140 0042 FFF7FEFF 		bl	CapSense_Start
+ 141              	.LVL10:
+ 158:Generated_Source\PSoC4/CapSense_Tuner.c ****             tunerStatus = CapSense_STATUS_RESTART_DONE;
+ 159:Generated_Source\PSoC4/CapSense_Tuner.c ****             tunerFsm = TU_FSM_RUNNING;
+ 142              		.loc 1 159 0
+ 143 0046 0022     		movs	r2, #0
+ 144 0048 2D4B     		ldr	r3, .L18
+ 145 004a 1A60     		str	r2, [r3]
+ 146              	.LVL11:
+ 158:Generated_Source\PSoC4/CapSense_Tuner.c ****             tunerStatus = CapSense_STATUS_RESTART_DONE;
+ 147              		.loc 1 158 0
+ 148 004c 0125     		movs	r5, #1
+ 160:Generated_Source\PSoC4/CapSense_Tuner.c ****             updateFlag = 1Lu;
+ 149              		.loc 1 160 0
+ 150 004e 0126     		movs	r6, #1
+ 161:Generated_Source\PSoC4/CapSense_Tuner.c ****             break;
+ 151              		.loc 1 161 0
+ 152 0050 0DE0     		b	.L6
+ 153              	.LVL12:
+ 154              	.L11:
+ 162:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 163:Generated_Source\PSoC4/CapSense_Tuner.c ****         case CapSense_TU_CMD_RUN_SNR_TEST_E:
+ 164:Generated_Source\PSoC4/CapSense_Tuner.c ****             tunerFsm = TU_FSM_SNR_TEST;
+ 155              		.loc 1 164 0
+ 156 0052 0222     		movs	r2, #2
+ 157 0054 2A4B     		ldr	r3, .L18
+ 158 0056 1A60     		str	r2, [r3]
+ 159              	.LVL13:
+ 165:Generated_Source\PSoC4/CapSense_Tuner.c ****             updateFlag = 1Lu;
+ 160              		.loc 1 165 0
+ 161 0058 0126     		movs	r6, #1
+ 166:Generated_Source\PSoC4/CapSense_Tuner.c ****             break;
+ 162              		.loc 1 166 0
+ 163 005a 08E0     		b	.L6
+ 164              	.LVL14:
+ 165              	.L12:
+ 167:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 168:Generated_Source\PSoC4/CapSense_Tuner.c ****         case CapSense_TU_CMD_PING_E:
+ 169:Generated_Source\PSoC4/CapSense_Tuner.c ****             tunerFsm = TU_FSM_RUNNING;
+ 166              		.loc 1 169 0
+ 167 005c 0022     		movs	r2, #0
+ 168 005e 284B     		ldr	r3, .L18
+ 169 0060 1A60     		str	r2, [r3]
+ 170              	.LVL15:
+ 170:Generated_Source\PSoC4/CapSense_Tuner.c ****             updateFlag = 1Lu;
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 7
+
+
+ 171              		.loc 1 170 0
+ 172 0062 0126     		movs	r6, #1
+ 171:Generated_Source\PSoC4/CapSense_Tuner.c ****             break;
+ 173              		.loc 1 171 0
+ 174 0064 03E0     		b	.L6
+ 175              	.LVL16:
+ 176              	.L13:
+ 172:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 173:Generated_Source\PSoC4/CapSense_Tuner.c ****         case CapSense_TU_CMD_ONE_SCAN_E:
+ 174:Generated_Source\PSoC4/CapSense_Tuner.c ****             tunerFsm = TU_FSM_ONE_SCAN;
+ 177              		.loc 1 174 0
+ 178 0066 0322     		movs	r2, #3
+ 179 0068 254B     		ldr	r3, .L18
+ 180 006a 1A60     		str	r2, [r3]
+ 181              	.LVL17:
+ 175:Generated_Source\PSoC4/CapSense_Tuner.c ****             updateFlag = 0Lu;
+ 182              		.loc 1 175 0
+ 183 006c 0026     		movs	r6, #0
+ 184              	.LVL18:
+ 185              	.L6:
+ 176:Generated_Source\PSoC4/CapSense_Tuner.c ****             break;
+ 177:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 178:Generated_Source\PSoC4/CapSense_Tuner.c ****         default:
+ 179:Generated_Source\PSoC4/CapSense_Tuner.c ****             break;
+ 180:Generated_Source\PSoC4/CapSense_Tuner.c ****         }
+ 181:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 182:Generated_Source\PSoC4/CapSense_Tuner.c ****         /* Set Complete flag in command register if needed */
+ 183:Generated_Source\PSoC4/CapSense_Tuner.c ****         if (0Lu != updateFlag)
+ 186              		.loc 1 183 0
+ 187 006e 002E     		cmp	r6, #0
+ 188 0070 0FD0     		beq	.L14
+ 184:Generated_Source\PSoC4/CapSense_Tuner.c ****         {
+ 185:Generated_Source\PSoC4/CapSense_Tuner.c ****             interruptState = CyEnterCriticalSection();
+ 189              		.loc 1 185 0
+ 190 0072 FFF7FEFF 		bl	CyEnterCriticalSection
+ 191              	.LVL19:
+ 186:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 187:Generated_Source\PSoC4/CapSense_Tuner.c ****             /* Check if command wasn't overwritten with new command */
+ 188:Generated_Source\PSoC4/CapSense_Tuner.c ****             if (command == (CapSense_TU_CMD_ENUM)ptrDsRam->tunerCmd)
+ 192              		.loc 1 188 0
+ 193 0076 234B     		ldr	r3, .L18+4
+ 194 0078 DB88     		ldrh	r3, [r3, #6]
+ 195 007a DBB2     		uxtb	r3, r3
+ 196 007c 9C42     		cmp	r4, r3
+ 197 007e 05D1     		bne	.L15
+ 189:Generated_Source\PSoC4/CapSense_Tuner.c ****             {
+ 190:Generated_Source\PSoC4/CapSense_Tuner.c ****                 ptrDsRam->tunerCmd |= CapSense_TU_CMD_COMPLETE_BIT;
+ 198              		.loc 1 190 0
+ 199 0080 204A     		ldr	r2, .L18+4
+ 200 0082 D188     		ldrh	r1, [r2, #6]
+ 201 0084 214B     		ldr	r3, .L18+12
+ 202 0086 0B43     		orrs	r3, r1
+ 203 0088 9BB2     		uxth	r3, r3
+ 204 008a D380     		strh	r3, [r2, #6]
+ 205              	.L15:
+ 191:Generated_Source\PSoC4/CapSense_Tuner.c ****             }
+ 192:Generated_Source\PSoC4/CapSense_Tuner.c ****             CyExitCriticalSection(interruptState);
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 8
+
+
+ 206              		.loc 1 192 0
+ 207 008c FFF7FEFF 		bl	CyExitCriticalSection
+ 208              	.LVL20:
+ 193:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 194:Generated_Source\PSoC4/CapSense_Tuner.c ****             updateFlag = 0Lu;
+ 209              		.loc 1 194 0
+ 210 0090 0026     		movs	r6, #0
+ 211              	.LVL21:
+ 212              	.L14:
+ 195:Generated_Source\PSoC4/CapSense_Tuner.c ****         }
+ 196:Generated_Source\PSoC4/CapSense_Tuner.c ****     } while (TU_FSM_SUSPENDED == tunerFsm);
+ 213              		.loc 1 196 0
+ 214 0092 1B4B     		ldr	r3, .L18
+ 215 0094 1B68     		ldr	r3, [r3]
+ 216 0096 012B     		cmp	r3, #1
+ 217 0098 B5D0     		beq	.L16
+ 197:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 198:Generated_Source\PSoC4/CapSense_Tuner.c ****     /* Check for SNR Test mode and do appropriate actions */
+ 199:Generated_Source\PSoC4/CapSense_Tuner.c ****     if (TU_FSM_SNR_TEST == tunerFsm)
+ 218              		.loc 1 199 0
+ 219 009a 022B     		cmp	r3, #2
+ 220 009c 2DD1     		bne	.L17
+ 200:Generated_Source\PSoC4/CapSense_Tuner.c ****     {
+ 201:Generated_Source\PSoC4/CapSense_Tuner.c ****         widgetId = ptrDsRam->snrTestWidgetId;
+ 221              		.loc 1 201 0
+ 222 009e 194A     		ldr	r2, .L18+4
+ 223 00a0 6233     		adds	r3, r3, #98
+ 224 00a2 D35C     		ldrb	r3, [r2, r3]
+ 225 00a4 DBB2     		uxtb	r3, r3
+ 226              	.LVL22:
+ 202:Generated_Source\PSoC4/CapSense_Tuner.c ****         sensorId = ptrDsRam->snrTestSensorId;
+ 227              		.loc 1 202 0
+ 228 00a6 6521     		movs	r1, #101
+ 229 00a8 525C     		ldrb	r2, [r2, r1]
+ 230 00aa D2B2     		uxtb	r2, r2
+ 231              	.LVL23:
+ 203:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 204:Generated_Source\PSoC4/CapSense_Tuner.c ****         /* Check if widgetId and sensorId are in range,
+ 205:Generated_Source\PSoC4/CapSense_Tuner.c ****          * and data was updated in RAM (scan counter changed)
+ 206:Generated_Source\PSoC4/CapSense_Tuner.c ****          */
+ 207:Generated_Source\PSoC4/CapSense_Tuner.c ****         if ((widgetId < CapSense_TOTAL_WIDGETS)              &&
+ 232              		.loc 1 207 0
+ 233 00ac 002B     		cmp	r3, #0
+ 234 00ae 24D1     		bne	.L17
+ 208:Generated_Source\PSoC4/CapSense_Tuner.c ****             (sensorId < CapSense_GET_SENSOR_COUNT(widgetId)) &&
+ 235              		.loc 1 208 0 discriminator 1
+ 236 00b0 3939     		subs	r1, r1, #57
+ 237 00b2 5943     		muls	r1, r3
+ 238 00b4 1648     		ldr	r0, .L18+16
+ 239 00b6 4118     		adds	r1, r0, r1
+ 240 00b8 098B     		ldrh	r1, [r1, #24]
+ 207:Generated_Source\PSoC4/CapSense_Tuner.c ****             (sensorId < CapSense_GET_SENSOR_COUNT(widgetId)) &&
+ 241              		.loc 1 207 0 discriminator 1
+ 242 00ba 8A42     		cmp	r2, r1
+ 243 00bc 1DD2     		bcs	.L17
+ 209:Generated_Source\PSoC4/CapSense_Tuner.c ****             (ptrDsRam->scanCounter != ptrDsRam->snrTestScanCounter))
+ 244              		.loc 1 209 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 9
+
+
+ 245 00be 1149     		ldr	r1, .L18+4
+ 246 00c0 0889     		ldrh	r0, [r1, #8]
+ 247 00c2 80B2     		uxth	r0, r0
+ 248 00c4 6624     		movs	r4, #102
+ 249              	.LVL24:
+ 250 00c6 095B     		ldrh	r1, [r1, r4]
+ 251 00c8 89B2     		uxth	r1, r1
+ 208:Generated_Source\PSoC4/CapSense_Tuner.c ****             (sensorId < CapSense_GET_SENSOR_COUNT(widgetId)) &&
+ 252              		.loc 1 208 0
+ 253 00ca 8842     		cmp	r0, r1
+ 254 00cc 15D0     		beq	.L17
+ 210:Generated_Source\PSoC4/CapSense_Tuner.c ****         {
+ 211:Generated_Source\PSoC4/CapSense_Tuner.c ****             /* Get access to the Sensor Object */
+ 212:Generated_Source\PSoC4/CapSense_Tuner.c ****             ptrSnsTmp = CapSense_dsFlash.wdgtArray[widgetId].ptr2SnsRam;
+ 255              		.loc 1 212 0
+ 256 00ce 2C21     		movs	r1, #44
+ 257 00d0 4B43     		muls	r3, r1
+ 258              	.LVL25:
+ 259 00d2 0F49     		ldr	r1, .L18+16
+ 260 00d4 CB18     		adds	r3, r1, r3
+ 261 00d6 9C68     		ldr	r4, [r3, #8]
+ 262              	.LVL26:
+ 213:Generated_Source\PSoC4/CapSense_Tuner.c ****             ptrSnsTmp += sensorId;
+ 263              		.loc 1 213 0
+ 264 00d8 9300     		lsls	r3, r2, #2
+ 265 00da 9A18     		adds	r2, r3, r2
+ 266              	.LVL27:
+ 267 00dc 5300     		lsls	r3, r2, #1
+ 268 00de E418     		adds	r4, r4, r3
+ 269              	.LVL28:
+ 214:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 215:Generated_Source\PSoC4/CapSense_Tuner.c ****             /* Update data in SNR Test Object */
+ 216:Generated_Source\PSoC4/CapSense_Tuner.c ****             interruptState = CyEnterCriticalSection();
+ 270              		.loc 1 216 0
+ 271 00e0 FFF7FEFF 		bl	CyEnterCriticalSection
+ 272              	.LVL29:
+ 217:Generated_Source\PSoC4/CapSense_Tuner.c ****             ptrDsRam->snrTestScanCounter = ptrDsRam->scanCounter;
+ 273              		.loc 1 217 0
+ 274 00e4 074B     		ldr	r3, .L18+4
+ 275 00e6 1A89     		ldrh	r2, [r3, #8]
+ 276 00e8 92B2     		uxth	r2, r2
+ 277 00ea 6621     		movs	r1, #102
+ 278 00ec 5A52     		strh	r2, [r3, r1]
+ 218:Generated_Source\PSoC4/CapSense_Tuner.c ****             ptrDsRam->snrTestRawCount[0u] = ptrSnsTmp->raw[0u];
+ 279              		.loc 1 218 0
+ 280 00ee 2288     		ldrh	r2, [r4]
+ 281 00f0 92B2     		uxth	r2, r2
+ 282 00f2 0231     		adds	r1, r1, #2
+ 283 00f4 5A52     		strh	r2, [r3, r1]
+ 219:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 220:Generated_Source\PSoC4/CapSense_Tuner.c ****             #if (0u != CapSense_MULTI_FREQ_SCAN_EN)
+ 221:Generated_Source\PSoC4/CapSense_Tuner.c ****                 ptrDsRam->snrTestRawCount[1u] = ptrSnsTmp->raw[1u];
+ 222:Generated_Source\PSoC4/CapSense_Tuner.c ****                 ptrDsRam->snrTestRawCount[2u] = ptrSnsTmp->raw[2u];
+ 223:Generated_Source\PSoC4/CapSense_Tuner.c ****             #endif
+ 224:Generated_Source\PSoC4/CapSense_Tuner.c **** 
+ 225:Generated_Source\PSoC4/CapSense_Tuner.c ****             CyExitCriticalSection(interruptState);
+ 284              		.loc 1 225 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 10
+
+
+ 285 00f6 FFF7FEFF 		bl	CyExitCriticalSection
+ 286              	.LVL30:
+ 287              	.L17:
+ 226:Generated_Source\PSoC4/CapSense_Tuner.c ****         }
+ 227:Generated_Source\PSoC4/CapSense_Tuner.c ****     }
+ 228:Generated_Source\PSoC4/CapSense_Tuner.c ****     return tunerStatus;
+ 229:Generated_Source\PSoC4/CapSense_Tuner.c **** }
+ 288              		.loc 1 229 0
+ 289 00fa 2800     		movs	r0, r5
+ 290              		@ sp needed
+ 291              	.LVL31:
+ 292              	.LVL32:
+ 293 00fc 70BD     		pop	{r4, r5, r6, pc}
+ 294              	.L19:
+ 295 00fe C046     		.align	2
+ 296              	.L18:
+ 297 0100 00000000 		.word	.LANCHOR0
+ 298 0104 00000000 		.word	CapSense_dsRam
+ 299 0108 00000000 		.word	.L8
+ 300 010c 0080FFFF 		.word	-32768
+ 301 0110 00000000 		.word	CapSense_dsFlash
+ 302              		.cfi_endproc
+ 303              	.LFE2:
+ 304              		.size	CapSense_RunTuner, .-CapSense_RunTuner
+ 305              		.bss
+ 306              		.align	2
+ 307              		.set	.LANCHOR0,. + 0
+ 308              		.type	tunerFsm, %object
+ 309              		.size	tunerFsm, 4
+ 310              	tunerFsm:
+ 311 0000 00000000 		.space	4
+ 312              		.text
+ 313              	.Letext0:
+ 314              		.file 2 "Generated_Source\\PSoC4\\cytypes.h"
+ 315              		.file 3 "Generated_Source\\PSoC4\\CapSense_Configuration.h"
+ 316              		.file 4 "Generated_Source\\PSoC4\\CapSense_SmartSense_LL.h"
+ 317              		.file 5 "Generated_Source\\PSoC4\\CapSense_Structure.h"
+ 318              		.file 6 "Generated_Source\\PSoC4\\CapSense_Tuner.h"
+ 319              		.file 7 "Generated_Source\\PSoC4\\CyLib.h"
+ 320              		.file 8 "Generated_Source\\PSoC4\\CapSense_Control.h"
+ 321              		.section	.debug_info,"",%progbits
+ 322              	.Ldebug_info0:
+ 323 0000 7B060000 		.4byte	0x67b
+ 324 0004 0400     		.2byte	0x4
+ 325 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 326 000a 04       		.byte	0x4
+ 327 000b 01       		.uleb128 0x1
+ 328 000c 6C010000 		.4byte	.LASF105
+ 329 0010 0C       		.byte	0xc
+ 330 0011 0E030000 		.4byte	.LASF106
+ 331 0015 74000000 		.4byte	.LASF107
+ 332 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 333 001d 00000000 		.4byte	0
+ 334 0021 00000000 		.4byte	.Ldebug_line0
+ 335 0025 02       		.uleb128 0x2
+ 336 0026 01       		.byte	0x1
+ 337 0027 06       		.byte	0x6
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 11
+
+
+ 338 0028 F4030000 		.4byte	.LASF0
+ 339 002c 02       		.uleb128 0x2
+ 340 002d 01       		.byte	0x1
+ 341 002e 08       		.byte	0x8
+ 342 002f 70030000 		.4byte	.LASF1
+ 343 0033 02       		.uleb128 0x2
+ 344 0034 02       		.byte	0x2
+ 345 0035 05       		.byte	0x5
+ 346 0036 12010000 		.4byte	.LASF2
+ 347 003a 02       		.uleb128 0x2
+ 348 003b 02       		.byte	0x2
+ 349 003c 07       		.byte	0x7
+ 350 003d 10050000 		.4byte	.LASF3
+ 351 0041 02       		.uleb128 0x2
+ 352 0042 04       		.byte	0x4
+ 353 0043 05       		.byte	0x5
+ 354 0044 FC020000 		.4byte	.LASF4
+ 355 0048 02       		.uleb128 0x2
+ 356 0049 04       		.byte	0x4
+ 357 004a 07       		.byte	0x7
+ 358 004b 5D040000 		.4byte	.LASF5
+ 359 004f 02       		.uleb128 0x2
+ 360 0050 08       		.byte	0x8
+ 361 0051 05       		.byte	0x5
+ 362 0052 12020000 		.4byte	.LASF6
+ 363 0056 02       		.uleb128 0x2
+ 364 0057 08       		.byte	0x8
+ 365 0058 07       		.byte	0x7
+ 366 0059 1D040000 		.4byte	.LASF7
+ 367 005d 03       		.uleb128 0x3
+ 368 005e 04       		.byte	0x4
+ 369 005f 05       		.byte	0x5
+ 370 0060 696E7400 		.ascii	"int\000"
+ 371 0064 02       		.uleb128 0x2
+ 372 0065 04       		.byte	0x4
+ 373 0066 07       		.byte	0x7
+ 374 0067 50040000 		.4byte	.LASF8
+ 375 006b 04       		.uleb128 0x4
+ 376 006c A1020000 		.4byte	.LASF9
+ 377 0070 02       		.byte	0x2
+ 378 0071 E401     		.2byte	0x1e4
+ 379 0073 2C000000 		.4byte	0x2c
+ 380 0077 04       		.uleb128 0x4
+ 381 0078 78020000 		.4byte	.LASF10
+ 382 007c 02       		.byte	0x2
+ 383 007d E501     		.2byte	0x1e5
+ 384 007f 3A000000 		.4byte	0x3a
+ 385 0083 04       		.uleb128 0x4
+ 386 0084 74050000 		.4byte	.LASF11
+ 387 0088 02       		.byte	0x2
+ 388 0089 E601     		.2byte	0x1e6
+ 389 008b 48000000 		.4byte	0x48
+ 390 008f 02       		.uleb128 0x2
+ 391 0090 04       		.byte	0x4
+ 392 0091 04       		.byte	0x4
+ 393 0092 AE020000 		.4byte	.LASF12
+ 394 0096 02       		.uleb128 0x2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 12
+
+
+ 395 0097 08       		.byte	0x8
+ 396 0098 04       		.byte	0x4
+ 397 0099 84050000 		.4byte	.LASF13
+ 398 009d 02       		.uleb128 0x2
+ 399 009e 01       		.byte	0x1
+ 400 009f 08       		.byte	0x8
+ 401 00a0 F7020000 		.4byte	.LASF14
+ 402 00a4 05       		.uleb128 0x5
+ 403 00a5 83000000 		.4byte	0x83
+ 404 00a9 02       		.uleb128 0x2
+ 405 00aa 08       		.byte	0x8
+ 406 00ab 04       		.byte	0x4
+ 407 00ac 99030000 		.4byte	.LASF15
+ 408 00b0 02       		.uleb128 0x2
+ 409 00b1 04       		.byte	0x4
+ 410 00b2 07       		.byte	0x7
+ 411 00b3 27010000 		.4byte	.LASF16
+ 412 00b7 06       		.uleb128 0x6
+ 413 00b8 04       		.byte	0x4
+ 414 00b9 04       		.uleb128 0x4
+ 415 00ba DC030000 		.4byte	.LASF17
+ 416 00be 03       		.byte	0x3
+ 417 00bf 2101     		.2byte	0x121
+ 418 00c1 77000000 		.4byte	0x77
+ 419 00c5 04       		.uleb128 0x4
+ 420 00c6 C7040000 		.4byte	.LASF18
+ 421 00ca 03       		.byte	0x3
+ 422 00cb 2501     		.2byte	0x125
+ 423 00cd 6B000000 		.4byte	0x6b
+ 424 00d1 07       		.uleb128 0x7
+ 425 00d2 0C       		.byte	0xc
+ 426 00d3 04       		.byte	0x4
+ 427 00d4 6E       		.byte	0x6e
+ 428 00d5 2E010000 		.4byte	0x12e
+ 429 00d9 08       		.uleb128 0x8
+ 430 00da 20020000 		.4byte	.LASF19
+ 431 00de 04       		.byte	0x4
+ 432 00df 73       		.byte	0x73
+ 433 00e0 77000000 		.4byte	0x77
+ 434 00e4 00       		.byte	0
+ 435 00e5 08       		.uleb128 0x8
+ 436 00e6 7A040000 		.4byte	.LASF20
+ 437 00ea 04       		.byte	0x4
+ 438 00eb 77       		.byte	0x77
+ 439 00ec 77000000 		.4byte	0x77
+ 440 00f0 02       		.byte	0x2
+ 441 00f1 08       		.uleb128 0x8
+ 442 00f2 34020000 		.4byte	.LASF21
+ 443 00f6 04       		.byte	0x4
+ 444 00f7 7B       		.byte	0x7b
+ 445 00f8 77000000 		.4byte	0x77
+ 446 00fc 04       		.byte	0x4
+ 447 00fd 08       		.uleb128 0x8
+ 448 00fe 3B020000 		.4byte	.LASF22
+ 449 0102 04       		.byte	0x4
+ 450 0103 7F       		.byte	0x7f
+ 451 0104 77000000 		.4byte	0x77
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 13
+
+
+ 452 0108 06       		.byte	0x6
+ 453 0109 08       		.uleb128 0x8
+ 454 010a 89030000 		.4byte	.LASF23
+ 455 010e 04       		.byte	0x4
+ 456 010f 83       		.byte	0x83
+ 457 0110 77000000 		.4byte	0x77
+ 458 0114 08       		.byte	0x8
+ 459 0115 08       		.uleb128 0x8
+ 460 0116 59020000 		.4byte	.LASF24
+ 461 011a 04       		.byte	0x4
+ 462 011b 87       		.byte	0x87
+ 463 011c 6B000000 		.4byte	0x6b
+ 464 0120 0A       		.byte	0xa
+ 465 0121 08       		.uleb128 0x8
+ 466 0122 60020000 		.4byte	.LASF25
+ 467 0126 04       		.byte	0x4
+ 468 0127 8B       		.byte	0x8b
+ 469 0128 6B000000 		.4byte	0x6b
+ 470 012c 0B       		.byte	0xb
+ 471 012d 00       		.byte	0
+ 472 012e 09       		.uleb128 0x9
+ 473 012f 4D060000 		.4byte	.LASF26
+ 474 0133 04       		.byte	0x4
+ 475 0134 8C       		.byte	0x8c
+ 476 0135 D1000000 		.4byte	0xd1
+ 477 0139 0A       		.uleb128 0xa
+ 478 013a 6B000000 		.4byte	0x6b
+ 479 013e 49010000 		.4byte	0x149
+ 480 0142 0B       		.uleb128 0xb
+ 481 0143 B0000000 		.4byte	0xb0
+ 482 0147 00       		.byte	0
+ 483 0148 00       		.byte	0
+ 484 0149 07       		.uleb128 0x7
+ 485 014a 14       		.byte	0x14
+ 486 014b 05       		.byte	0x5
+ 487 014c DA       		.byte	0xda
+ 488 014d F5010000 		.4byte	0x1f5
+ 489 0151 08       		.uleb128 0x8
+ 490 0152 05050000 		.4byte	.LASF27
+ 491 0156 05       		.byte	0x5
+ 492 0157 DF       		.byte	0xdf
+ 493 0158 77000000 		.4byte	0x77
+ 494 015c 00       		.byte	0
+ 495 015d 08       		.uleb128 0x8
+ 496 015e 36030000 		.4byte	.LASF28
+ 497 0162 05       		.byte	0x5
+ 498 0163 E4       		.byte	0xe4
+ 499 0164 B9000000 		.4byte	0xb9
+ 500 0168 02       		.byte	0x2
+ 501 0169 08       		.uleb128 0x8
+ 502 016a 67020000 		.4byte	.LASF29
+ 503 016e 05       		.byte	0x5
+ 504 016f E9       		.byte	0xe9
+ 505 0170 6B000000 		.4byte	0x6b
+ 506 0174 04       		.byte	0x4
+ 507 0175 08       		.uleb128 0x8
+ 508 0176 41050000 		.4byte	.LASF30
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 14
+
+
+ 509 017a 05       		.byte	0x5
+ 510 017b EE       		.byte	0xee
+ 511 017c 6B000000 		.4byte	0x6b
+ 512 0180 05       		.byte	0x5
+ 513 0181 08       		.uleb128 0x8
+ 514 0182 7E030000 		.4byte	.LASF31
+ 515 0186 05       		.byte	0x5
+ 516 0187 F4       		.byte	0xf4
+ 517 0188 6B000000 		.4byte	0x6b
+ 518 018c 06       		.byte	0x6
+ 519 018d 08       		.uleb128 0x8
+ 520 018e 1C010000 		.4byte	.LASF32
+ 521 0192 05       		.byte	0x5
+ 522 0193 FA       		.byte	0xfa
+ 523 0194 6B000000 		.4byte	0x6b
+ 524 0198 07       		.byte	0x7
+ 525 0199 0C       		.uleb128 0xc
+ 526 019a D1030000 		.4byte	.LASF33
+ 527 019e 05       		.byte	0x5
+ 528 019f 0101     		.2byte	0x101
+ 529 01a1 C5000000 		.4byte	0xc5
+ 530 01a5 08       		.byte	0x8
+ 531 01a6 0C       		.uleb128 0xc
+ 532 01a7 FB000000 		.4byte	.LASF34
+ 533 01ab 05       		.byte	0x5
+ 534 01ac 0801     		.2byte	0x108
+ 535 01ae 39010000 		.4byte	0x139
+ 536 01b2 09       		.byte	0x9
+ 537 01b3 0C       		.uleb128 0xc
+ 538 01b4 A7020000 		.4byte	.LASF35
+ 539 01b8 05       		.byte	0x5
+ 540 01b9 1001     		.2byte	0x110
+ 541 01bb 77000000 		.4byte	0x77
+ 542 01bf 0A       		.byte	0xa
+ 543 01c0 0C       		.uleb128 0xc
+ 544 01c1 27020000 		.4byte	.LASF36
+ 545 01c5 05       		.byte	0x5
+ 546 01c6 1501     		.2byte	0x115
+ 547 01c8 6B000000 		.4byte	0x6b
+ 548 01cc 0C       		.byte	0xc
+ 549 01cd 0C       		.uleb128 0xc
+ 550 01ce 19060000 		.4byte	.LASF37
+ 551 01d2 05       		.byte	0x5
+ 552 01d3 1B01     		.2byte	0x11b
+ 553 01d5 77000000 		.4byte	0x77
+ 554 01d9 0E       		.byte	0xe
+ 555 01da 0C       		.uleb128 0xc
+ 556 01db 6D050000 		.4byte	.LASF38
+ 557 01df 05       		.byte	0x5
+ 558 01e0 2001     		.2byte	0x120
+ 559 01e2 77000000 		.4byte	0x77
+ 560 01e6 10       		.byte	0x10
+ 561 01e7 0C       		.uleb128 0xc
+ 562 01e8 34060000 		.4byte	.LASF39
+ 563 01ec 05       		.byte	0x5
+ 564 01ed 2501     		.2byte	0x125
+ 565 01ef F5010000 		.4byte	0x1f5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 15
+
+
+ 566 01f3 12       		.byte	0x12
+ 567 01f4 00       		.byte	0
+ 568 01f5 0A       		.uleb128 0xa
+ 569 01f6 77000000 		.4byte	0x77
+ 570 01fa 05020000 		.4byte	0x205
+ 571 01fe 0B       		.uleb128 0xb
+ 572 01ff B0000000 		.4byte	0xb0
+ 573 0203 00       		.byte	0
+ 574 0204 00       		.byte	0
+ 575 0205 04       		.uleb128 0x4
+ 576 0206 90060000 		.4byte	.LASF40
+ 577 020a 05       		.byte	0x5
+ 578 020b 2601     		.2byte	0x126
+ 579 020d 49010000 		.4byte	0x149
+ 580 0211 0D       		.uleb128 0xd
+ 581 0212 14       		.byte	0x14
+ 582 0213 05       		.byte	0x5
+ 583 0214 2C01     		.2byte	0x12c
+ 584 0216 28020000 		.4byte	0x228
+ 585 021a 0E       		.uleb128 0xe
+ 586 021b 736C6400 		.ascii	"sld\000"
+ 587 021f 05       		.byte	0x5
+ 588 0220 3101     		.2byte	0x131
+ 589 0222 05020000 		.4byte	0x205
+ 590 0226 00       		.byte	0
+ 591 0227 00       		.byte	0
+ 592 0228 04       		.uleb128 0x4
+ 593 0229 B4020000 		.4byte	.LASF41
+ 594 022d 05       		.byte	0x5
+ 595 022e 3201     		.2byte	0x132
+ 596 0230 11020000 		.4byte	0x211
+ 597 0234 0D       		.uleb128 0xd
+ 598 0235 0A       		.byte	0xa
+ 599 0236 05       		.byte	0x5
+ 600 0237 3801     		.2byte	0x138
+ 601 0239 8C020000 		.4byte	0x28c
+ 602 023d 0E       		.uleb128 0xe
+ 603 023e 72617700 		.ascii	"raw\000"
+ 604 0242 05       		.byte	0x5
+ 605 0243 3D01     		.2byte	0x13d
+ 606 0245 F5010000 		.4byte	0x1f5
+ 607 0249 00       		.byte	0
+ 608 024a 0C       		.uleb128 0xc
+ 609 024b 51000000 		.4byte	.LASF42
+ 610 024f 05       		.byte	0x5
+ 611 0250 4201     		.2byte	0x142
+ 612 0252 F5010000 		.4byte	0x1f5
+ 613 0256 02       		.byte	0x2
+ 614 0257 0C       		.uleb128 0xc
+ 615 0258 8B050000 		.4byte	.LASF43
+ 616 025c 05       		.byte	0x5
+ 617 025d 4801     		.2byte	0x148
+ 618 025f 39010000 		.4byte	0x139
+ 619 0263 04       		.byte	0x4
+ 620 0264 0C       		.uleb128 0xc
+ 621 0265 AE060000 		.4byte	.LASF44
+ 622 0269 05       		.byte	0x5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 16
+
+
+ 623 026a 4D01     		.2byte	0x14d
+ 624 026c B9000000 		.4byte	0xb9
+ 625 0270 06       		.byte	0x6
+ 626 0271 0C       		.uleb128 0xc
+ 627 0272 3F030000 		.4byte	.LASF45
+ 628 0276 05       		.byte	0x5
+ 629 0277 5201     		.2byte	0x152
+ 630 0279 8C020000 		.4byte	0x28c
+ 631 027d 08       		.byte	0x8
+ 632 027e 0C       		.uleb128 0xc
+ 633 027f FE010000 		.4byte	.LASF46
+ 634 0283 05       		.byte	0x5
+ 635 0284 5701     		.2byte	0x157
+ 636 0286 39010000 		.4byte	0x139
+ 637 028a 09       		.byte	0x9
+ 638 028b 00       		.byte	0
+ 639 028c 0A       		.uleb128 0xa
+ 640 028d C5000000 		.4byte	0xc5
+ 641 0291 9C020000 		.4byte	0x29c
+ 642 0295 0B       		.uleb128 0xb
+ 643 0296 B0000000 		.4byte	0xb0
+ 644 029a 00       		.byte	0
+ 645 029b 00       		.byte	0
+ 646 029c 04       		.uleb128 0x4
+ 647 029d AF040000 		.4byte	.LASF47
+ 648 02a1 05       		.byte	0x5
+ 649 02a2 5801     		.2byte	0x158
+ 650 02a4 34020000 		.4byte	0x234
+ 651 02a8 0D       		.uleb128 0xd
+ 652 02a9 32       		.byte	0x32
+ 653 02aa 05       		.byte	0x5
+ 654 02ab 5E01     		.2byte	0x15e
+ 655 02ad BF020000 		.4byte	0x2bf
+ 656 02b1 0E       		.uleb128 0xe
+ 657 02b2 736C6400 		.ascii	"sld\000"
+ 658 02b6 05       		.byte	0x5
+ 659 02b7 6301     		.2byte	0x163
+ 660 02b9 BF020000 		.4byte	0x2bf
+ 661 02bd 00       		.byte	0
+ 662 02be 00       		.byte	0
+ 663 02bf 0A       		.uleb128 0xa
+ 664 02c0 9C020000 		.4byte	0x29c
+ 665 02c4 CF020000 		.4byte	0x2cf
+ 666 02c8 0B       		.uleb128 0xb
+ 667 02c9 B0000000 		.4byte	0xb0
+ 668 02cd 04       		.byte	0x4
+ 669 02ce 00       		.byte	0
+ 670 02cf 04       		.uleb128 0x4
+ 671 02d0 00040000 		.4byte	.LASF48
+ 672 02d4 05       		.byte	0x5
+ 673 02d5 6401     		.2byte	0x164
+ 674 02d7 A8020000 		.4byte	0x2a8
+ 675 02db 0D       		.uleb128 0xd
+ 676 02dc 6C       		.byte	0x6c
+ 677 02dd 05       		.byte	0x5
+ 678 02de 6A01     		.2byte	0x16a
+ 679 02e0 C2030000 		.4byte	0x3c2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 17
+
+
+ 680 02e4 0C       		.uleb128 0xc
+ 681 02e5 63010000 		.4byte	.LASF49
+ 682 02e9 05       		.byte	0x5
+ 683 02ea 7101     		.2byte	0x171
+ 684 02ec 77000000 		.4byte	0x77
+ 685 02f0 00       		.byte	0
+ 686 02f1 0C       		.uleb128 0xc
+ 687 02f2 6F020000 		.4byte	.LASF50
+ 688 02f6 05       		.byte	0x5
+ 689 02f7 7601     		.2byte	0x176
+ 690 02f9 77000000 		.4byte	0x77
+ 691 02fd 02       		.byte	0x2
+ 692 02fe 0C       		.uleb128 0xc
+ 693 02ff BB050000 		.4byte	.LASF51
+ 694 0303 05       		.byte	0x5
+ 695 0304 7B01     		.2byte	0x17b
+ 696 0306 77000000 		.4byte	0x77
+ 697 030a 04       		.byte	0x4
+ 698 030b 0C       		.uleb128 0xc
+ 699 030c 90030000 		.4byte	.LASF52
+ 700 0310 05       		.byte	0x5
+ 701 0311 8101     		.2byte	0x181
+ 702 0313 77000000 		.4byte	0x77
+ 703 0317 06       		.byte	0x6
+ 704 0318 0C       		.uleb128 0xc
+ 705 0319 35050000 		.4byte	.LASF53
+ 706 031d 05       		.byte	0x5
+ 707 031e 8601     		.2byte	0x186
+ 708 0320 77000000 		.4byte	0x77
+ 709 0324 08       		.byte	0x8
+ 710 0325 0C       		.uleb128 0xc
+ 711 0326 E2040000 		.4byte	.LASF54
+ 712 032a 05       		.byte	0x5
+ 713 032b 8B01     		.2byte	0x18b
+ 714 032d A4000000 		.4byte	0xa4
+ 715 0331 0C       		.byte	0xc
+ 716 0332 0C       		.uleb128 0xc
+ 717 0333 6F040000 		.4byte	.LASF55
+ 718 0337 05       		.byte	0x5
+ 719 0338 9101     		.2byte	0x191
+ 720 033a C2030000 		.4byte	0x3c2
+ 721 033e 10       		.byte	0x10
+ 722 033f 0C       		.uleb128 0xc
+ 723 0340 A5030000 		.4byte	.LASF56
+ 724 0344 05       		.byte	0x5
+ 725 0345 9801     		.2byte	0x198
+ 726 0347 C2030000 		.4byte	0x3c2
+ 727 034b 14       		.byte	0x14
+ 728 034c 0C       		.uleb128 0xc
+ 729 034d 7E060000 		.4byte	.LASF57
+ 730 0351 05       		.byte	0x5
+ 731 0352 A801     		.2byte	0x1a8
+ 732 0354 39010000 		.4byte	0x139
+ 733 0358 18       		.byte	0x18
+ 734 0359 0C       		.uleb128 0xc
+ 735 035a 07020000 		.4byte	.LASF58
+ 736 035e 05       		.byte	0x5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 18
+
+
+ 737 035f AE01     		.2byte	0x1ae
+ 738 0361 77000000 		.4byte	0x77
+ 739 0365 1A       		.byte	0x1a
+ 740 0366 0C       		.uleb128 0xc
+ 741 0367 2B050000 		.4byte	.LASF59
+ 742 036b 05       		.byte	0x5
+ 743 036c B301     		.2byte	0x1b3
+ 744 036e 6B000000 		.4byte	0x6b
+ 745 0372 1C       		.byte	0x1c
+ 746 0373 0C       		.uleb128 0xc
+ 747 0374 16000000 		.4byte	.LASF60
+ 748 0378 05       		.byte	0x5
+ 749 0379 B801     		.2byte	0x1b8
+ 750 037b 28020000 		.4byte	0x228
+ 751 037f 1E       		.byte	0x1e
+ 752 0380 0C       		.uleb128 0xc
+ 753 0381 23050000 		.4byte	.LASF61
+ 754 0385 05       		.byte	0x5
+ 755 0386 BD01     		.2byte	0x1bd
+ 756 0388 CF020000 		.4byte	0x2cf
+ 757 038c 32       		.byte	0x32
+ 758 038d 0C       		.uleb128 0xc
+ 759 038e 3D060000 		.4byte	.LASF62
+ 760 0392 05       		.byte	0x5
+ 761 0393 C201     		.2byte	0x1c2
+ 762 0395 6B000000 		.4byte	0x6b
+ 763 0399 64       		.byte	0x64
+ 764 039a 0C       		.uleb128 0xc
+ 765 039b D0020000 		.4byte	.LASF63
+ 766 039f 05       		.byte	0x5
+ 767 03a0 C701     		.2byte	0x1c7
+ 768 03a2 6B000000 		.4byte	0x6b
+ 769 03a6 65       		.byte	0x65
+ 770 03a7 0C       		.uleb128 0xc
+ 771 03a8 F2040000 		.4byte	.LASF64
+ 772 03ac 05       		.byte	0x5
+ 773 03ad CC01     		.2byte	0x1cc
+ 774 03af 77000000 		.4byte	0x77
+ 775 03b3 66       		.byte	0x66
+ 776 03b4 0C       		.uleb128 0xc
+ 777 03b5 1F000000 		.4byte	.LASF65
+ 778 03b9 05       		.byte	0x5
+ 779 03ba D101     		.2byte	0x1d1
+ 780 03bc F5010000 		.4byte	0x1f5
+ 781 03c0 68       		.byte	0x68
+ 782 03c1 00       		.byte	0
+ 783 03c2 0A       		.uleb128 0xa
+ 784 03c3 83000000 		.4byte	0x83
+ 785 03c7 D2030000 		.4byte	0x3d2
+ 786 03cb 0B       		.uleb128 0xb
+ 787 03cc B0000000 		.4byte	0xb0
+ 788 03d0 00       		.byte	0
+ 789 03d1 00       		.byte	0
+ 790 03d2 04       		.uleb128 0x4
+ 791 03d3 59050000 		.4byte	.LASF66
+ 792 03d7 05       		.byte	0x5
+ 793 03d8 D201     		.2byte	0x1d2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 19
+
+
+ 794 03da DB020000 		.4byte	0x2db
+ 795 03de 0D       		.uleb128 0xd
+ 796 03df 2C       		.byte	0x2c
+ 797 03e0 05       		.byte	0x5
+ 798 03e1 3902     		.2byte	0x239
+ 799 03e3 91040000 		.4byte	0x491
+ 800 03e7 0C       		.uleb128 0xc
+ 801 03e8 F2050000 		.4byte	.LASF67
+ 802 03ec 05       		.byte	0x5
+ 803 03ed 4202     		.2byte	0x242
+ 804 03ef 91040000 		.4byte	0x491
+ 805 03f3 00       		.byte	0
+ 806 03f4 0C       		.uleb128 0xc
+ 807 03f5 4D030000 		.4byte	.LASF68
+ 808 03f9 05       		.byte	0x5
+ 809 03fa 4902     		.2byte	0x249
+ 810 03fc B7000000 		.4byte	0xb7
+ 811 0400 04       		.byte	0x4
+ 812 0401 0C       		.uleb128 0xc
+ 813 0402 E7050000 		.4byte	.LASF69
+ 814 0406 05       		.byte	0x5
+ 815 0407 4F02     		.2byte	0x24f
+ 816 0409 98040000 		.4byte	0x498
+ 817 040d 08       		.byte	0x8
+ 818 040e 0C       		.uleb128 0xc
+ 819 040f FF050000 		.4byte	.LASF70
+ 820 0413 05       		.byte	0x5
+ 821 0414 5502     		.2byte	0x255
+ 822 0416 B7000000 		.4byte	0xb7
+ 823 041a 0C       		.byte	0xc
+ 824 041b 0C       		.uleb128 0xc
+ 825 041c 91020000 		.4byte	.LASF71
+ 826 0420 05       		.byte	0x5
+ 827 0421 5C02     		.2byte	0x25c
+ 828 0423 9E040000 		.4byte	0x49e
+ 829 0427 10       		.byte	0x10
+ 830 0428 0C       		.uleb128 0xc
+ 831 0429 34040000 		.4byte	.LASF72
+ 832 042d 05       		.byte	0x5
+ 833 042e 6102     		.2byte	0x261
+ 834 0430 83000000 		.4byte	0x83
+ 835 0434 14       		.byte	0x14
+ 836 0435 0C       		.uleb128 0xc
+ 837 0436 D4000000 		.4byte	.LASF73
+ 838 043a 05       		.byte	0x5
+ 839 043b 6802     		.2byte	0x268
+ 840 043d 77000000 		.4byte	0x77
+ 841 0441 18       		.byte	0x18
+ 842 0442 0C       		.uleb128 0xc
+ 843 0443 05030000 		.4byte	.LASF74
+ 844 0447 05       		.byte	0x5
+ 845 0448 6F02     		.2byte	0x26f
+ 846 044a 6B000000 		.4byte	0x6b
+ 847 044e 1A       		.byte	0x1a
+ 848 044f 0C       		.uleb128 0xc
+ 849 0450 68030000 		.4byte	.LASF75
+ 850 0454 05       		.byte	0x5
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 20
+
+
+ 851 0455 7902     		.2byte	0x279
+ 852 0457 6B000000 		.4byte	0x6b
+ 853 045b 1B       		.byte	0x1b
+ 854 045c 0C       		.uleb128 0xc
+ 855 045d 2F000000 		.4byte	.LASF76
+ 856 0461 05       		.byte	0x5
+ 857 0462 7E02     		.2byte	0x27e
+ 858 0464 77000000 		.4byte	0x77
+ 859 0468 1C       		.byte	0x1c
+ 860 0469 0C       		.uleb128 0xc
+ 861 046a 81040000 		.4byte	.LASF77
+ 862 046e 05       		.byte	0x5
+ 863 046f 8702     		.2byte	0x287
+ 864 0471 83000000 		.4byte	0x83
+ 865 0475 20       		.byte	0x20
+ 866 0476 0C       		.uleb128 0xc
+ 867 0477 B3060000 		.4byte	.LASF78
+ 868 047b 05       		.byte	0x5
+ 869 047c 8F02     		.2byte	0x28f
+ 870 047e A4040000 		.4byte	0x4a4
+ 871 0482 24       		.byte	0x24
+ 872 0483 0C       		.uleb128 0xc
+ 873 0484 03010000 		.4byte	.LASF79
+ 874 0488 05       		.byte	0x5
+ 875 0489 9402     		.2byte	0x294
+ 876 048b 6B000000 		.4byte	0x6b
+ 877 048f 28       		.byte	0x28
+ 878 0490 00       		.byte	0
+ 879 0491 0F       		.uleb128 0xf
+ 880 0492 04       		.byte	0x4
+ 881 0493 97040000 		.4byte	0x497
+ 882 0497 10       		.uleb128 0x10
+ 883 0498 0F       		.uleb128 0xf
+ 884 0499 04       		.byte	0x4
+ 885 049a 9C020000 		.4byte	0x29c
+ 886 049e 0F       		.uleb128 0xf
+ 887 049f 04       		.byte	0x4
+ 888 04a0 6B000000 		.4byte	0x6b
+ 889 04a4 0F       		.uleb128 0xf
+ 890 04a5 04       		.byte	0x4
+ 891 04a6 2E010000 		.4byte	0x12e
+ 892 04aa 04       		.uleb128 0x4
+ 893 04ab 4A010000 		.4byte	.LASF80
+ 894 04af 05       		.byte	0x5
+ 895 04b0 9502     		.2byte	0x295
+ 896 04b2 DE030000 		.4byte	0x3de
+ 897 04b6 0D       		.uleb128 0xd
+ 898 04b7 2C       		.byte	0x2c
+ 899 04b8 05       		.byte	0x5
+ 900 04b9 9B02     		.2byte	0x29b
+ 901 04bb CD040000 		.4byte	0x4cd
+ 902 04bf 0C       		.uleb128 0xc
+ 903 04c0 0F060000 		.4byte	.LASF81
+ 904 04c4 05       		.byte	0x5
+ 905 04c5 A002     		.2byte	0x2a0
+ 906 04c7 CD040000 		.4byte	0x4cd
+ 907 04cb 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 21
+
+
+ 908 04cc 00       		.byte	0
+ 909 04cd 0A       		.uleb128 0xa
+ 910 04ce AA040000 		.4byte	0x4aa
+ 911 04d2 DD040000 		.4byte	0x4dd
+ 912 04d6 0B       		.uleb128 0xb
+ 913 04d7 B0000000 		.4byte	0xb0
+ 914 04db 00       		.byte	0
+ 915 04dc 00       		.byte	0
+ 916 04dd 04       		.uleb128 0x4
+ 917 04de 00000000 		.4byte	.LASF82
+ 918 04e2 05       		.byte	0x5
+ 919 04e3 A102     		.2byte	0x2a1
+ 920 04e5 B6040000 		.4byte	0x4b6
+ 921 04e9 11       		.uleb128 0x11
+ 922 04ea 01       		.byte	0x1
+ 923 04eb 2C000000 		.4byte	0x2c
+ 924 04ef 06       		.byte	0x6
+ 925 04f0 2E       		.byte	0x2e
+ 926 04f1 20050000 		.4byte	0x520
+ 927 04f5 12       		.uleb128 0x12
+ 928 04f6 42020000 		.4byte	.LASF83
+ 929 04fa 00       		.byte	0
+ 930 04fb 12       		.uleb128 0x12
+ 931 04fc 95040000 		.4byte	.LASF84
+ 932 0500 01       		.byte	0x1
+ 933 0501 12       		.uleb128 0x12
+ 934 0502 CE050000 		.4byte	.LASF85
+ 935 0506 02       		.byte	0x2
+ 936 0507 12       		.uleb128 0x12
+ 937 0508 30010000 		.4byte	.LASF86
+ 938 050c 03       		.byte	0x3
+ 939 050d 12       		.uleb128 0x12
+ 940 050e 93050000 		.4byte	.LASF87
+ 941 0512 04       		.byte	0x4
+ 942 0513 12       		.uleb128 0x12
+ 943 0514 E0020000 		.4byte	.LASF88
+ 944 0518 05       		.byte	0x5
+ 945 0519 12       		.uleb128 0x12
+ 946 051a E0000000 		.4byte	.LASF89
+ 947 051e 06       		.byte	0x6
+ 948 051f 00       		.byte	0
+ 949 0520 09       		.uleb128 0x9
+ 950 0521 5F000000 		.4byte	.LASF90
+ 951 0525 06       		.byte	0x6
+ 952 0526 36       		.byte	0x36
+ 953 0527 E9040000 		.4byte	0x4e9
+ 954 052b 13       		.uleb128 0x13
+ 955 052c 3B000000 		.4byte	.LASF108
+ 956 0530 01       		.byte	0x1
+ 957 0531 44       		.byte	0x44
+ 958 0532 00000000 		.4byte	.LFB1
+ 959 0536 14000000 		.4byte	.LFE1-.LFB1
+ 960 053a 01       		.uleb128 0x1
+ 961 053b 9C       		.byte	0x9c
+ 962 053c 4C050000 		.4byte	0x54c
+ 963 0540 14       		.uleb128 0x14
+ 964 0541 B2050000 		.4byte	.LASF97
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 22
+
+
+ 965 0545 01       		.byte	0x1
+ 966 0546 46       		.byte	0x46
+ 967 0547 4C050000 		.4byte	0x54c
+ 968 054b 00       		.byte	0
+ 969 054c 0F       		.uleb128 0xf
+ 970 054d 04       		.byte	0x4
+ 971 054e 52050000 		.4byte	0x552
+ 972 0552 05       		.uleb128 0x5
+ 973 0553 D2030000 		.4byte	0x3d2
+ 974 0557 15       		.uleb128 0x15
+ 975 0558 7F020000 		.4byte	.LASF109
+ 976 055c 01       		.byte	0x1
+ 977 055d 73       		.byte	0x73
+ 978 055e 83000000 		.4byte	0x83
+ 979 0562 00000000 		.4byte	.LFB2
+ 980 0566 14010000 		.4byte	.LFE2-.LFB2
+ 981 056a 01       		.uleb128 0x1
+ 982 056b 9C       		.byte	0x9c
+ 983 056c 24060000 		.4byte	0x624
+ 984 0570 16       		.uleb128 0x16
+ 985 0571 4A050000 		.4byte	.LASF91
+ 986 0575 01       		.byte	0x1
+ 987 0576 75       		.byte	0x75
+ 988 0577 6B000000 		.4byte	0x6b
+ 989 057b 00000000 		.4byte	.LLST0
+ 990 057f 16       		.uleb128 0x16
+ 991 0580 E9040000 		.4byte	.LASF92
+ 992 0584 01       		.byte	0x1
+ 993 0585 76       		.byte	0x76
+ 994 0586 83000000 		.4byte	0x83
+ 995 058a 29000000 		.4byte	.LLST1
+ 996 058e 16       		.uleb128 0x16
+ 997 058f 56000000 		.4byte	.LASF93
+ 998 0593 01       		.byte	0x1
+ 999 0594 77       		.byte	0x77
+ 1000 0595 83000000 		.4byte	0x83
+ 1001 0599 3C000000 		.4byte	.LLST2
+ 1002 059d 16       		.uleb128 0x16
+ 1003 059e C3050000 		.4byte	.LASF94
+ 1004 05a2 01       		.byte	0x1
+ 1005 05a3 78       		.byte	0x78
+ 1006 05a4 83000000 		.4byte	0x83
+ 1007 05a8 4F000000 		.4byte	.LLST3
+ 1008 05ac 16       		.uleb128 0x16
+ 1009 05ad 88060000 		.4byte	.LASF95
+ 1010 05b1 01       		.byte	0x1
+ 1011 05b2 79       		.byte	0x79
+ 1012 05b3 20050000 		.4byte	0x520
+ 1013 05b7 0F010000 		.4byte	.LLST4
+ 1014 05bb 16       		.uleb128 0x16
+ 1015 05bc 72060000 		.4byte	.LASF96
+ 1016 05c0 01       		.byte	0x1
+ 1017 05c1 7A       		.byte	0x7a
+ 1018 05c2 83000000 		.4byte	0x83
+ 1019 05c6 22010000 		.4byte	.LLST5
+ 1020 05ca 14       		.uleb128 0x14
+ 1021 05cb B2050000 		.4byte	.LASF97
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 23
+
+
+ 1022 05cf 01       		.byte	0x1
+ 1023 05d0 7C       		.byte	0x7c
+ 1024 05d1 4C050000 		.4byte	0x54c
+ 1025 05d5 16       		.uleb128 0x16
+ 1026 05d6 B0030000 		.4byte	.LASF98
+ 1027 05da 01       		.byte	0x1
+ 1028 05db 7D       		.byte	0x7d
+ 1029 05dc 24060000 		.4byte	0x624
+ 1030 05e0 63010000 		.4byte	.LLST6
+ 1031 05e4 17       		.uleb128 0x17
+ 1032 05e5 12000000 		.4byte	.LVL3
+ 1033 05e9 5D060000 		.4byte	0x65d
+ 1034 05ed 17       		.uleb128 0x17
+ 1035 05ee 1C000000 		.4byte	.LVL4
+ 1036 05f2 68060000 		.4byte	0x668
+ 1037 05f6 17       		.uleb128 0x17
+ 1038 05f7 46000000 		.4byte	.LVL10
+ 1039 05fb 73060000 		.4byte	0x673
+ 1040 05ff 17       		.uleb128 0x17
+ 1041 0600 76000000 		.4byte	.LVL19
+ 1042 0604 5D060000 		.4byte	0x65d
+ 1043 0608 17       		.uleb128 0x17
+ 1044 0609 90000000 		.4byte	.LVL20
+ 1045 060d 68060000 		.4byte	0x668
+ 1046 0611 17       		.uleb128 0x17
+ 1047 0612 E4000000 		.4byte	.LVL29
+ 1048 0616 5D060000 		.4byte	0x65d
+ 1049 061a 17       		.uleb128 0x17
+ 1050 061b FA000000 		.4byte	.LVL30
+ 1051 061f 68060000 		.4byte	0x668
+ 1052 0623 00       		.byte	0
+ 1053 0624 0F       		.uleb128 0xf
+ 1054 0625 04       		.byte	0x4
+ 1055 0626 2A060000 		.4byte	0x62a
+ 1056 062a 05       		.uleb128 0x5
+ 1057 062b 9C020000 		.4byte	0x29c
+ 1058 062f 18       		.uleb128 0x18
+ 1059 0630 7B050000 		.4byte	.LASF99
+ 1060 0634 01       		.byte	0x1
+ 1061 0635 35       		.byte	0x35
+ 1062 0636 83000000 		.4byte	0x83
+ 1063 063a 05       		.uleb128 0x5
+ 1064 063b 03       		.byte	0x3
+ 1065 063c 00000000 		.4byte	tunerFsm
+ 1066 0640 19       		.uleb128 0x19
+ 1067 0641 59030000 		.4byte	.LASF100
+ 1068 0645 05       		.byte	0x5
+ 1069 0646 3504     		.2byte	0x435
+ 1070 0648 D2030000 		.4byte	0x3d2
+ 1071 064c 19       		.uleb128 0x19
+ 1072 064d 23060000 		.4byte	.LASF101
+ 1073 0651 05       		.byte	0x5
+ 1074 0652 3604     		.2byte	0x436
+ 1075 0654 58060000 		.4byte	0x658
+ 1076 0658 1A       		.uleb128 0x1a
+ 1077 0659 DD040000 		.4byte	0x4dd
+ 1078 065d 1B       		.uleb128 0x1b
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 24
+
+
+ 1079 065e BA030000 		.4byte	.LASF102
+ 1080 0662 BA030000 		.4byte	.LASF102
+ 1081 0666 07       		.byte	0x7
+ 1082 0667 E5       		.byte	0xe5
+ 1083 0668 1B       		.uleb128 0x1b
+ 1084 0669 BE000000 		.4byte	.LASF103
+ 1085 066d BE000000 		.4byte	.LASF103
+ 1086 0671 07       		.byte	0x7
+ 1087 0672 E6       		.byte	0xe6
+ 1088 0673 1B       		.uleb128 0x1b
+ 1089 0674 41040000 		.4byte	.LASF104
+ 1090 0678 41040000 		.4byte	.LASF104
+ 1091 067c 08       		.byte	0x8
+ 1092 067d 3B       		.byte	0x3b
+ 1093 067e 00       		.byte	0
+ 1094              		.section	.debug_abbrev,"",%progbits
+ 1095              	.Ldebug_abbrev0:
+ 1096 0000 01       		.uleb128 0x1
+ 1097 0001 11       		.uleb128 0x11
+ 1098 0002 01       		.byte	0x1
+ 1099 0003 25       		.uleb128 0x25
+ 1100 0004 0E       		.uleb128 0xe
+ 1101 0005 13       		.uleb128 0x13
+ 1102 0006 0B       		.uleb128 0xb
+ 1103 0007 03       		.uleb128 0x3
+ 1104 0008 0E       		.uleb128 0xe
+ 1105 0009 1B       		.uleb128 0x1b
+ 1106 000a 0E       		.uleb128 0xe
+ 1107 000b 55       		.uleb128 0x55
+ 1108 000c 17       		.uleb128 0x17
+ 1109 000d 11       		.uleb128 0x11
+ 1110 000e 01       		.uleb128 0x1
+ 1111 000f 10       		.uleb128 0x10
+ 1112 0010 17       		.uleb128 0x17
+ 1113 0011 00       		.byte	0
+ 1114 0012 00       		.byte	0
+ 1115 0013 02       		.uleb128 0x2
+ 1116 0014 24       		.uleb128 0x24
+ 1117 0015 00       		.byte	0
+ 1118 0016 0B       		.uleb128 0xb
+ 1119 0017 0B       		.uleb128 0xb
+ 1120 0018 3E       		.uleb128 0x3e
+ 1121 0019 0B       		.uleb128 0xb
+ 1122 001a 03       		.uleb128 0x3
+ 1123 001b 0E       		.uleb128 0xe
+ 1124 001c 00       		.byte	0
+ 1125 001d 00       		.byte	0
+ 1126 001e 03       		.uleb128 0x3
+ 1127 001f 24       		.uleb128 0x24
+ 1128 0020 00       		.byte	0
+ 1129 0021 0B       		.uleb128 0xb
+ 1130 0022 0B       		.uleb128 0xb
+ 1131 0023 3E       		.uleb128 0x3e
+ 1132 0024 0B       		.uleb128 0xb
+ 1133 0025 03       		.uleb128 0x3
+ 1134 0026 08       		.uleb128 0x8
+ 1135 0027 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 25
+
+
+ 1136 0028 00       		.byte	0
+ 1137 0029 04       		.uleb128 0x4
+ 1138 002a 16       		.uleb128 0x16
+ 1139 002b 00       		.byte	0
+ 1140 002c 03       		.uleb128 0x3
+ 1141 002d 0E       		.uleb128 0xe
+ 1142 002e 3A       		.uleb128 0x3a
+ 1143 002f 0B       		.uleb128 0xb
+ 1144 0030 3B       		.uleb128 0x3b
+ 1145 0031 05       		.uleb128 0x5
+ 1146 0032 49       		.uleb128 0x49
+ 1147 0033 13       		.uleb128 0x13
+ 1148 0034 00       		.byte	0
+ 1149 0035 00       		.byte	0
+ 1150 0036 05       		.uleb128 0x5
+ 1151 0037 35       		.uleb128 0x35
+ 1152 0038 00       		.byte	0
+ 1153 0039 49       		.uleb128 0x49
+ 1154 003a 13       		.uleb128 0x13
+ 1155 003b 00       		.byte	0
+ 1156 003c 00       		.byte	0
+ 1157 003d 06       		.uleb128 0x6
+ 1158 003e 0F       		.uleb128 0xf
+ 1159 003f 00       		.byte	0
+ 1160 0040 0B       		.uleb128 0xb
+ 1161 0041 0B       		.uleb128 0xb
+ 1162 0042 00       		.byte	0
+ 1163 0043 00       		.byte	0
+ 1164 0044 07       		.uleb128 0x7
+ 1165 0045 13       		.uleb128 0x13
+ 1166 0046 01       		.byte	0x1
+ 1167 0047 0B       		.uleb128 0xb
+ 1168 0048 0B       		.uleb128 0xb
+ 1169 0049 3A       		.uleb128 0x3a
+ 1170 004a 0B       		.uleb128 0xb
+ 1171 004b 3B       		.uleb128 0x3b
+ 1172 004c 0B       		.uleb128 0xb
+ 1173 004d 01       		.uleb128 0x1
+ 1174 004e 13       		.uleb128 0x13
+ 1175 004f 00       		.byte	0
+ 1176 0050 00       		.byte	0
+ 1177 0051 08       		.uleb128 0x8
+ 1178 0052 0D       		.uleb128 0xd
+ 1179 0053 00       		.byte	0
+ 1180 0054 03       		.uleb128 0x3
+ 1181 0055 0E       		.uleb128 0xe
+ 1182 0056 3A       		.uleb128 0x3a
+ 1183 0057 0B       		.uleb128 0xb
+ 1184 0058 3B       		.uleb128 0x3b
+ 1185 0059 0B       		.uleb128 0xb
+ 1186 005a 49       		.uleb128 0x49
+ 1187 005b 13       		.uleb128 0x13
+ 1188 005c 38       		.uleb128 0x38
+ 1189 005d 0B       		.uleb128 0xb
+ 1190 005e 00       		.byte	0
+ 1191 005f 00       		.byte	0
+ 1192 0060 09       		.uleb128 0x9
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 26
+
+
+ 1193 0061 16       		.uleb128 0x16
+ 1194 0062 00       		.byte	0
+ 1195 0063 03       		.uleb128 0x3
+ 1196 0064 0E       		.uleb128 0xe
+ 1197 0065 3A       		.uleb128 0x3a
+ 1198 0066 0B       		.uleb128 0xb
+ 1199 0067 3B       		.uleb128 0x3b
+ 1200 0068 0B       		.uleb128 0xb
+ 1201 0069 49       		.uleb128 0x49
+ 1202 006a 13       		.uleb128 0x13
+ 1203 006b 00       		.byte	0
+ 1204 006c 00       		.byte	0
+ 1205 006d 0A       		.uleb128 0xa
+ 1206 006e 01       		.uleb128 0x1
+ 1207 006f 01       		.byte	0x1
+ 1208 0070 49       		.uleb128 0x49
+ 1209 0071 13       		.uleb128 0x13
+ 1210 0072 01       		.uleb128 0x1
+ 1211 0073 13       		.uleb128 0x13
+ 1212 0074 00       		.byte	0
+ 1213 0075 00       		.byte	0
+ 1214 0076 0B       		.uleb128 0xb
+ 1215 0077 21       		.uleb128 0x21
+ 1216 0078 00       		.byte	0
+ 1217 0079 49       		.uleb128 0x49
+ 1218 007a 13       		.uleb128 0x13
+ 1219 007b 2F       		.uleb128 0x2f
+ 1220 007c 0B       		.uleb128 0xb
+ 1221 007d 00       		.byte	0
+ 1222 007e 00       		.byte	0
+ 1223 007f 0C       		.uleb128 0xc
+ 1224 0080 0D       		.uleb128 0xd
+ 1225 0081 00       		.byte	0
+ 1226 0082 03       		.uleb128 0x3
+ 1227 0083 0E       		.uleb128 0xe
+ 1228 0084 3A       		.uleb128 0x3a
+ 1229 0085 0B       		.uleb128 0xb
+ 1230 0086 3B       		.uleb128 0x3b
+ 1231 0087 05       		.uleb128 0x5
+ 1232 0088 49       		.uleb128 0x49
+ 1233 0089 13       		.uleb128 0x13
+ 1234 008a 38       		.uleb128 0x38
+ 1235 008b 0B       		.uleb128 0xb
+ 1236 008c 00       		.byte	0
+ 1237 008d 00       		.byte	0
+ 1238 008e 0D       		.uleb128 0xd
+ 1239 008f 13       		.uleb128 0x13
+ 1240 0090 01       		.byte	0x1
+ 1241 0091 0B       		.uleb128 0xb
+ 1242 0092 0B       		.uleb128 0xb
+ 1243 0093 3A       		.uleb128 0x3a
+ 1244 0094 0B       		.uleb128 0xb
+ 1245 0095 3B       		.uleb128 0x3b
+ 1246 0096 05       		.uleb128 0x5
+ 1247 0097 01       		.uleb128 0x1
+ 1248 0098 13       		.uleb128 0x13
+ 1249 0099 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 27
+
+
+ 1250 009a 00       		.byte	0
+ 1251 009b 0E       		.uleb128 0xe
+ 1252 009c 0D       		.uleb128 0xd
+ 1253 009d 00       		.byte	0
+ 1254 009e 03       		.uleb128 0x3
+ 1255 009f 08       		.uleb128 0x8
+ 1256 00a0 3A       		.uleb128 0x3a
+ 1257 00a1 0B       		.uleb128 0xb
+ 1258 00a2 3B       		.uleb128 0x3b
+ 1259 00a3 05       		.uleb128 0x5
+ 1260 00a4 49       		.uleb128 0x49
+ 1261 00a5 13       		.uleb128 0x13
+ 1262 00a6 38       		.uleb128 0x38
+ 1263 00a7 0B       		.uleb128 0xb
+ 1264 00a8 00       		.byte	0
+ 1265 00a9 00       		.byte	0
+ 1266 00aa 0F       		.uleb128 0xf
+ 1267 00ab 0F       		.uleb128 0xf
+ 1268 00ac 00       		.byte	0
+ 1269 00ad 0B       		.uleb128 0xb
+ 1270 00ae 0B       		.uleb128 0xb
+ 1271 00af 49       		.uleb128 0x49
+ 1272 00b0 13       		.uleb128 0x13
+ 1273 00b1 00       		.byte	0
+ 1274 00b2 00       		.byte	0
+ 1275 00b3 10       		.uleb128 0x10
+ 1276 00b4 26       		.uleb128 0x26
+ 1277 00b5 00       		.byte	0
+ 1278 00b6 00       		.byte	0
+ 1279 00b7 00       		.byte	0
+ 1280 00b8 11       		.uleb128 0x11
+ 1281 00b9 04       		.uleb128 0x4
+ 1282 00ba 01       		.byte	0x1
+ 1283 00bb 0B       		.uleb128 0xb
+ 1284 00bc 0B       		.uleb128 0xb
+ 1285 00bd 49       		.uleb128 0x49
+ 1286 00be 13       		.uleb128 0x13
+ 1287 00bf 3A       		.uleb128 0x3a
+ 1288 00c0 0B       		.uleb128 0xb
+ 1289 00c1 3B       		.uleb128 0x3b
+ 1290 00c2 0B       		.uleb128 0xb
+ 1291 00c3 01       		.uleb128 0x1
+ 1292 00c4 13       		.uleb128 0x13
+ 1293 00c5 00       		.byte	0
+ 1294 00c6 00       		.byte	0
+ 1295 00c7 12       		.uleb128 0x12
+ 1296 00c8 28       		.uleb128 0x28
+ 1297 00c9 00       		.byte	0
+ 1298 00ca 03       		.uleb128 0x3
+ 1299 00cb 0E       		.uleb128 0xe
+ 1300 00cc 1C       		.uleb128 0x1c
+ 1301 00cd 0B       		.uleb128 0xb
+ 1302 00ce 00       		.byte	0
+ 1303 00cf 00       		.byte	0
+ 1304 00d0 13       		.uleb128 0x13
+ 1305 00d1 2E       		.uleb128 0x2e
+ 1306 00d2 01       		.byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 28
+
+
+ 1307 00d3 3F       		.uleb128 0x3f
+ 1308 00d4 19       		.uleb128 0x19
+ 1309 00d5 03       		.uleb128 0x3
+ 1310 00d6 0E       		.uleb128 0xe
+ 1311 00d7 3A       		.uleb128 0x3a
+ 1312 00d8 0B       		.uleb128 0xb
+ 1313 00d9 3B       		.uleb128 0x3b
+ 1314 00da 0B       		.uleb128 0xb
+ 1315 00db 27       		.uleb128 0x27
+ 1316 00dc 19       		.uleb128 0x19
+ 1317 00dd 11       		.uleb128 0x11
+ 1318 00de 01       		.uleb128 0x1
+ 1319 00df 12       		.uleb128 0x12
+ 1320 00e0 06       		.uleb128 0x6
+ 1321 00e1 40       		.uleb128 0x40
+ 1322 00e2 18       		.uleb128 0x18
+ 1323 00e3 9742     		.uleb128 0x2117
+ 1324 00e5 19       		.uleb128 0x19
+ 1325 00e6 01       		.uleb128 0x1
+ 1326 00e7 13       		.uleb128 0x13
+ 1327 00e8 00       		.byte	0
+ 1328 00e9 00       		.byte	0
+ 1329 00ea 14       		.uleb128 0x14
+ 1330 00eb 34       		.uleb128 0x34
+ 1331 00ec 00       		.byte	0
+ 1332 00ed 03       		.uleb128 0x3
+ 1333 00ee 0E       		.uleb128 0xe
+ 1334 00ef 3A       		.uleb128 0x3a
+ 1335 00f0 0B       		.uleb128 0xb
+ 1336 00f1 3B       		.uleb128 0x3b
+ 1337 00f2 0B       		.uleb128 0xb
+ 1338 00f3 49       		.uleb128 0x49
+ 1339 00f4 13       		.uleb128 0x13
+ 1340 00f5 00       		.byte	0
+ 1341 00f6 00       		.byte	0
+ 1342 00f7 15       		.uleb128 0x15
+ 1343 00f8 2E       		.uleb128 0x2e
+ 1344 00f9 01       		.byte	0x1
+ 1345 00fa 3F       		.uleb128 0x3f
+ 1346 00fb 19       		.uleb128 0x19
+ 1347 00fc 03       		.uleb128 0x3
+ 1348 00fd 0E       		.uleb128 0xe
+ 1349 00fe 3A       		.uleb128 0x3a
+ 1350 00ff 0B       		.uleb128 0xb
+ 1351 0100 3B       		.uleb128 0x3b
+ 1352 0101 0B       		.uleb128 0xb
+ 1353 0102 27       		.uleb128 0x27
+ 1354 0103 19       		.uleb128 0x19
+ 1355 0104 49       		.uleb128 0x49
+ 1356 0105 13       		.uleb128 0x13
+ 1357 0106 11       		.uleb128 0x11
+ 1358 0107 01       		.uleb128 0x1
+ 1359 0108 12       		.uleb128 0x12
+ 1360 0109 06       		.uleb128 0x6
+ 1361 010a 40       		.uleb128 0x40
+ 1362 010b 18       		.uleb128 0x18
+ 1363 010c 9742     		.uleb128 0x2117
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 29
+
+
+ 1364 010e 19       		.uleb128 0x19
+ 1365 010f 01       		.uleb128 0x1
+ 1366 0110 13       		.uleb128 0x13
+ 1367 0111 00       		.byte	0
+ 1368 0112 00       		.byte	0
+ 1369 0113 16       		.uleb128 0x16
+ 1370 0114 34       		.uleb128 0x34
+ 1371 0115 00       		.byte	0
+ 1372 0116 03       		.uleb128 0x3
+ 1373 0117 0E       		.uleb128 0xe
+ 1374 0118 3A       		.uleb128 0x3a
+ 1375 0119 0B       		.uleb128 0xb
+ 1376 011a 3B       		.uleb128 0x3b
+ 1377 011b 0B       		.uleb128 0xb
+ 1378 011c 49       		.uleb128 0x49
+ 1379 011d 13       		.uleb128 0x13
+ 1380 011e 02       		.uleb128 0x2
+ 1381 011f 17       		.uleb128 0x17
+ 1382 0120 00       		.byte	0
+ 1383 0121 00       		.byte	0
+ 1384 0122 17       		.uleb128 0x17
+ 1385 0123 898201   		.uleb128 0x4109
+ 1386 0126 00       		.byte	0
+ 1387 0127 11       		.uleb128 0x11
+ 1388 0128 01       		.uleb128 0x1
+ 1389 0129 31       		.uleb128 0x31
+ 1390 012a 13       		.uleb128 0x13
+ 1391 012b 00       		.byte	0
+ 1392 012c 00       		.byte	0
+ 1393 012d 18       		.uleb128 0x18
+ 1394 012e 34       		.uleb128 0x34
+ 1395 012f 00       		.byte	0
+ 1396 0130 03       		.uleb128 0x3
+ 1397 0131 0E       		.uleb128 0xe
+ 1398 0132 3A       		.uleb128 0x3a
+ 1399 0133 0B       		.uleb128 0xb
+ 1400 0134 3B       		.uleb128 0x3b
+ 1401 0135 0B       		.uleb128 0xb
+ 1402 0136 49       		.uleb128 0x49
+ 1403 0137 13       		.uleb128 0x13
+ 1404 0138 02       		.uleb128 0x2
+ 1405 0139 18       		.uleb128 0x18
+ 1406 013a 00       		.byte	0
+ 1407 013b 00       		.byte	0
+ 1408 013c 19       		.uleb128 0x19
+ 1409 013d 34       		.uleb128 0x34
+ 1410 013e 00       		.byte	0
+ 1411 013f 03       		.uleb128 0x3
+ 1412 0140 0E       		.uleb128 0xe
+ 1413 0141 3A       		.uleb128 0x3a
+ 1414 0142 0B       		.uleb128 0xb
+ 1415 0143 3B       		.uleb128 0x3b
+ 1416 0144 05       		.uleb128 0x5
+ 1417 0145 49       		.uleb128 0x49
+ 1418 0146 13       		.uleb128 0x13
+ 1419 0147 3F       		.uleb128 0x3f
+ 1420 0148 19       		.uleb128 0x19
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 30
+
+
+ 1421 0149 3C       		.uleb128 0x3c
+ 1422 014a 19       		.uleb128 0x19
+ 1423 014b 00       		.byte	0
+ 1424 014c 00       		.byte	0
+ 1425 014d 1A       		.uleb128 0x1a
+ 1426 014e 26       		.uleb128 0x26
+ 1427 014f 00       		.byte	0
+ 1428 0150 49       		.uleb128 0x49
+ 1429 0151 13       		.uleb128 0x13
+ 1430 0152 00       		.byte	0
+ 1431 0153 00       		.byte	0
+ 1432 0154 1B       		.uleb128 0x1b
+ 1433 0155 2E       		.uleb128 0x2e
+ 1434 0156 00       		.byte	0
+ 1435 0157 3F       		.uleb128 0x3f
+ 1436 0158 19       		.uleb128 0x19
+ 1437 0159 3C       		.uleb128 0x3c
+ 1438 015a 19       		.uleb128 0x19
+ 1439 015b 6E       		.uleb128 0x6e
+ 1440 015c 0E       		.uleb128 0xe
+ 1441 015d 03       		.uleb128 0x3
+ 1442 015e 0E       		.uleb128 0xe
+ 1443 015f 3A       		.uleb128 0x3a
+ 1444 0160 0B       		.uleb128 0xb
+ 1445 0161 3B       		.uleb128 0x3b
+ 1446 0162 0B       		.uleb128 0xb
+ 1447 0163 00       		.byte	0
+ 1448 0164 00       		.byte	0
+ 1449 0165 00       		.byte	0
+ 1450              		.section	.debug_loc,"",%progbits
+ 1451              	.Ldebug_loc0:
+ 1452              	.LLST0:
+ 1453 0000 12000000 		.4byte	.LVL3
+ 1454 0004 1B000000 		.4byte	.LVL4-1
+ 1455 0008 0100     		.2byte	0x1
+ 1456 000a 50       		.byte	0x50
+ 1457 000b 76000000 		.4byte	.LVL19
+ 1458 000f 8F000000 		.4byte	.LVL20-1
+ 1459 0013 0100     		.2byte	0x1
+ 1460 0015 50       		.byte	0x50
+ 1461 0016 E4000000 		.4byte	.LVL29
+ 1462 001a F9000000 		.4byte	.LVL30-1
+ 1463 001e 0100     		.2byte	0x1
+ 1464 0020 50       		.byte	0x50
+ 1465 0021 00000000 		.4byte	0
+ 1466 0025 00000000 		.4byte	0
+ 1467              	.LLST1:
+ 1468 0029 A6000000 		.4byte	.LVL22
+ 1469 002d D2000000 		.4byte	.LVL25
+ 1470 0031 0100     		.2byte	0x1
+ 1471 0033 53       		.byte	0x53
+ 1472 0034 00000000 		.4byte	0
+ 1473 0038 00000000 		.4byte	0
+ 1474              	.LLST2:
+ 1475 003c AC000000 		.4byte	.LVL23
+ 1476 0040 DC000000 		.4byte	.LVL27
+ 1477 0044 0100     		.2byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 31
+
+
+ 1478 0046 52       		.byte	0x52
+ 1479 0047 00000000 		.4byte	0
+ 1480 004b 00000000 		.4byte	0
+ 1481              	.LLST3:
+ 1482 004f 02000000 		.4byte	.LVL1
+ 1483 0053 06000000 		.4byte	.LVL2
+ 1484 0057 0200     		.2byte	0x2
+ 1485 0059 30       		.byte	0x30
+ 1486 005a 9F       		.byte	0x9f
+ 1487 005b 06000000 		.4byte	.LVL2
+ 1488 005f 34000000 		.4byte	.LVL6
+ 1489 0063 0100     		.2byte	0x1
+ 1490 0065 56       		.byte	0x56
+ 1491 0066 34000000 		.4byte	.LVL6
+ 1492 006a 38000000 		.4byte	.LVL7
+ 1493 006e 0200     		.2byte	0x2
+ 1494 0070 31       		.byte	0x31
+ 1495 0071 9F       		.byte	0x9f
+ 1496 0072 38000000 		.4byte	.LVL7
+ 1497 0076 3E000000 		.4byte	.LVL8
+ 1498 007a 0100     		.2byte	0x1
+ 1499 007c 56       		.byte	0x56
+ 1500 007d 3E000000 		.4byte	.LVL8
+ 1501 0081 42000000 		.4byte	.LVL9
+ 1502 0085 0200     		.2byte	0x2
+ 1503 0087 31       		.byte	0x31
+ 1504 0088 9F       		.byte	0x9f
+ 1505 0089 42000000 		.4byte	.LVL9
+ 1506 008d 4C000000 		.4byte	.LVL11
+ 1507 0091 0100     		.2byte	0x1
+ 1508 0093 56       		.byte	0x56
+ 1509 0094 4C000000 		.4byte	.LVL11
+ 1510 0098 52000000 		.4byte	.LVL12
+ 1511 009c 0200     		.2byte	0x2
+ 1512 009e 31       		.byte	0x31
+ 1513 009f 9F       		.byte	0x9f
+ 1514 00a0 52000000 		.4byte	.LVL12
+ 1515 00a4 58000000 		.4byte	.LVL13
+ 1516 00a8 0100     		.2byte	0x1
+ 1517 00aa 56       		.byte	0x56
+ 1518 00ab 58000000 		.4byte	.LVL13
+ 1519 00af 5C000000 		.4byte	.LVL14
+ 1520 00b3 0200     		.2byte	0x2
+ 1521 00b5 31       		.byte	0x31
+ 1522 00b6 9F       		.byte	0x9f
+ 1523 00b7 5C000000 		.4byte	.LVL14
+ 1524 00bb 62000000 		.4byte	.LVL15
+ 1525 00bf 0100     		.2byte	0x1
+ 1526 00c1 56       		.byte	0x56
+ 1527 00c2 62000000 		.4byte	.LVL15
+ 1528 00c6 66000000 		.4byte	.LVL16
+ 1529 00ca 0200     		.2byte	0x2
+ 1530 00cc 31       		.byte	0x31
+ 1531 00cd 9F       		.byte	0x9f
+ 1532 00ce 66000000 		.4byte	.LVL16
+ 1533 00d2 6C000000 		.4byte	.LVL17
+ 1534 00d6 0100     		.2byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 32
+
+
+ 1535 00d8 56       		.byte	0x56
+ 1536 00d9 6C000000 		.4byte	.LVL17
+ 1537 00dd 6E000000 		.4byte	.LVL18
+ 1538 00e1 0200     		.2byte	0x2
+ 1539 00e3 30       		.byte	0x30
+ 1540 00e4 9F       		.byte	0x9f
+ 1541 00e5 6E000000 		.4byte	.LVL18
+ 1542 00e9 90000000 		.4byte	.LVL20
+ 1543 00ed 0100     		.2byte	0x1
+ 1544 00ef 56       		.byte	0x56
+ 1545 00f0 90000000 		.4byte	.LVL20
+ 1546 00f4 92000000 		.4byte	.LVL21
+ 1547 00f8 0200     		.2byte	0x2
+ 1548 00fa 30       		.byte	0x30
+ 1549 00fb 9F       		.byte	0x9f
+ 1550 00fc 92000000 		.4byte	.LVL21
+ 1551 0100 FC000000 		.4byte	.LVL32
+ 1552 0104 0100     		.2byte	0x1
+ 1553 0106 56       		.byte	0x56
+ 1554 0107 00000000 		.4byte	0
+ 1555 010b 00000000 		.4byte	0
+ 1556              	.LLST4:
+ 1557 010f 22000000 		.4byte	.LVL5
+ 1558 0113 C6000000 		.4byte	.LVL24
+ 1559 0117 0100     		.2byte	0x1
+ 1560 0119 54       		.byte	0x54
+ 1561 011a 00000000 		.4byte	0
+ 1562 011e 00000000 		.4byte	0
+ 1563              	.LLST5:
+ 1564 0122 02000000 		.4byte	.LVL1
+ 1565 0126 06000000 		.4byte	.LVL2
+ 1566 012a 0200     		.2byte	0x2
+ 1567 012c 30       		.byte	0x30
+ 1568 012d 9F       		.byte	0x9f
+ 1569 012e 06000000 		.4byte	.LVL2
+ 1570 0132 46000000 		.4byte	.LVL10
+ 1571 0136 0100     		.2byte	0x1
+ 1572 0138 55       		.byte	0x55
+ 1573 0139 46000000 		.4byte	.LVL10
+ 1574 013d 52000000 		.4byte	.LVL12
+ 1575 0141 0200     		.2byte	0x2
+ 1576 0143 31       		.byte	0x31
+ 1577 0144 9F       		.byte	0x9f
+ 1578 0145 52000000 		.4byte	.LVL12
+ 1579 0149 FC000000 		.4byte	.LVL31
+ 1580 014d 0100     		.2byte	0x1
+ 1581 014f 55       		.byte	0x55
+ 1582 0150 FC000000 		.4byte	.LVL31
+ 1583 0154 14010000 		.4byte	.LFE2
+ 1584 0158 0100     		.2byte	0x1
+ 1585 015a 50       		.byte	0x50
+ 1586 015b 00000000 		.4byte	0
+ 1587 015f 00000000 		.4byte	0
+ 1588              	.LLST6:
+ 1589 0163 D8000000 		.4byte	.LVL26
+ 1590 0167 FA000000 		.4byte	.LVL30
+ 1591 016b 0100     		.2byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 33
+
+
+ 1592 016d 54       		.byte	0x54
+ 1593 016e 00000000 		.4byte	0
+ 1594 0172 00000000 		.4byte	0
+ 1595              		.section	.debug_aranges,"",%progbits
+ 1596 0000 24000000 		.4byte	0x24
+ 1597 0004 0200     		.2byte	0x2
+ 1598 0006 00000000 		.4byte	.Ldebug_info0
+ 1599 000a 04       		.byte	0x4
+ 1600 000b 00       		.byte	0
+ 1601 000c 0000     		.2byte	0
+ 1602 000e 0000     		.2byte	0
+ 1603 0010 00000000 		.4byte	.LFB1
+ 1604 0014 14000000 		.4byte	.LFE1-.LFB1
+ 1605 0018 00000000 		.4byte	.LFB2
+ 1606 001c 14010000 		.4byte	.LFE2-.LFB2
+ 1607 0020 00000000 		.4byte	0
+ 1608 0024 00000000 		.4byte	0
+ 1609              		.section	.debug_ranges,"",%progbits
+ 1610              	.Ldebug_ranges0:
+ 1611 0000 00000000 		.4byte	.LFB1
+ 1612 0004 14000000 		.4byte	.LFE1
+ 1613 0008 00000000 		.4byte	.LFB2
+ 1614 000c 14010000 		.4byte	.LFE2
+ 1615 0010 00000000 		.4byte	0
+ 1616 0014 00000000 		.4byte	0
+ 1617              		.section	.debug_line,"",%progbits
+ 1618              	.Ldebug_line0:
+ 1619 0000 34010000 		.section	.debug_str,"MS",%progbits,1
+ 1619      0200D000 
+ 1619      00000201 
+ 1619      FB0E0D00 
+ 1619      01010101 
+ 1620              	.LASF82:
+ 1621 0000 43617053 		.ascii	"CapSense_FLASH_STRUCT\000"
+ 1621      656E7365 
+ 1621      5F464C41 
+ 1621      53485F53 
+ 1621      54525543 
+ 1622              	.LASF60:
+ 1623 0016 77646774 		.ascii	"wdgtList\000"
+ 1623      4C697374 
+ 1623      00
+ 1624              	.LASF65:
+ 1625 001f 736E7254 		.ascii	"snrTestRawCount\000"
+ 1625      65737452 
+ 1625      6177436F 
+ 1625      756E7400 
+ 1626              	.LASF76:
+ 1627 002f 78526573 		.ascii	"xResolution\000"
+ 1627      6F6C7574 
+ 1627      696F6E00 
+ 1628              	.LASF108:
+ 1629 003b 43617053 		.ascii	"CapSense_TuInitialize\000"
+ 1629      656E7365 
+ 1629      5F547549 
+ 1629      6E697469 
+ 1629      616C697A 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 34
+
+
+ 1630              	.LASF42:
+ 1631 0051 62736C6E 		.ascii	"bsln\000"
+ 1631      00
+ 1632              	.LASF93:
+ 1633 0056 73656E73 		.ascii	"sensorId\000"
+ 1633      6F724964 
+ 1633      00
+ 1634              	.LASF90:
+ 1635 005f 43617053 		.ascii	"CapSense_TU_CMD_ENUM\000"
+ 1635      656E7365 
+ 1635      5F54555F 
+ 1635      434D445F 
+ 1635      454E554D 
+ 1636              	.LASF107:
+ 1637 0074 433A5C55 		.ascii	"C:\\Users\\dmytro.fedorchenko\\Documents\\PSoC Crea"
+ 1637      73657273 
+ 1637      5C646D79 
+ 1637      74726F2E 
+ 1637      6665646F 
+ 1638 00a3 746F725C 		.ascii	"tor\\PWM01\\midiPlayer.cydsn\000"
+ 1638      50574D30 
+ 1638      315C6D69 
+ 1638      6469506C 
+ 1638      61796572 
+ 1639              	.LASF103:
+ 1640 00be 43794578 		.ascii	"CyExitCriticalSection\000"
+ 1640      69744372 
+ 1640      69746963 
+ 1640      616C5365 
+ 1640      6374696F 
+ 1641              	.LASF73:
+ 1642 00d4 746F7461 		.ascii	"totalNumSns\000"
+ 1642      6C4E756D 
+ 1642      536E7300 
+ 1643              	.LASF89:
+ 1644 00e0 43617053 		.ascii	"CapSense_TU_CMD_ONE_SCAN_E\000"
+ 1644      656E7365 
+ 1644      5F54555F 
+ 1644      434D445F 
+ 1644      4F4E455F 
+ 1645              	.LASF34:
+ 1646 00fb 69646163 		.ascii	"idacMod\000"
+ 1646      4D6F6400 
+ 1647              	.LASF79:
+ 1648 0103 69697246 		.ascii	"iirFilterCoeff\000"
+ 1648      696C7465 
+ 1648      72436F65 
+ 1648      666600
+ 1649              	.LASF2:
+ 1650 0112 73686F72 		.ascii	"short int\000"
+ 1650      7420696E 
+ 1650      7400
+ 1651              	.LASF32:
+ 1652 011c 6F6E4465 		.ascii	"onDebounce\000"
+ 1652      626F756E 
+ 1652      636500
+ 1653              	.LASF16:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 35
+
+
+ 1654 0127 73697A65 		.ascii	"sizetype\000"
+ 1654      74797065 
+ 1654      00
+ 1655              	.LASF86:
+ 1656 0130 43617053 		.ascii	"CapSense_TU_CMD_RESTART_E\000"
+ 1656      656E7365 
+ 1656      5F54555F 
+ 1656      434D445F 
+ 1656      52455354 
+ 1657              	.LASF80:
+ 1658 014a 43617053 		.ascii	"CapSense_FLASH_WD_STRUCT\000"
+ 1658      656E7365 
+ 1658      5F464C41 
+ 1658      53485F57 
+ 1658      445F5354 
+ 1659              	.LASF49:
+ 1660 0163 636F6E66 		.ascii	"configId\000"
+ 1660      69674964 
+ 1660      00
+ 1661              	.LASF105:
+ 1662 016c 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1662      43313120 
+ 1662      352E342E 
+ 1662      31203230 
+ 1662      31363036 
+ 1663 019f 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0plus -mthumb -"
+ 1663      20726576 
+ 1663      6973696F 
+ 1663      6E203233 
+ 1663      37373135 
+ 1664 01d2 67202D4F 		.ascii	"g -Og -ffunction-sections -ffat-lto-objects\000"
+ 1664      67202D66 
+ 1664      66756E63 
+ 1664      74696F6E 
+ 1664      2D736563 
+ 1665              	.LASF46:
+ 1666 01fe 69646163 		.ascii	"idacComp\000"
+ 1666      436F6D70 
+ 1666      00
+ 1667              	.LASF58:
+ 1668 0207 63736430 		.ascii	"csd0Config\000"
+ 1668      436F6E66 
+ 1668      696700
+ 1669              	.LASF6:
+ 1670 0212 6C6F6E67 		.ascii	"long long int\000"
+ 1670      206C6F6E 
+ 1670      6720696E 
+ 1670      7400
+ 1671              	.LASF19:
+ 1672 0220 70617261 		.ascii	"param0\000"
+ 1672      6D3000
+ 1673              	.LASF36:
+ 1674 0227 736E7343 		.ascii	"snsClkSource\000"
+ 1674      6C6B536F 
+ 1674      75726365 
+ 1674      00
+ 1675              	.LASF21:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 36
+
+
+ 1676 0234 70617261 		.ascii	"param2\000"
+ 1676      6D3200
+ 1677              	.LASF22:
+ 1678 023b 70617261 		.ascii	"param3\000"
+ 1678      6D3300
+ 1679              	.LASF83:
+ 1680 0242 43617053 		.ascii	"CapSense_TU_CMD_NONE_E\000"
+ 1680      656E7365 
+ 1680      5F54555F 
+ 1680      434D445F 
+ 1680      4E4F4E45 
+ 1681              	.LASF24:
+ 1682 0259 70617261 		.ascii	"param5\000"
+ 1682      6D3500
+ 1683              	.LASF25:
+ 1684 0260 70617261 		.ascii	"param6\000"
+ 1684      6D3600
+ 1685              	.LASF29:
+ 1686 0267 6E6F6973 		.ascii	"noiseTh\000"
+ 1686      65546800 
+ 1687              	.LASF50:
+ 1688 026f 64657669 		.ascii	"deviceId\000"
+ 1688      63654964 
+ 1688      00
+ 1689              	.LASF10:
+ 1690 0278 75696E74 		.ascii	"uint16\000"
+ 1690      313600
+ 1691              	.LASF109:
+ 1692 027f 43617053 		.ascii	"CapSense_RunTuner\000"
+ 1692      656E7365 
+ 1692      5F52756E 
+ 1692      54756E65 
+ 1692      7200
+ 1693              	.LASF71:
+ 1694 0291 70747232 		.ascii	"ptr2DebounceArr\000"
+ 1694      4465626F 
+ 1694      756E6365 
+ 1694      41727200 
+ 1695              	.LASF9:
+ 1696 02a1 75696E74 		.ascii	"uint8\000"
+ 1696      3800
+ 1697              	.LASF35:
+ 1698 02a7 736E7343 		.ascii	"snsClk\000"
+ 1698      6C6B00
+ 1699              	.LASF12:
+ 1700 02ae 666C6F61 		.ascii	"float\000"
+ 1700      7400
+ 1701              	.LASF41:
+ 1702 02b4 43617053 		.ascii	"CapSense_RAM_WD_LIST_STRUCT\000"
+ 1702      656E7365 
+ 1702      5F52414D 
+ 1702      5F57445F 
+ 1702      4C495354 
+ 1703              	.LASF63:
+ 1704 02d0 736E7254 		.ascii	"snrTestSensorId\000"
+ 1704      65737453 
+ 1704      656E736F 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 37
+
+
+ 1704      72496400 
+ 1705              	.LASF88:
+ 1706 02e0 43617053 		.ascii	"CapSense_TU_CMD_PING_E\000"
+ 1706      656E7365 
+ 1706      5F54555F 
+ 1706      434D445F 
+ 1706      50494E47 
+ 1707              	.LASF14:
+ 1708 02f7 63686172 		.ascii	"char\000"
+ 1708      00
+ 1709              	.LASF4:
+ 1710 02fc 6C6F6E67 		.ascii	"long int\000"
+ 1710      20696E74 
+ 1710      00
+ 1711              	.LASF74:
+ 1712 0305 77646774 		.ascii	"wdgtType\000"
+ 1712      54797065 
+ 1712      00
+ 1713              	.LASF106:
+ 1714 030e 47656E65 		.ascii	"Generated_Source\\PSoC4\\CapSense_Tuner.c\000"
+ 1714      72617465 
+ 1714      645F536F 
+ 1714      75726365 
+ 1714      5C50536F 
+ 1715              	.LASF28:
+ 1716 0336 66696E67 		.ascii	"fingerTh\000"
+ 1716      65725468 
+ 1716      00
+ 1717              	.LASF45:
+ 1718 033f 6E656742 		.ascii	"negBslnRstCnt\000"
+ 1718      736C6E52 
+ 1718      7374436E 
+ 1718      7400
+ 1719              	.LASF68:
+ 1720 034d 70747232 		.ascii	"ptr2WdgtRam\000"
+ 1720      57646774 
+ 1720      52616D00 
+ 1721              	.LASF100:
+ 1722 0359 43617053 		.ascii	"CapSense_dsRam\000"
+ 1722      656E7365 
+ 1722      5F647352 
+ 1722      616D00
+ 1723              	.LASF75:
+ 1724 0368 6E756D43 		.ascii	"numCols\000"
+ 1724      6F6C7300 
+ 1725              	.LASF1:
+ 1726 0370 756E7369 		.ascii	"unsigned char\000"
+ 1726      676E6564 
+ 1726      20636861 
+ 1726      7200
+ 1727              	.LASF31:
+ 1728 037e 68797374 		.ascii	"hysteresis\000"
+ 1728      65726573 
+ 1728      697300
+ 1729              	.LASF23:
+ 1730 0389 70617261 		.ascii	"param4\000"
+ 1730      6D3400
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 38
+
+
+ 1731              	.LASF52:
+ 1732 0390 74756E65 		.ascii	"tunerCmd\000"
+ 1732      72436D64 
+ 1732      00
+ 1733              	.LASF15:
+ 1734 0399 6C6F6E67 		.ascii	"long double\000"
+ 1734      20646F75 
+ 1734      626C6500 
+ 1735              	.LASF56:
+ 1736 03a5 77646774 		.ascii	"wdgtStatus\000"
+ 1736      53746174 
+ 1736      757300
+ 1737              	.LASF98:
+ 1738 03b0 70747253 		.ascii	"ptrSnsTmp\000"
+ 1738      6E73546D 
+ 1738      7000
+ 1739              	.LASF102:
+ 1740 03ba 4379456E 		.ascii	"CyEnterCriticalSection\000"
+ 1740      74657243 
+ 1740      72697469 
+ 1740      63616C53 
+ 1740      65637469 
+ 1741              	.LASF33:
+ 1742 03d1 6C6F7742 		.ascii	"lowBslnRst\000"
+ 1742      736C6E52 
+ 1742      737400
+ 1743              	.LASF17:
+ 1744 03dc 43617053 		.ascii	"CapSense_THRESHOLD_TYPE\000"
+ 1744      656E7365 
+ 1744      5F544852 
+ 1744      4553484F 
+ 1744      4C445F54 
+ 1745              	.LASF0:
+ 1746 03f4 7369676E 		.ascii	"signed char\000"
+ 1746      65642063 
+ 1746      68617200 
+ 1747              	.LASF48:
+ 1748 0400 43617053 		.ascii	"CapSense_RAM_SNS_LIST_STRUCT\000"
+ 1748      656E7365 
+ 1748      5F52414D 
+ 1748      5F534E53 
+ 1748      5F4C4953 
+ 1749              	.LASF7:
+ 1750 041d 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1750      206C6F6E 
+ 1750      6720756E 
+ 1750      7369676E 
+ 1750      65642069 
+ 1751              	.LASF72:
+ 1752 0434 73746174 		.ascii	"staticConfig\000"
+ 1752      6963436F 
+ 1752      6E666967 
+ 1752      00
+ 1753              	.LASF104:
+ 1754 0441 43617053 		.ascii	"CapSense_Start\000"
+ 1754      656E7365 
+ 1754      5F537461 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 39
+
+
+ 1754      727400
+ 1755              	.LASF8:
+ 1756 0450 756E7369 		.ascii	"unsigned int\000"
+ 1756      676E6564 
+ 1756      20696E74 
+ 1756      00
+ 1757              	.LASF5:
+ 1758 045d 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1758      20756E73 
+ 1758      69676E65 
+ 1758      6420696E 
+ 1758      7400
+ 1759              	.LASF55:
+ 1760 046f 77646774 		.ascii	"wdgtEnable\000"
+ 1760      456E6162 
+ 1760      6C6500
+ 1761              	.LASF20:
+ 1762 047a 70617261 		.ascii	"param1\000"
+ 1762      6D3100
+ 1763              	.LASF77:
+ 1764 0481 7843656E 		.ascii	"xCentroidMultiplier\000"
+ 1764      74726F69 
+ 1764      644D756C 
+ 1764      7469706C 
+ 1764      69657200 
+ 1765              	.LASF84:
+ 1766 0495 43617053 		.ascii	"CapSense_TU_CMD_SUSPEND_E\000"
+ 1766      656E7365 
+ 1766      5F54555F 
+ 1766      434D445F 
+ 1766      53555350 
+ 1767              	.LASF47:
+ 1768 04af 43617053 		.ascii	"CapSense_RAM_SNS_STRUCT\000"
+ 1768      656E7365 
+ 1768      5F52414D 
+ 1768      5F534E53 
+ 1768      5F535452 
+ 1769              	.LASF18:
+ 1770 04c7 43617053 		.ascii	"CapSense_LOW_BSLN_RST_TYPE\000"
+ 1770      656E7365 
+ 1770      5F4C4F57 
+ 1770      5F42534C 
+ 1770      4E5F5253 
+ 1771              	.LASF54:
+ 1772 04e2 73746174 		.ascii	"status\000"
+ 1772      757300
+ 1773              	.LASF92:
+ 1774 04e9 77696467 		.ascii	"widgetId\000"
+ 1774      65744964 
+ 1774      00
+ 1775              	.LASF64:
+ 1776 04f2 736E7254 		.ascii	"snrTestScanCounter\000"
+ 1776      65737453 
+ 1776      63616E43 
+ 1776      6F756E74 
+ 1776      657200
+ 1777              	.LASF27:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 40
+
+
+ 1778 0505 7265736F 		.ascii	"resolution\000"
+ 1778      6C757469 
+ 1778      6F6E00
+ 1779              	.LASF3:
+ 1780 0510 73686F72 		.ascii	"short unsigned int\000"
+ 1780      7420756E 
+ 1780      7369676E 
+ 1780      65642069 
+ 1780      6E7400
+ 1781              	.LASF61:
+ 1782 0523 736E734C 		.ascii	"snsList\000"
+ 1782      69737400 
+ 1783              	.LASF59:
+ 1784 052b 6D6F6443 		.ascii	"modCsdClk\000"
+ 1784      7364436C 
+ 1784      6B00
+ 1785              	.LASF53:
+ 1786 0535 7363616E 		.ascii	"scanCounter\000"
+ 1786      436F756E 
+ 1786      74657200 
+ 1787              	.LASF30:
+ 1788 0541 6E4E6F69 		.ascii	"nNoiseTh\000"
+ 1788      73655468 
+ 1788      00
+ 1789              	.LASF91:
+ 1790 054a 696E7465 		.ascii	"interruptState\000"
+ 1790      72727570 
+ 1790      74537461 
+ 1790      746500
+ 1791              	.LASF66:
+ 1792 0559 43617053 		.ascii	"CapSense_RAM_STRUCT\000"
+ 1792      656E7365 
+ 1792      5F52414D 
+ 1792      5F535452 
+ 1792      55435400 
+ 1793              	.LASF38:
+ 1794 056d 73696750 		.ascii	"sigPFC\000"
+ 1794      464300
+ 1795              	.LASF11:
+ 1796 0574 75696E74 		.ascii	"uint32\000"
+ 1796      333200
+ 1797              	.LASF99:
+ 1798 057b 74756E65 		.ascii	"tunerFsm\000"
+ 1798      7246736D 
+ 1798      00
+ 1799              	.LASF13:
+ 1800 0584 646F7562 		.ascii	"double\000"
+ 1800      6C6500
+ 1801              	.LASF43:
+ 1802 058b 62736C6E 		.ascii	"bslnExt\000"
+ 1802      45787400 
+ 1803              	.LASF87:
+ 1804 0593 43617053 		.ascii	"CapSense_TU_CMD_RUN_SNR_TEST_E\000"
+ 1804      656E7365 
+ 1804      5F54555F 
+ 1804      434D445F 
+ 1804      52554E5F 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 41
+
+
+ 1805              	.LASF97:
+ 1806 05b2 70747244 		.ascii	"ptrDsRam\000"
+ 1806      7352616D 
+ 1806      00
+ 1807              	.LASF51:
+ 1808 05bb 6877436C 		.ascii	"hwClock\000"
+ 1808      6F636B00 
+ 1809              	.LASF94:
+ 1810 05c3 75706461 		.ascii	"updateFlag\000"
+ 1810      7465466C 
+ 1810      616700
+ 1811              	.LASF85:
+ 1812 05ce 43617053 		.ascii	"CapSense_TU_CMD_RESUME_E\000"
+ 1812      656E7365 
+ 1812      5F54555F 
+ 1812      434D445F 
+ 1812      52455355 
+ 1813              	.LASF69:
+ 1814 05e7 70747232 		.ascii	"ptr2SnsRam\000"
+ 1814      536E7352 
+ 1814      616D00
+ 1815              	.LASF67:
+ 1816 05f2 70747232 		.ascii	"ptr2SnsFlash\000"
+ 1816      536E7346 
+ 1816      6C617368 
+ 1816      00
+ 1817              	.LASF70:
+ 1818 05ff 70747232 		.ascii	"ptr2FltrHistory\000"
+ 1818      466C7472 
+ 1818      48697374 
+ 1818      6F727900 
+ 1819              	.LASF81:
+ 1820 060f 77646774 		.ascii	"wdgtArray\000"
+ 1820      41727261 
+ 1820      7900
+ 1821              	.LASF37:
+ 1822 0619 66696E67 		.ascii	"fingerCap\000"
+ 1822      65724361 
+ 1822      7000
+ 1823              	.LASF101:
+ 1824 0623 43617053 		.ascii	"CapSense_dsFlash\000"
+ 1824      656E7365 
+ 1824      5F647346 
+ 1824      6C617368 
+ 1824      00
+ 1825              	.LASF39:
+ 1826 0634 706F7369 		.ascii	"position\000"
+ 1826      74696F6E 
+ 1826      00
+ 1827              	.LASF62:
+ 1828 063d 736E7254 		.ascii	"snrTestWidgetId\000"
+ 1828      65737457 
+ 1828      69646765 
+ 1828      74496400 
+ 1829              	.LASF26:
+ 1830 064d 534D4152 		.ascii	"SMARTSENSE_CSD_NOISE_ENVELOPE_STRUCT\000"
+ 1830      5453454E 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccTL1epR.s 			page 42
+
+
+ 1830      53455F43 
+ 1830      53445F4E 
+ 1830      4F495345 
+ 1831              	.LASF96:
+ 1832 0672 74756E65 		.ascii	"tunerStatus\000"
+ 1832      72537461 
+ 1832      74757300 
+ 1833              	.LASF57:
+ 1834 067e 736E7353 		.ascii	"snsStatus\000"
+ 1834      74617475 
+ 1834      7300
+ 1835              	.LASF95:
+ 1836 0688 636F6D6D 		.ascii	"command\000"
+ 1836      616E6400 
+ 1837              	.LASF40:
+ 1838 0690 43617053 		.ascii	"CapSense_RAM_WD_SLIDER_STRUCT\000"
+ 1838      656E7365 
+ 1838      5F52414D 
+ 1838      5F57445F 
+ 1838      534C4944 
+ 1839              	.LASF44:
+ 1840 06ae 64696666 		.ascii	"diff\000"
+ 1840      00
+ 1841              	.LASF78:
+ 1842 06b3 70747232 		.ascii	"ptr2NoiseEnvlp\000"
+ 1842      4E6F6973 
+ 1842      65456E76 
+ 1842      6C7000
+ 1843              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

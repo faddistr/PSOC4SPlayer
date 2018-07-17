@@ -1,0 +1,3445 @@
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0plus
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"filePlayer.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.filePlayer_GetNextFile,"ax",%progbits
+  20              		.align	2
+  21              		.code	16
+  22              		.thumb_func
+  23              		.type	filePlayer_GetNextFile, %function
+  24              	filePlayer_GetNextFile:
+  25              	.LFB7:
+  26              		.file 1 "filePlayer.c"
+   1:filePlayer.c  **** /** @file
+   2:filePlayer.c  ****  *  @brief Source file for player of sound files
+   3:filePlayer.c  ****  */  
+   4:filePlayer.c  **** #include <string.h>
+   5:filePlayer.c  **** #include "filePlayer.h"
+   6:filePlayer.c  **** #include "card.h"
+   7:filePlayer.c  **** #include "player.h"
+   8:filePlayer.c  **** #include "pcmPlayer.h"
+   9:filePlayer.c  **** #include "midiPlayer.h"
+  10:filePlayer.c  **** #include "assert.h"
+  11:filePlayer.c  **** 
+  12:filePlayer.c  **** /** Maximum size of the file extension */
+  13:filePlayer.c  **** #define MAX_EXT_SIZE 4U
+  14:filePlayer.c  **** 
+  15:filePlayer.c  **** const char rootDir[] ="/"; 
+  16:filePlayer.c  **** 
+  17:filePlayer.c  **** typedef enum
+  18:filePlayer.c  **** {
+  19:filePlayer.c  ****     FILE_NOT_SUPPORTED,
+  20:filePlayer.c  ****     FILE_PCM,
+  21:filePlayer.c  ****     FILE_MIDI,
+  22:filePlayer.c  ****     FILE_WAV,
+  23:filePlayer.c  ****     FILE_AMOUNT
+  24:filePlayer.c  **** } fileType_t;
+  25:filePlayer.c  **** 
+  26:filePlayer.c  **** typedef struct
+  27:filePlayer.c  **** {
+  28:filePlayer.c  ****     char        ext[MAX_EXT_SIZE + 1];
+  29:filePlayer.c  ****     fileType_t  type;
+  30:filePlayer.c  **** } fileExstRow_t;
+  31:filePlayer.c  **** 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 2
+
+
+  32:filePlayer.c  **** typedef enum
+  33:filePlayer.c  **** {
+  34:filePlayer.c  ****     FILE_PLAYER_START,
+  35:filePlayer.c  ****     FILE_PLAYER_PLAY,
+  36:filePlayer.c  ****     FILE_PLAYER_PAUSE,
+  37:filePlayer.c  ****     FILE_PLAYER_STOP,
+  38:filePlayer.c  ****     FILE_PLAYER_NO_DIR,
+  39:filePlayer.c  **** } filePlayer_State_t;
+  40:filePlayer.c  **** 
+  41:filePlayer.c  **** typedef struct
+  42:filePlayer.c  **** {
+  43:filePlayer.c  ****     DIR                 dir;
+  44:filePlayer.c  ****     FILINFO             fno_temp;
+  45:filePlayer.c  ****     filePlayer_State_t  state;
+  46:filePlayer.c  **** } filePlayer_t;
+  47:filePlayer.c  **** 
+  48:filePlayer.c  **** static const fileExstRow_t extDB[] = 
+  49:filePlayer.c  **** {
+  50:filePlayer.c  ****     { .ext = ".WAV",  .type =  FILE_WAV, },
+  51:filePlayer.c  ****     { .ext = ".PCM",  .type =  FILE_PCM, },
+  52:filePlayer.c  ****     { .ext = ".MID",  .type =  FILE_MIDI,},
+  53:filePlayer.c  **** };
+  54:filePlayer.c  **** 
+  55:filePlayer.c  **** static const uint32_t extDB_size = sizeof(extDB) / sizeof(fileExstRow_t); /* Will be calculated at 
+  56:filePlayer.c  **** 
+  57:filePlayer.c  **** static bool filePlayer_Init(void);
+  58:filePlayer.c  **** static bool filePlayer_GetNextFile(void);
+  59:filePlayer.c  **** static fileType_t filePlayer_GetFileType(void);
+  60:filePlayer.c  **** 
+  61:filePlayer.c  **** static filePlayer_t filePlayer = {.state = FILE_PLAYER_START,};
+  62:filePlayer.c  **** 
+  63:filePlayer.c  **** void filePlayer_Pause(void)
+  64:filePlayer.c  **** {
+  65:filePlayer.c  ****     if (FILE_PLAYER_PLAY == filePlayer.state)
+  66:filePlayer.c  ****     {
+  67:filePlayer.c  ****         player_Pause();
+  68:filePlayer.c  ****         filePlayer.state = FILE_PLAYER_PAUSE;
+  69:filePlayer.c  ****     }
+  70:filePlayer.c  **** }
+  71:filePlayer.c  **** 
+  72:filePlayer.c  **** void filePlayer_Stop(void)
+  73:filePlayer.c  **** {
+  74:filePlayer.c  ****     if (FILE_PLAYER_START != filePlayer.state)
+  75:filePlayer.c  ****     {
+  76:filePlayer.c  ****         filePlayer.state = FILE_PLAYER_STOP;
+  77:filePlayer.c  ****         player_Stop();
+  78:filePlayer.c  ****     }
+  79:filePlayer.c  **** }
+  80:filePlayer.c  **** 
+  81:filePlayer.c  **** void filePlayer_Play(void)
+  82:filePlayer.c  **** {
+  83:filePlayer.c  ****     if (FILE_PLAYER_PAUSE == filePlayer.state)
+  84:filePlayer.c  ****     {
+  85:filePlayer.c  ****         filePlayer.state = FILE_PLAYER_PLAY;
+  86:filePlayer.c  ****         player_Play();
+  87:filePlayer.c  ****     } else
+  88:filePlayer.c  ****     {
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 3
+
+
+  89:filePlayer.c  ****        filePlayer_Next();
+  90:filePlayer.c  ****     }
+  91:filePlayer.c  **** }
+  92:filePlayer.c  **** 
+  93:filePlayer.c  **** bool filePlayer_isPlay(void)
+  94:filePlayer.c  **** {
+  95:filePlayer.c  ****     return (filePlayer.state == FILE_PLAYER_PLAY);
+  96:filePlayer.c  **** }
+  97:filePlayer.c  **** 
+  98:filePlayer.c  **** void filePlayer_Next(void)
+  99:filePlayer.c  **** {
+ 100:filePlayer.c  ****     fileType_t fileType;
+ 101:filePlayer.c  ****     bool ret = false;
+ 102:filePlayer.c  ****      
+ 103:filePlayer.c  ****     if (FILE_PLAYER_START != filePlayer.state)
+ 104:filePlayer.c  ****     {
+ 105:filePlayer.c  ****         filePlayer_Stop();
+ 106:filePlayer.c  ****         do
+ 107:filePlayer.c  ****         {
+ 108:filePlayer.c  ****             ret = filePlayer_GetNextFile();
+ 109:filePlayer.c  ****             if (!ret)
+ 110:filePlayer.c  ****             {
+ 111:filePlayer.c  ****                 uartPrintf("FPLAYER: No files, rewind to the begining\r\n");
+ 112:filePlayer.c  ****                 filePlayer.state = FILE_PLAYER_START;
+ 113:filePlayer.c  ****                 break;
+ 114:filePlayer.c  ****             }
+ 115:filePlayer.c  ****             
+ 116:filePlayer.c  ****             fileType = filePlayer_GetFileType();
+ 117:filePlayer.c  ****             uartPrintf("FPLAYER: %s Type: %d\r\n", filePlayer.fno_temp.fname, fileType);
+ 118:filePlayer.c  ****             switch(fileType)
+ 119:filePlayer.c  ****             {
+ 120:filePlayer.c  ****                 case FILE_WAV:
+ 121:filePlayer.c  ****                     ret = pcmPlayerPlayWav(filePlayer.fno_temp.fname);
+ 122:filePlayer.c  ****                     break;
+ 123:filePlayer.c  ****                 
+ 124:filePlayer.c  ****                 case FILE_PCM:
+ 125:filePlayer.c  ****                     audio_SetSampleRate(AUDIO_SAMPLE_RATE_32K);
+ 126:filePlayer.c  ****                     ret = pcmPlayerPlay(filePlayer.fno_temp.fname);
+ 127:filePlayer.c  ****                     break;
+ 128:filePlayer.c  ****                 
+ 129:filePlayer.c  ****                 case FILE_MIDI:
+ 130:filePlayer.c  ****                     ret = midiPlayer_Play(filePlayer.fno_temp.fname);
+ 131:filePlayer.c  ****                     break;
+ 132:filePlayer.c  ****                 
+ 133:filePlayer.c  ****                 default:
+ 134:filePlayer.c  ****                     ret = false;
+ 135:filePlayer.c  ****                     break;
+ 136:filePlayer.c  ****             } 
+ 137:filePlayer.c  ****         } while(!ret);
+ 138:filePlayer.c  ****         
+ 139:filePlayer.c  ****         if (ret)
+ 140:filePlayer.c  ****         {
+ 141:filePlayer.c  ****            filePlayer.state = FILE_PLAYER_PLAY;
+ 142:filePlayer.c  ****         }
+ 143:filePlayer.c  ****     }
+ 144:filePlayer.c  **** }
+ 145:filePlayer.c  **** 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 4
+
+
+ 146:filePlayer.c  **** void filePlayer_Run(void)
+ 147:filePlayer.c  **** {
+ 148:filePlayer.c  ****     player_Run();
+ 149:filePlayer.c  ****     switch (filePlayer.state)
+ 150:filePlayer.c  ****     {
+ 151:filePlayer.c  ****         case FILE_PLAYER_START:
+ 152:filePlayer.c  ****             if (filePlayer_Init())
+ 153:filePlayer.c  ****             {
+ 154:filePlayer.c  ****                 uartPrintf("FPLAYER: Started!\r\n");
+ 155:filePlayer.c  ****                 filePlayer.state = FILE_PLAYER_STOP;
+ 156:filePlayer.c  ****             }
+ 157:filePlayer.c  ****             break;
+ 158:filePlayer.c  ****             
+ 159:filePlayer.c  ****         case FILE_PLAYER_STOP:   
+ 160:filePlayer.c  ****         case FILE_PLAYER_PAUSE:
+ 161:filePlayer.c  ****             break;
+ 162:filePlayer.c  ****             
+ 163:filePlayer.c  ****         case FILE_PLAYER_PLAY:
+ 164:filePlayer.c  ****             if (!player_IsPlaying())
+ 165:filePlayer.c  ****             {
+ 166:filePlayer.c  ****                 filePlayer_Next();
+ 167:filePlayer.c  ****             }
+ 168:filePlayer.c  ****             break;
+ 169:filePlayer.c  ****         
+ 170:filePlayer.c  ****         default:
+ 171:filePlayer.c  ****             uartPrintf("FPLAYER: Wrong state %d\r\n", filePlayer.state);
+ 172:filePlayer.c  ****             ASSERT(false);
+ 173:filePlayer.c  ****             break;
+ 174:filePlayer.c  ****     }
+ 175:filePlayer.c  ****  
+ 176:filePlayer.c  **** }
+ 177:filePlayer.c  **** 
+ 178:filePlayer.c  **** static fileType_t filePlayer_GetFileType(void)
+ 179:filePlayer.c  **** {
+ 180:filePlayer.c  ****     uint32_t i;
+ 181:filePlayer.c  ****     fileType_t ret = FILE_NOT_SUPPORTED;
+ 182:filePlayer.c  ****     
+ 183:filePlayer.c  ****     for (i = 0; i < extDB_size; i++)
+ 184:filePlayer.c  ****     {
+ 185:filePlayer.c  ****         if (NULL != strstr(filePlayer.fno_temp.fname, extDB[i].ext))
+ 186:filePlayer.c  ****         {
+ 187:filePlayer.c  ****             ret = extDB[i].type;
+ 188:filePlayer.c  ****             break;
+ 189:filePlayer.c  ****         }
+ 190:filePlayer.c  ****     }
+ 191:filePlayer.c  ****     
+ 192:filePlayer.c  ****     return ret; 
+ 193:filePlayer.c  **** }
+ 194:filePlayer.c  **** 
+ 195:filePlayer.c  **** static bool filePlayer_GetNextFile(void)
+ 196:filePlayer.c  **** {
+  27              		.loc 1 196 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31 0000 70B5     		push	{r4, r5, r6, lr}
+  32              		.cfi_def_cfa_offset 16
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 5
+
+
+  33              		.cfi_offset 4, -16
+  34              		.cfi_offset 5, -12
+  35              		.cfi_offset 6, -8
+  36              		.cfi_offset 14, -4
+  37              	.L5:
+ 197:filePlayer.c  ****     FRESULT res;
+ 198:filePlayer.c  ****     bool ret = false;
+ 199:filePlayer.c  ****     
+ 200:filePlayer.c  ****     do
+ 201:filePlayer.c  ****     {
+ 202:filePlayer.c  ****          res = f_readdir(&filePlayer.dir, &filePlayer.fno_temp);
+  38              		.loc 1 202 0
+  39 0002 1148     		ldr	r0, .L7
+  40 0004 0100     		movs	r1, r0
+  41 0006 1C31     		adds	r1, r1, #28
+  42 0008 FFF7FEFF 		bl	f_readdir
+  43              	.LVL0:
+  44 000c 041E     		subs	r4, r0, #0
+  45              	.LVL1:
+ 203:filePlayer.c  ****          if (res != FR_OK)
+  46              		.loc 1 203 0
+  47 000e 04D0     		beq	.L2
+ 204:filePlayer.c  ****          {
+ 205:filePlayer.c  ****             uartPrintf("FPLAYER: Error readdir\r\n");
+  48              		.loc 1 205 0
+  49 0010 0E48     		ldr	r0, .L7+4
+  50              	.LVL2:
+  51 0012 FFF7FEFF 		bl	uartPrintf
+  52              	.LVL3:
+ 198:filePlayer.c  ****     
+  53              		.loc 1 198 0
+  54 0016 0025     		movs	r5, #0
+ 206:filePlayer.c  ****             break;
+  55              		.loc 1 206 0
+  56 0018 0FE0     		b	.L3
+  57              	.LVL4:
+  58              	.L2:
+ 207:filePlayer.c  ****          }
+ 208:filePlayer.c  ****             
+ 209:filePlayer.c  ****          if (0 == filePlayer.fno_temp.fname[0])
+  59              		.loc 1 209 0
+  60 001a 2523     		movs	r3, #37
+  61 001c 0A4A     		ldr	r2, .L7
+  62 001e D35C     		ldrb	r3, [r2, r3]
+  63 0020 002B     		cmp	r3, #0
+  64 0022 04D1     		bne	.L4
+ 210:filePlayer.c  ****          {
+ 211:filePlayer.c  ****            uartPrintf("FPLAYER: Dir end, restart!\r\n");
+  65              		.loc 1 211 0
+  66 0024 0A48     		ldr	r0, .L7+8
+  67              	.LVL5:
+  68 0026 FFF7FEFF 		bl	uartPrintf
+  69              	.LVL6:
+ 198:filePlayer.c  ****     
+  70              		.loc 1 198 0
+  71 002a 0025     		movs	r5, #0
+ 212:filePlayer.c  ****            break;              
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 6
+
+
+  72              		.loc 1 212 0
+  73 002c 05E0     		b	.L3
+  74              	.LVL7:
+  75              	.L4:
+ 213:filePlayer.c  ****           } else
+ 214:filePlayer.c  ****           {
+ 215:filePlayer.c  ****             if (!(filePlayer.fno_temp.fattrib & AM_DIR))
+  76              		.loc 1 215 0
+  77 002e 2423     		movs	r3, #36
+  78 0030 054A     		ldr	r2, .L7
+  79 0032 D35C     		ldrb	r3, [r2, r3]
+  80 0034 DB06     		lsls	r3, r3, #27
+  81 0036 E4D4     		bmi	.L5
+ 216:filePlayer.c  ****             {
+ 217:filePlayer.c  ****                ret = true;
+  82              		.loc 1 217 0
+  83 0038 0125     		movs	r5, #1
+  84              	.LVL8:
+  85              	.L3:
+ 218:filePlayer.c  ****                break;
+ 219:filePlayer.c  ****              }
+ 220:filePlayer.c  ****           }
+ 221:filePlayer.c  ****     } while (true);
+ 222:filePlayer.c  ****         
+ 223:filePlayer.c  ****     if (FR_OK != res)
+  86              		.loc 1 223 0
+  87 003a 002C     		cmp	r4, #0
+  88 003c 02D0     		beq	.L6
+ 224:filePlayer.c  ****     {
+ 225:filePlayer.c  ****        cardErrorPrint(res);
+  89              		.loc 1 225 0
+  90 003e 2000     		movs	r0, r4
+  91 0040 FFF7FEFF 		bl	cardErrorPrint
+  92              	.LVL9:
+  93              	.L6:
+ 226:filePlayer.c  ****     }
+ 227:filePlayer.c  ****         
+ 228:filePlayer.c  ****     return ret;
+ 229:filePlayer.c  **** }
+  94              		.loc 1 229 0
+  95 0044 2800     		movs	r0, r5
+  96              		@ sp needed
+  97              	.LVL10:
+  98              	.LVL11:
+  99 0046 70BD     		pop	{r4, r5, r6, pc}
+ 100              	.L8:
+ 101              		.align	2
+ 102              	.L7:
+ 103 0048 00000000 		.word	.LANCHOR0
+ 104 004c 00000000 		.word	.LC1
+ 105 0050 1C000000 		.word	.LC3
+ 106              		.cfi_endproc
+ 107              	.LFE7:
+ 108              		.size	filePlayer_GetNextFile, .-filePlayer_GetNextFile
+ 109              		.section	.text.filePlayer_GetFileType,"ax",%progbits
+ 110              		.align	2
+ 111              		.code	16
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 7
+
+
+ 112              		.thumb_func
+ 113              		.type	filePlayer_GetFileType, %function
+ 114              	filePlayer_GetFileType:
+ 115              	.LFB6:
+ 179:filePlayer.c  ****     uint32_t i;
+ 116              		.loc 1 179 0
+ 117              		.cfi_startproc
+ 118              		@ args = 0, pretend = 0, frame = 0
+ 119              		@ frame_needed = 0, uses_anonymous_args = 0
+ 120 0000 10B5     		push	{r4, lr}
+ 121              		.cfi_def_cfa_offset 8
+ 122              		.cfi_offset 4, -8
+ 123              		.cfi_offset 14, -4
+ 124              	.LVL12:
+ 183:filePlayer.c  ****     {
+ 125              		.loc 1 183 0
+ 126 0002 0024     		movs	r4, #0
+ 127 0004 12E0     		b	.L10
+ 128              	.LVL13:
+ 129              	.L13:
+ 185:filePlayer.c  ****         {
+ 130              		.loc 1 185 0
+ 131 0006 6300     		lsls	r3, r4, #1
+ 132 0008 1B19     		adds	r3, r3, r4
+ 133 000a 5900     		lsls	r1, r3, #1
+ 134 000c 094B     		ldr	r3, .L14
+ 135 000e 5918     		adds	r1, r3, r1
+ 136 0010 0948     		ldr	r0, .L14+4
+ 137 0012 2530     		adds	r0, r0, #37
+ 138 0014 FFF7FEFF 		bl	strstr
+ 139              	.LVL14:
+ 140 0018 0028     		cmp	r0, #0
+ 141 001a 06D0     		beq	.L11
+ 187:filePlayer.c  ****             break;
+ 142              		.loc 1 187 0
+ 143 001c 6300     		lsls	r3, r4, #1
+ 144 001e 1C19     		adds	r4, r3, r4
+ 145              	.LVL15:
+ 146 0020 6300     		lsls	r3, r4, #1
+ 147 0022 044A     		ldr	r2, .L14
+ 148 0024 D318     		adds	r3, r2, r3
+ 149 0026 5879     		ldrb	r0, [r3, #5]
+ 150              	.LVL16:
+ 188:filePlayer.c  ****         }
+ 151              		.loc 1 188 0
+ 152 0028 03E0     		b	.L12
+ 153              	.LVL17:
+ 154              	.L11:
+ 183:filePlayer.c  ****     {
+ 155              		.loc 1 183 0 discriminator 2
+ 156 002a 0134     		adds	r4, r4, #1
+ 157              	.LVL18:
+ 158              	.L10:
+ 183:filePlayer.c  ****     {
+ 159              		.loc 1 183 0 is_stmt 0 discriminator 1
+ 160 002c 022C     		cmp	r4, #2
+ 161 002e EAD9     		bls	.L13
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 8
+
+
+ 181:filePlayer.c  ****     
+ 162              		.loc 1 181 0 is_stmt 1
+ 163 0030 0020     		movs	r0, #0
+ 164              	.LVL19:
+ 165              	.L12:
+ 193:filePlayer.c  **** 
+ 166              		.loc 1 193 0
+ 167              		@ sp needed
+ 168 0032 10BD     		pop	{r4, pc}
+ 169              	.L15:
+ 170              		.align	2
+ 171              	.L14:
+ 172 0034 00000000 		.word	.LANCHOR1
+ 173 0038 00000000 		.word	.LANCHOR0
+ 174              		.cfi_endproc
+ 175              	.LFE6:
+ 176              		.size	filePlayer_GetFileType, .-filePlayer_GetFileType
+ 177              		.section	.text.filePlayer_Init,"ax",%progbits
+ 178              		.align	2
+ 179              		.code	16
+ 180              		.thumb_func
+ 181              		.type	filePlayer_Init, %function
+ 182              	filePlayer_Init:
+ 183              	.LFB8:
+ 230:filePlayer.c  **** 
+ 231:filePlayer.c  **** static bool filePlayer_Init(void)
+ 232:filePlayer.c  **** {
+ 184              		.loc 1 232 0
+ 185              		.cfi_startproc
+ 186              		@ args = 0, pretend = 0, frame = 0
+ 187              		@ frame_needed = 0, uses_anonymous_args = 0
+ 188 0000 10B5     		push	{r4, lr}
+ 189              		.cfi_def_cfa_offset 8
+ 190              		.cfi_offset 4, -8
+ 191              		.cfi_offset 14, -4
+ 192              	.LVL20:
+ 233:filePlayer.c  ****     bool res = false;
+ 234:filePlayer.c  **** 
+ 235:filePlayer.c  ****     FRESULT resF = f_opendir(&filePlayer.dir, rootDir);
+ 193              		.loc 1 235 0
+ 194 0002 0849     		ldr	r1, .L19
+ 195 0004 1431     		adds	r1, r1, #20
+ 196 0006 0848     		ldr	r0, .L19+4
+ 197 0008 FFF7FEFF 		bl	f_opendir
+ 198              	.LVL21:
+ 199 000c 041E     		subs	r4, r0, #0
+ 200              	.LVL22:
+ 236:filePlayer.c  ****     if (resF == FR_OK) {
+ 201              		.loc 1 236 0
+ 202 000e 07D0     		beq	.L18
+ 237:filePlayer.c  ****         res = true;
+ 238:filePlayer.c  ****     } else
+ 239:filePlayer.c  ****     {
+ 240:filePlayer.c  ****         uartPrintf("FPLAYER: Error openDir\r\n");
+ 203              		.loc 1 240 0
+ 204 0010 0648     		ldr	r0, .L19+8
+ 205              	.LVL23:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 9
+
+
+ 206 0012 FFF7FEFF 		bl	uartPrintf
+ 207              	.LVL24:
+ 241:filePlayer.c  ****         cardErrorPrint(resF);
+ 208              		.loc 1 241 0
+ 209 0016 2000     		movs	r0, r4
+ 210 0018 FFF7FEFF 		bl	cardErrorPrint
+ 211              	.LVL25:
+ 233:filePlayer.c  **** 
+ 212              		.loc 1 233 0
+ 213 001c 0020     		movs	r0, #0
+ 214 001e 00E0     		b	.L17
+ 215              	.LVL26:
+ 216              	.L18:
+ 237:filePlayer.c  ****         res = true;
+ 217              		.loc 1 237 0
+ 218 0020 0120     		movs	r0, #1
+ 219              	.LVL27:
+ 220              	.L17:
+ 242:filePlayer.c  ****     }
+ 243:filePlayer.c  ****     
+ 244:filePlayer.c  ****     return res;
+ 245:filePlayer.c  **** }
+ 221              		.loc 1 245 0
+ 222              		@ sp needed
+ 223 0022 10BD     		pop	{r4, pc}
+ 224              	.L20:
+ 225              		.align	2
+ 226              	.L19:
+ 227 0024 00000000 		.word	.LANCHOR1
+ 228 0028 00000000 		.word	.LANCHOR0
+ 229 002c 3C000000 		.word	.LC10
+ 230              		.cfi_endproc
+ 231              	.LFE8:
+ 232              		.size	filePlayer_Init, .-filePlayer_Init
+ 233              		.section	.text.filePlayer_Pause,"ax",%progbits
+ 234              		.align	2
+ 235              		.global	filePlayer_Pause
+ 236              		.code	16
+ 237              		.thumb_func
+ 238              		.type	filePlayer_Pause, %function
+ 239              	filePlayer_Pause:
+ 240              	.LFB0:
+  64:filePlayer.c  ****     if (FILE_PLAYER_PLAY == filePlayer.state)
+ 241              		.loc 1 64 0
+ 242              		.cfi_startproc
+ 243              		@ args = 0, pretend = 0, frame = 0
+ 244              		@ frame_needed = 0, uses_anonymous_args = 0
+ 245 0000 10B5     		push	{r4, lr}
+ 246              		.cfi_def_cfa_offset 8
+ 247              		.cfi_offset 4, -8
+ 248              		.cfi_offset 14, -4
+  65:filePlayer.c  ****     {
+ 249              		.loc 1 65 0
+ 250 0002 3423     		movs	r3, #52
+ 251 0004 054A     		ldr	r2, .L23
+ 252 0006 D35C     		ldrb	r3, [r2, r3]
+ 253 0008 012B     		cmp	r3, #1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 10
+
+
+ 254 000a 05D1     		bne	.L21
+  67:filePlayer.c  ****         filePlayer.state = FILE_PLAYER_PAUSE;
+ 255              		.loc 1 67 0
+ 256 000c FFF7FEFF 		bl	player_Pause
+ 257              	.LVL28:
+  68:filePlayer.c  ****     }
+ 258              		.loc 1 68 0
+ 259 0010 0221     		movs	r1, #2
+ 260 0012 3423     		movs	r3, #52
+ 261 0014 014A     		ldr	r2, .L23
+ 262 0016 D154     		strb	r1, [r2, r3]
+ 263              	.L21:
+  70:filePlayer.c  **** 
+ 264              		.loc 1 70 0
+ 265              		@ sp needed
+ 266 0018 10BD     		pop	{r4, pc}
+ 267              	.L24:
+ 268 001a C046     		.align	2
+ 269              	.L23:
+ 270 001c 00000000 		.word	.LANCHOR0
+ 271              		.cfi_endproc
+ 272              	.LFE0:
+ 273              		.size	filePlayer_Pause, .-filePlayer_Pause
+ 274              		.section	.text.filePlayer_Stop,"ax",%progbits
+ 275              		.align	2
+ 276              		.global	filePlayer_Stop
+ 277              		.code	16
+ 278              		.thumb_func
+ 279              		.type	filePlayer_Stop, %function
+ 280              	filePlayer_Stop:
+ 281              	.LFB1:
+  73:filePlayer.c  ****     if (FILE_PLAYER_START != filePlayer.state)
+ 282              		.loc 1 73 0
+ 283              		.cfi_startproc
+ 284              		@ args = 0, pretend = 0, frame = 0
+ 285              		@ frame_needed = 0, uses_anonymous_args = 0
+ 286 0000 10B5     		push	{r4, lr}
+ 287              		.cfi_def_cfa_offset 8
+ 288              		.cfi_offset 4, -8
+ 289              		.cfi_offset 14, -4
+  74:filePlayer.c  ****     {
+ 290              		.loc 1 74 0
+ 291 0002 3423     		movs	r3, #52
+ 292 0004 044A     		ldr	r2, .L27
+ 293 0006 D35C     		ldrb	r3, [r2, r3]
+ 294 0008 002B     		cmp	r3, #0
+ 295 000a 04D0     		beq	.L25
+  76:filePlayer.c  ****         player_Stop();
+ 296              		.loc 1 76 0
+ 297 000c 0321     		movs	r1, #3
+ 298 000e 3423     		movs	r3, #52
+ 299 0010 D154     		strb	r1, [r2, r3]
+  77:filePlayer.c  ****     }
+ 300              		.loc 1 77 0
+ 301 0012 FFF7FEFF 		bl	player_Stop
+ 302              	.LVL29:
+ 303              	.L25:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 11
+
+
+  79:filePlayer.c  **** 
+ 304              		.loc 1 79 0
+ 305              		@ sp needed
+ 306 0016 10BD     		pop	{r4, pc}
+ 307              	.L28:
+ 308              		.align	2
+ 309              	.L27:
+ 310 0018 00000000 		.word	.LANCHOR0
+ 311              		.cfi_endproc
+ 312              	.LFE1:
+ 313              		.size	filePlayer_Stop, .-filePlayer_Stop
+ 314              		.section	.text.filePlayer_isPlay,"ax",%progbits
+ 315              		.align	2
+ 316              		.global	filePlayer_isPlay
+ 317              		.code	16
+ 318              		.thumb_func
+ 319              		.type	filePlayer_isPlay, %function
+ 320              	filePlayer_isPlay:
+ 321              	.LFB3:
+  94:filePlayer.c  ****     return (filePlayer.state == FILE_PLAYER_PLAY);
+ 322              		.loc 1 94 0
+ 323              		.cfi_startproc
+ 324              		@ args = 0, pretend = 0, frame = 0
+ 325              		@ frame_needed = 0, uses_anonymous_args = 0
+ 326              		@ link register save eliminated.
+  95:filePlayer.c  **** }
+ 327              		.loc 1 95 0
+ 328 0000 3423     		movs	r3, #52
+ 329 0002 034A     		ldr	r2, .L30
+ 330 0004 D05C     		ldrb	r0, [r2, r3]
+ 331 0006 0138     		subs	r0, r0, #1
+ 332 0008 4342     		rsbs	r3, r0, #0
+ 333 000a 5841     		adcs	r0, r0, r3
+ 334 000c C0B2     		uxtb	r0, r0
+  96:filePlayer.c  **** 
+ 335              		.loc 1 96 0
+ 336              		@ sp needed
+ 337 000e 7047     		bx	lr
+ 338              	.L31:
+ 339              		.align	2
+ 340              	.L30:
+ 341 0010 00000000 		.word	.LANCHOR0
+ 342              		.cfi_endproc
+ 343              	.LFE3:
+ 344              		.size	filePlayer_isPlay, .-filePlayer_isPlay
+ 345              		.section	.text.filePlayer_Next,"ax",%progbits
+ 346              		.align	2
+ 347              		.global	filePlayer_Next
+ 348              		.code	16
+ 349              		.thumb_func
+ 350              		.type	filePlayer_Next, %function
+ 351              	filePlayer_Next:
+ 352              	.LFB4:
+  99:filePlayer.c  ****     fileType_t fileType;
+ 353              		.loc 1 99 0
+ 354              		.cfi_startproc
+ 355              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 12
+
+
+ 356              		@ frame_needed = 0, uses_anonymous_args = 0
+ 357 0000 10B5     		push	{r4, lr}
+ 358              		.cfi_def_cfa_offset 8
+ 359              		.cfi_offset 4, -8
+ 360              		.cfi_offset 14, -4
+ 361              	.LVL30:
+ 103:filePlayer.c  ****     {
+ 362              		.loc 1 103 0
+ 363 0002 3423     		movs	r3, #52
+ 364 0004 204A     		ldr	r2, .L43
+ 365 0006 D35C     		ldrb	r3, [r2, r3]
+ 366 0008 002B     		cmp	r3, #0
+ 367 000a 3BD0     		beq	.L32
+ 105:filePlayer.c  ****         do
+ 368              		.loc 1 105 0
+ 369 000c FFF7FEFF 		bl	filePlayer_Stop
+ 370              	.LVL31:
+ 371              	.L40:
+ 108:filePlayer.c  ****             if (!ret)
+ 372              		.loc 1 108 0
+ 373 0010 FFF7FEFF 		bl	filePlayer_GetNextFile
+ 374              	.LVL32:
+ 375 0014 041E     		subs	r4, r0, #0
+ 376              	.LVL33:
+ 109:filePlayer.c  ****             {
+ 377              		.loc 1 109 0
+ 378 0016 07D1     		bne	.L34
+ 111:filePlayer.c  ****                 filePlayer.state = FILE_PLAYER_START;
+ 379              		.loc 1 111 0
+ 380 0018 1C48     		ldr	r0, .L43+4
+ 381              	.LVL34:
+ 382 001a FFF7FEFF 		bl	uartPrintf
+ 383              	.LVL35:
+ 112:filePlayer.c  ****                 break;
+ 384              		.loc 1 112 0
+ 385 001e 0021     		movs	r1, #0
+ 386 0020 3423     		movs	r3, #52
+ 387 0022 194A     		ldr	r2, .L43
+ 388 0024 D154     		strb	r1, [r2, r3]
+ 113:filePlayer.c  ****             }
+ 389              		.loc 1 113 0
+ 390 0026 27E0     		b	.L35
+ 391              	.LVL36:
+ 392              	.L34:
+ 116:filePlayer.c  ****             uartPrintf("FPLAYER: %s Type: %d\r\n", filePlayer.fno_temp.fname, fileType);
+ 393              		.loc 1 116 0
+ 394 0028 FFF7FEFF 		bl	filePlayer_GetFileType
+ 395              	.LVL37:
+ 396 002c 0200     		movs	r2, r0
+ 397 002e 0400     		movs	r4, r0
+ 398              	.LVL38:
+ 117:filePlayer.c  ****             switch(fileType)
+ 399              		.loc 1 117 0
+ 400 0030 1549     		ldr	r1, .L43
+ 401 0032 2531     		adds	r1, r1, #37
+ 402 0034 1648     		ldr	r0, .L43+8
+ 403 0036 FFF7FEFF 		bl	uartPrintf
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 13
+
+
+ 404              	.LVL39:
+ 118:filePlayer.c  ****             {
+ 405              		.loc 1 118 0
+ 406 003a 022C     		cmp	r4, #2
+ 407 003c 13D0     		beq	.L37
+ 408 003e 032C     		cmp	r4, #3
+ 409 0040 02D0     		beq	.L38
+ 410 0042 012C     		cmp	r4, #1
+ 411 0044 15D1     		bne	.L42
+ 412 0046 05E0     		b	.L39
+ 413              	.L38:
+ 121:filePlayer.c  ****                     break;
+ 414              		.loc 1 121 0
+ 415 0048 0F48     		ldr	r0, .L43
+ 416 004a 2530     		adds	r0, r0, #37
+ 417 004c FFF7FEFF 		bl	pcmPlayerPlayWav
+ 418              	.LVL40:
+ 419 0050 0400     		movs	r4, r0
+ 420              	.LVL41:
+ 122:filePlayer.c  ****                 
+ 421              		.loc 1 122 0
+ 422 0052 0FE0     		b	.L36
+ 423              	.LVL42:
+ 424              	.L39:
+ 125:filePlayer.c  ****                     ret = pcmPlayerPlay(filePlayer.fno_temp.fname);
+ 425              		.loc 1 125 0
+ 426 0054 0320     		movs	r0, #3
+ 427 0056 FFF7FEFF 		bl	audio_SetSampleRate
+ 428              	.LVL43:
+ 126:filePlayer.c  ****                     break;
+ 429              		.loc 1 126 0
+ 430 005a 0B48     		ldr	r0, .L43
+ 431 005c 2530     		adds	r0, r0, #37
+ 432 005e FFF7FEFF 		bl	pcmPlayerPlay
+ 433              	.LVL44:
+ 434 0062 0400     		movs	r4, r0
+ 435              	.LVL45:
+ 127:filePlayer.c  ****                 
+ 436              		.loc 1 127 0
+ 437 0064 06E0     		b	.L36
+ 438              	.LVL46:
+ 439              	.L37:
+ 130:filePlayer.c  ****                     break;
+ 440              		.loc 1 130 0
+ 441 0066 0848     		ldr	r0, .L43
+ 442 0068 2530     		adds	r0, r0, #37
+ 443 006a FFF7FEFF 		bl	midiPlayer_Play
+ 444              	.LVL47:
+ 445 006e 0400     		movs	r4, r0
+ 446              	.LVL48:
+ 131:filePlayer.c  ****                 
+ 447              		.loc 1 131 0
+ 448 0070 00E0     		b	.L36
+ 449              	.LVL49:
+ 450              	.L42:
+ 134:filePlayer.c  ****                     break;
+ 451              		.loc 1 134 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 14
+
+
+ 452 0072 0024     		movs	r4, #0
+ 453              	.L36:
+ 454              	.LVL50:
+ 137:filePlayer.c  ****         
+ 455              		.loc 1 137 0
+ 456 0074 002C     		cmp	r4, #0
+ 457 0076 CBD0     		beq	.L40
+ 458              	.LVL51:
+ 459              	.L35:
+ 139:filePlayer.c  ****         {
+ 460              		.loc 1 139 0
+ 461 0078 002C     		cmp	r4, #0
+ 462 007a 03D0     		beq	.L32
+ 141:filePlayer.c  ****         }
+ 463              		.loc 1 141 0
+ 464 007c 0121     		movs	r1, #1
+ 465 007e 3423     		movs	r3, #52
+ 466 0080 014A     		ldr	r2, .L43
+ 467 0082 D154     		strb	r1, [r2, r3]
+ 468              	.LVL52:
+ 469              	.L32:
+ 144:filePlayer.c  **** 
+ 470              		.loc 1 144 0
+ 471              		@ sp needed
+ 472 0084 10BD     		pop	{r4, pc}
+ 473              	.L44:
+ 474 0086 C046     		.align	2
+ 475              	.L43:
+ 476 0088 00000000 		.word	.LANCHOR0
+ 477 008c 58000000 		.word	.LC16
+ 478 0090 84000000 		.word	.LC18
+ 479              		.cfi_endproc
+ 480              	.LFE4:
+ 481              		.size	filePlayer_Next, .-filePlayer_Next
+ 482              		.section	.text.filePlayer_Play,"ax",%progbits
+ 483              		.align	2
+ 484              		.global	filePlayer_Play
+ 485              		.code	16
+ 486              		.thumb_func
+ 487              		.type	filePlayer_Play, %function
+ 488              	filePlayer_Play:
+ 489              	.LFB2:
+  82:filePlayer.c  ****     if (FILE_PLAYER_PAUSE == filePlayer.state)
+ 490              		.loc 1 82 0
+ 491              		.cfi_startproc
+ 492              		@ args = 0, pretend = 0, frame = 0
+ 493              		@ frame_needed = 0, uses_anonymous_args = 0
+ 494 0000 10B5     		push	{r4, lr}
+ 495              		.cfi_def_cfa_offset 8
+ 496              		.cfi_offset 4, -8
+ 497              		.cfi_offset 14, -4
+  83:filePlayer.c  ****     {
+ 498              		.loc 1 83 0
+ 499 0002 3423     		movs	r3, #52
+ 500 0004 064A     		ldr	r2, .L48
+ 501 0006 D35C     		ldrb	r3, [r2, r3]
+ 502 0008 022B     		cmp	r3, #2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 15
+
+
+ 503 000a 05D1     		bne	.L46
+  85:filePlayer.c  ****         player_Play();
+ 504              		.loc 1 85 0
+ 505 000c 0121     		movs	r1, #1
+ 506 000e 3233     		adds	r3, r3, #50
+ 507 0010 D154     		strb	r1, [r2, r3]
+  86:filePlayer.c  ****     } else
+ 508              		.loc 1 86 0
+ 509 0012 FFF7FEFF 		bl	player_Play
+ 510              	.LVL53:
+ 511 0016 01E0     		b	.L45
+ 512              	.L46:
+  89:filePlayer.c  ****     }
+ 513              		.loc 1 89 0
+ 514 0018 FFF7FEFF 		bl	filePlayer_Next
+ 515              	.LVL54:
+ 516              	.L45:
+  91:filePlayer.c  **** 
+ 517              		.loc 1 91 0
+ 518              		@ sp needed
+ 519 001c 10BD     		pop	{r4, pc}
+ 520              	.L49:
+ 521 001e C046     		.align	2
+ 522              	.L48:
+ 523 0020 00000000 		.word	.LANCHOR0
+ 524              		.cfi_endproc
+ 525              	.LFE2:
+ 526              		.size	filePlayer_Play, .-filePlayer_Play
+ 527              		.section	.text.filePlayer_Run,"ax",%progbits
+ 528              		.align	2
+ 529              		.global	filePlayer_Run
+ 530              		.code	16
+ 531              		.thumb_func
+ 532              		.type	filePlayer_Run, %function
+ 533              	filePlayer_Run:
+ 534              	.LFB5:
+ 147:filePlayer.c  ****     player_Run();
+ 535              		.loc 1 147 0
+ 536              		.cfi_startproc
+ 537              		@ args = 0, pretend = 0, frame = 0
+ 538              		@ frame_needed = 0, uses_anonymous_args = 0
+ 539 0000 10B5     		push	{r4, lr}
+ 540              		.cfi_def_cfa_offset 8
+ 541              		.cfi_offset 4, -8
+ 542              		.cfi_offset 14, -4
+ 148:filePlayer.c  ****     switch (filePlayer.state)
+ 543              		.loc 1 148 0
+ 544 0002 FFF7FEFF 		bl	player_Run
+ 545              	.LVL55:
+ 149:filePlayer.c  ****     {
+ 546              		.loc 1 149 0
+ 547 0006 3423     		movs	r3, #52
+ 548 0008 124A     		ldr	r2, .L56
+ 549 000a D15C     		ldrb	r1, [r2, r3]
+ 550 000c 0129     		cmp	r1, #1
+ 551 000e 10D0     		beq	.L52
+ 552 0010 0029     		cmp	r1, #0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 16
+
+
+ 553 0012 02D0     		beq	.L53
+ 554 0014 0329     		cmp	r1, #3
+ 555 0016 13D8     		bhi	.L51
+ 556 0018 1BE0     		b	.L50
+ 557              	.L53:
+ 152:filePlayer.c  ****             {
+ 558              		.loc 1 152 0
+ 559 001a FFF7FEFF 		bl	filePlayer_Init
+ 560              	.LVL56:
+ 561 001e 0028     		cmp	r0, #0
+ 562 0020 17D0     		beq	.L50
+ 154:filePlayer.c  ****                 filePlayer.state = FILE_PLAYER_STOP;
+ 563              		.loc 1 154 0
+ 564 0022 0D48     		ldr	r0, .L56+4
+ 565 0024 FFF7FEFF 		bl	uartPrintf
+ 566              	.LVL57:
+ 155:filePlayer.c  ****             }
+ 567              		.loc 1 155 0
+ 568 0028 0321     		movs	r1, #3
+ 569 002a 3423     		movs	r3, #52
+ 570 002c 094A     		ldr	r2, .L56
+ 571 002e D154     		strb	r1, [r2, r3]
+ 572 0030 0FE0     		b	.L50
+ 573              	.L52:
+ 164:filePlayer.c  ****             {
+ 574              		.loc 1 164 0
+ 575 0032 FFF7FEFF 		bl	player_IsPlaying
+ 576              	.LVL58:
+ 577 0036 0028     		cmp	r0, #0
+ 578 0038 0BD1     		bne	.L50
+ 166:filePlayer.c  ****             }
+ 579              		.loc 1 166 0
+ 580 003a FFF7FEFF 		bl	filePlayer_Next
+ 581              	.LVL59:
+ 582 003e 08E0     		b	.L50
+ 583              	.L51:
+ 171:filePlayer.c  ****             ASSERT(false);
+ 584              		.loc 1 171 0
+ 585 0040 0648     		ldr	r0, .L56+8
+ 586 0042 FFF7FEFF 		bl	uartPrintf
+ 587              	.LVL60:
+ 172:filePlayer.c  ****             break;
+ 588              		.loc 1 172 0
+ 589 0046 AC22     		movs	r2, #172
+ 590 0048 0549     		ldr	r1, .L56+12
+ 591 004a 0648     		ldr	r0, .L56+16
+ 592 004c FFF7FEFF 		bl	uartPrintf
+ 593              	.LVL61:
+ 594              	.L55:
+ 595 0050 FEE7     		b	.L55
+ 596              	.L50:
+ 176:filePlayer.c  **** 
+ 597              		.loc 1 176 0
+ 598              		@ sp needed
+ 599 0052 10BD     		pop	{r4, pc}
+ 600              	.L57:
+ 601              		.align	2
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 17
+
+
+ 602              	.L56:
+ 603 0054 00000000 		.word	.LANCHOR0
+ 604 0058 9C000000 		.word	.LC22
+ 605 005c B0000000 		.word	.LC24
+ 606 0060 CC000000 		.word	.LC26
+ 607 0064 DC000000 		.word	.LC28
+ 608              		.cfi_endproc
+ 609              	.LFE5:
+ 610              		.size	filePlayer_Run, .-filePlayer_Run
+ 611              		.global	rootDir
+ 612              		.section	.rodata
+ 613              		.align	2
+ 614              		.set	.LANCHOR1,. + 0
+ 615              		.type	extDB, %object
+ 616              		.size	extDB, 18
+ 617              	extDB:
+ 618 0000 2E574156 		.ascii	".WAV\000"
+ 618      00
+ 619 0005 03       		.byte	3
+ 620 0006 2E50434D 		.ascii	".PCM\000"
+ 620      00
+ 621 000b 01       		.byte	1
+ 622 000c 2E4D4944 		.ascii	".MID\000"
+ 622      00
+ 623 0011 02       		.byte	2
+ 624 0012 0000     		.space	2
+ 625              		.type	rootDir, %object
+ 626              		.size	rootDir, 2
+ 627              	rootDir:
+ 628 0014 2F00     		.ascii	"/\000"
+ 629              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 630              		.align	2
+ 631              	.LC1:
+ 632 0000 46504C41 		.ascii	"FPLAYER: Error readdir\015\012\000"
+ 632      5945523A 
+ 632      20457272 
+ 632      6F722072 
+ 632      65616464 
+ 633 0019 000000   		.space	3
+ 634              	.LC3:
+ 635 001c 46504C41 		.ascii	"FPLAYER: Dir end, restart!\015\012\000"
+ 635      5945523A 
+ 635      20446972 
+ 635      20656E64 
+ 635      2C207265 
+ 636 0039 000000   		.space	3
+ 637              	.LC10:
+ 638 003c 46504C41 		.ascii	"FPLAYER: Error openDir\015\012\000"
+ 638      5945523A 
+ 638      20457272 
+ 638      6F72206F 
+ 638      70656E44 
+ 639 0055 000000   		.space	3
+ 640              	.LC16:
+ 641 0058 46504C41 		.ascii	"FPLAYER: No files, rewind to the begining\015\012\000"
+ 641      5945523A 
+ 641      204E6F20 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 18
+
+
+ 641      66696C65 
+ 641      732C2072 
+ 642              	.LC18:
+ 643 0084 46504C41 		.ascii	"FPLAYER: %s Type: %d\015\012\000"
+ 643      5945523A 
+ 643      20257320 
+ 643      54797065 
+ 643      3A202564 
+ 644 009b 00       		.space	1
+ 645              	.LC22:
+ 646 009c 46504C41 		.ascii	"FPLAYER: Started!\015\012\000"
+ 646      5945523A 
+ 646      20537461 
+ 646      72746564 
+ 646      210D0A00 
+ 647              	.LC24:
+ 648 00b0 46504C41 		.ascii	"FPLAYER: Wrong state %d\015\012\000"
+ 648      5945523A 
+ 648      2057726F 
+ 648      6E672073 
+ 648      74617465 
+ 649 00ca 0000     		.space	2
+ 650              	.LC26:
+ 651 00cc 66696C65 		.ascii	"filePlayer.c\000"
+ 651      506C6179 
+ 651      65722E63 
+ 651      00
+ 652 00d9 000000   		.space	3
+ 653              	.LC28:
+ 654 00dc 52756E74 		.ascii	"RuntimeError: Assert in file: %s line: %d\015\012\000"
+ 654      696D6545 
+ 654      72726F72 
+ 654      3A204173 
+ 654      73657274 
+ 655              		.bss
+ 656              		.align	2
+ 657              		.set	.LANCHOR0,. + 0
+ 658              		.type	filePlayer, %object
+ 659              		.size	filePlayer, 56
+ 660              	filePlayer:
+ 661 0000 00000000 		.space	56
+ 661      00000000 
+ 661      00000000 
+ 661      00000000 
+ 661      00000000 
+ 662              		.text
+ 663              	.Letext0:
+ 664              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 665              		.file 3 "fatfs\\integer.h"
+ 666              		.file 4 "fatfs\\ff.h"
+ 667              		.file 5 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 668              		.file 6 "audio.h"
+ 669              		.file 7 "uartPrint.h"
+ 670              		.file 8 "card.h"
+ 671              		.file 9 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 672              		.file 10 "player.h"
+ 673              		.file 11 "pcmPlayer.h"
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 19
+
+
+ 674              		.file 12 "midiPlayer.h"
+ 675              		.section	.debug_info,"",%progbits
+ 676              	.Ldebug_info0:
+ 677 0000 BB080000 		.4byte	0x8bb
+ 678 0004 0400     		.2byte	0x4
+ 679 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 680 000a 04       		.byte	0x4
+ 681 000b 01       		.uleb128 0x1
+ 682 000c 0E050000 		.4byte	.LASF117
+ 683 0010 0C       		.byte	0xc
+ 684 0011 7D020000 		.4byte	.LASF118
+ 685 0015 A1010000 		.4byte	.LASF119
+ 686 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 687 001d 00000000 		.4byte	0
+ 688 0021 00000000 		.4byte	.Ldebug_line0
+ 689 0025 02       		.uleb128 0x2
+ 690 0026 04       		.byte	0x4
+ 691 0027 05       		.byte	0x5
+ 692 0028 696E7400 		.ascii	"int\000"
+ 693 002c 03       		.uleb128 0x3
+ 694 002d 04       		.byte	0x4
+ 695 002e 07       		.byte	0x7
+ 696 002f 70020000 		.4byte	.LASF0
+ 697 0033 03       		.uleb128 0x3
+ 698 0034 08       		.byte	0x8
+ 699 0035 05       		.byte	0x5
+ 700 0036 19010000 		.4byte	.LASF1
+ 701 003a 03       		.uleb128 0x3
+ 702 003b 08       		.byte	0x8
+ 703 003c 04       		.byte	0x4
+ 704 003d C7030000 		.4byte	.LASF2
+ 705 0041 03       		.uleb128 0x3
+ 706 0042 01       		.byte	0x1
+ 707 0043 06       		.byte	0x6
+ 708 0044 27010000 		.4byte	.LASF3
+ 709 0048 03       		.uleb128 0x3
+ 710 0049 01       		.byte	0x1
+ 711 004a 08       		.byte	0x8
+ 712 004b 82040000 		.4byte	.LASF4
+ 713 004f 03       		.uleb128 0x3
+ 714 0050 02       		.byte	0x2
+ 715 0051 05       		.byte	0x5
+ 716 0052 9B040000 		.4byte	.LASF5
+ 717 0056 03       		.uleb128 0x3
+ 718 0057 02       		.byte	0x2
+ 719 0058 07       		.byte	0x7
+ 720 0059 B3020000 		.4byte	.LASF6
+ 721 005d 03       		.uleb128 0x3
+ 722 005e 04       		.byte	0x4
+ 723 005f 05       		.byte	0x5
+ 724 0060 98010000 		.4byte	.LASF7
+ 725 0064 04       		.uleb128 0x4
+ 726 0065 38020000 		.4byte	.LASF12
+ 727 0069 02       		.byte	0x2
+ 728 006a 41       		.byte	0x41
+ 729 006b 6F000000 		.4byte	0x6f
+ 730 006f 03       		.uleb128 0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 20
+
+
+ 731 0070 04       		.byte	0x4
+ 732 0071 07       		.byte	0x7
+ 733 0072 90020000 		.4byte	.LASF8
+ 734 0076 03       		.uleb128 0x3
+ 735 0077 08       		.byte	0x8
+ 736 0078 07       		.byte	0x7
+ 737 0079 A1000000 		.4byte	.LASF9
+ 738 007d 03       		.uleb128 0x3
+ 739 007e 04       		.byte	0x4
+ 740 007f 07       		.byte	0x7
+ 741 0080 B5030000 		.4byte	.LASF10
+ 742 0084 03       		.uleb128 0x3
+ 743 0085 01       		.byte	0x1
+ 744 0086 08       		.byte	0x8
+ 745 0087 A0050000 		.4byte	.LASF11
+ 746 008b 05       		.uleb128 0x5
+ 747 008c 84000000 		.4byte	0x84
+ 748 0090 04       		.uleb128 0x4
+ 749 0091 6B020000 		.4byte	.LASF13
+ 750 0095 03       		.byte	0x3
+ 751 0096 10       		.byte	0x10
+ 752 0097 48000000 		.4byte	0x48
+ 753 009b 04       		.uleb128 0x4
+ 754 009c DE030000 		.4byte	.LASF14
+ 755 00a0 03       		.byte	0x3
+ 756 00a1 14       		.byte	0x14
+ 757 00a2 56000000 		.4byte	0x56
+ 758 00a6 04       		.uleb128 0x4
+ 759 00a7 27020000 		.4byte	.LASF15
+ 760 00ab 03       		.byte	0x3
+ 761 00ac 1D       		.byte	0x1d
+ 762 00ad 6F000000 		.4byte	0x6f
+ 763 00b1 04       		.uleb128 0x4
+ 764 00b2 1B040000 		.4byte	.LASF16
+ 765 00b6 04       		.byte	0x4
+ 766 00b7 43       		.byte	0x43
+ 767 00b8 84000000 		.4byte	0x84
+ 768 00bc 06       		.uleb128 0x6
+ 769 00bd 3402     		.2byte	0x234
+ 770 00bf 04       		.byte	0x4
+ 771 00c0 4E       		.byte	0x4e
+ 772 00c1 A9010000 		.4byte	0x1a9
+ 773 00c5 07       		.uleb128 0x7
+ 774 00c6 54000000 		.4byte	.LASF17
+ 775 00ca 04       		.byte	0x4
+ 776 00cb 4F       		.byte	0x4f
+ 777 00cc 90000000 		.4byte	0x90
+ 778 00d0 00       		.byte	0
+ 779 00d1 08       		.uleb128 0x8
+ 780 00d2 64727600 		.ascii	"drv\000"
+ 781 00d6 04       		.byte	0x4
+ 782 00d7 50       		.byte	0x50
+ 783 00d8 90000000 		.4byte	0x90
+ 784 00dc 01       		.byte	0x1
+ 785 00dd 07       		.uleb128 0x7
+ 786 00de 4F020000 		.4byte	.LASF18
+ 787 00e2 04       		.byte	0x4
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 21
+
+
+ 788 00e3 51       		.byte	0x51
+ 789 00e4 90000000 		.4byte	0x90
+ 790 00e8 02       		.byte	0x2
+ 791 00e9 07       		.uleb128 0x7
+ 792 00ea EB010000 		.4byte	.LASF19
+ 793 00ee 04       		.byte	0x4
+ 794 00ef 52       		.byte	0x52
+ 795 00f0 90000000 		.4byte	0x90
+ 796 00f4 03       		.byte	0x3
+ 797 00f5 07       		.uleb128 0x7
+ 798 00f6 FF040000 		.4byte	.LASF20
+ 799 00fa 04       		.byte	0x4
+ 800 00fb 53       		.byte	0x53
+ 801 00fc 90000000 		.4byte	0x90
+ 802 0100 04       		.byte	0x4
+ 803 0101 07       		.uleb128 0x7
+ 804 0102 F0050000 		.4byte	.LASF21
+ 805 0106 04       		.byte	0x4
+ 806 0107 54       		.byte	0x54
+ 807 0108 90000000 		.4byte	0x90
+ 808 010c 05       		.byte	0x5
+ 809 010d 08       		.uleb128 0x8
+ 810 010e 696400   		.ascii	"id\000"
+ 811 0111 04       		.byte	0x4
+ 812 0112 55       		.byte	0x55
+ 813 0113 9B000000 		.4byte	0x9b
+ 814 0117 06       		.byte	0x6
+ 815 0118 07       		.uleb128 0x7
+ 816 0119 77000000 		.4byte	.LASF22
+ 817 011d 04       		.byte	0x4
+ 818 011e 56       		.byte	0x56
+ 819 011f 9B000000 		.4byte	0x9b
+ 820 0123 08       		.byte	0x8
+ 821 0124 07       		.uleb128 0x7
+ 822 0125 E4000000 		.4byte	.LASF23
+ 823 0129 04       		.byte	0x4
+ 824 012a 5E       		.byte	0x5e
+ 825 012b A6000000 		.4byte	0xa6
+ 826 012f 0C       		.byte	0xc
+ 827 0130 07       		.uleb128 0x7
+ 828 0131 EF030000 		.4byte	.LASF24
+ 829 0135 04       		.byte	0x4
+ 830 0136 5F       		.byte	0x5f
+ 831 0137 A6000000 		.4byte	0xa6
+ 832 013b 10       		.byte	0x10
+ 833 013c 07       		.uleb128 0x7
+ 834 013d E3030000 		.4byte	.LASF25
+ 835 0141 04       		.byte	0x4
+ 836 0142 62       		.byte	0x62
+ 837 0143 A6000000 		.4byte	0xa6
+ 838 0147 14       		.byte	0x14
+ 839 0148 07       		.uleb128 0x7
+ 840 0149 71010000 		.4byte	.LASF26
+ 841 014d 04       		.byte	0x4
+ 842 014e 64       		.byte	0x64
+ 843 014f A6000000 		.4byte	0xa6
+ 844 0153 18       		.byte	0x18
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 22
+
+
+ 845 0154 07       		.uleb128 0x7
+ 846 0155 6B010000 		.4byte	.LASF27
+ 847 0159 04       		.byte	0x4
+ 848 015a 65       		.byte	0x65
+ 849 015b A6000000 		.4byte	0xa6
+ 850 015f 1C       		.byte	0x1c
+ 851 0160 07       		.uleb128 0x7
+ 852 0161 BB050000 		.4byte	.LASF28
+ 853 0165 04       		.byte	0x4
+ 854 0166 66       		.byte	0x66
+ 855 0167 A6000000 		.4byte	0xa6
+ 856 016b 20       		.byte	0x20
+ 857 016c 07       		.uleb128 0x7
+ 858 016d 1F020000 		.4byte	.LASF29
+ 859 0171 04       		.byte	0x4
+ 860 0172 67       		.byte	0x67
+ 861 0173 A6000000 		.4byte	0xa6
+ 862 0177 24       		.byte	0x24
+ 863 0178 07       		.uleb128 0x7
+ 864 0179 11010000 		.4byte	.LASF30
+ 865 017d 04       		.byte	0x4
+ 866 017e 68       		.byte	0x68
+ 867 017f A6000000 		.4byte	0xa6
+ 868 0183 28       		.byte	0x28
+ 869 0184 07       		.uleb128 0x7
+ 870 0185 C6020000 		.4byte	.LASF31
+ 871 0189 04       		.byte	0x4
+ 872 018a 69       		.byte	0x69
+ 873 018b A6000000 		.4byte	0xa6
+ 874 018f 2C       		.byte	0x2c
+ 875 0190 07       		.uleb128 0x7
+ 876 0191 28030000 		.4byte	.LASF32
+ 877 0195 04       		.byte	0x4
+ 878 0196 6A       		.byte	0x6a
+ 879 0197 A6000000 		.4byte	0xa6
+ 880 019b 30       		.byte	0x30
+ 881 019c 08       		.uleb128 0x8
+ 882 019d 77696E00 		.ascii	"win\000"
+ 883 01a1 04       		.byte	0x4
+ 884 01a2 6B       		.byte	0x6b
+ 885 01a3 A9010000 		.4byte	0x1a9
+ 886 01a7 34       		.byte	0x34
+ 887 01a8 00       		.byte	0
+ 888 01a9 09       		.uleb128 0x9
+ 889 01aa 90000000 		.4byte	0x90
+ 890 01ae BA010000 		.4byte	0x1ba
+ 891 01b2 0A       		.uleb128 0xa
+ 892 01b3 7D000000 		.4byte	0x7d
+ 893 01b7 FF01     		.2byte	0x1ff
+ 894 01b9 00       		.byte	0
+ 895 01ba 04       		.uleb128 0x4
+ 896 01bb 6D030000 		.4byte	.LASF33
+ 897 01bf 04       		.byte	0x4
+ 898 01c0 6C       		.byte	0x6c
+ 899 01c1 BC000000 		.4byte	0xbc
+ 900 01c5 0B       		.uleb128 0xb
+ 901 01c6 04       		.byte	0x4
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 23
+
+
+ 902 01c7 BA010000 		.4byte	0x1ba
+ 903 01cb 0B       		.uleb128 0xb
+ 904 01cc 04       		.byte	0x4
+ 905 01cd 90000000 		.4byte	0x90
+ 906 01d1 0C       		.uleb128 0xc
+ 907 01d2 1C       		.byte	0x1c
+ 908 01d3 04       		.byte	0x4
+ 909 01d4 8F       		.byte	0x8f
+ 910 01d5 37020000 		.4byte	0x237
+ 911 01d9 08       		.uleb128 0x8
+ 912 01da 667300   		.ascii	"fs\000"
+ 913 01dd 04       		.byte	0x4
+ 914 01de 90       		.byte	0x90
+ 915 01df C5010000 		.4byte	0x1c5
+ 916 01e3 00       		.byte	0
+ 917 01e4 08       		.uleb128 0x8
+ 918 01e5 696400   		.ascii	"id\000"
+ 919 01e8 04       		.byte	0x4
+ 920 01e9 91       		.byte	0x91
+ 921 01ea 9B000000 		.4byte	0x9b
+ 922 01ee 04       		.byte	0x4
+ 923 01ef 07       		.uleb128 0x7
+ 924 01f0 AB050000 		.4byte	.LASF34
+ 925 01f4 04       		.byte	0x4
+ 926 01f5 92       		.byte	0x92
+ 927 01f6 9B000000 		.4byte	0x9b
+ 928 01fa 06       		.byte	0x6
+ 929 01fb 07       		.uleb128 0x7
+ 930 01fc E8030000 		.4byte	.LASF35
+ 931 0200 04       		.byte	0x4
+ 932 0201 93       		.byte	0x93
+ 933 0202 A6000000 		.4byte	0xa6
+ 934 0206 08       		.byte	0x8
+ 935 0207 07       		.uleb128 0x7
+ 936 0208 A1060000 		.4byte	.LASF36
+ 937 020c 04       		.byte	0x4
+ 938 020d 94       		.byte	0x94
+ 939 020e A6000000 		.4byte	0xa6
+ 940 0212 0C       		.byte	0xc
+ 941 0213 07       		.uleb128 0x7
+ 942 0214 CD000000 		.4byte	.LASF37
+ 943 0218 04       		.byte	0x4
+ 944 0219 95       		.byte	0x95
+ 945 021a A6000000 		.4byte	0xa6
+ 946 021e 10       		.byte	0x10
+ 947 021f 08       		.uleb128 0x8
+ 948 0220 64697200 		.ascii	"dir\000"
+ 949 0224 04       		.byte	0x4
+ 950 0225 96       		.byte	0x96
+ 951 0226 CB010000 		.4byte	0x1cb
+ 952 022a 14       		.byte	0x14
+ 953 022b 08       		.uleb128 0x8
+ 954 022c 666E00   		.ascii	"fn\000"
+ 955 022f 04       		.byte	0x4
+ 956 0230 97       		.byte	0x97
+ 957 0231 CB010000 		.4byte	0x1cb
+ 958 0235 18       		.byte	0x18
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 24
+
+
+ 959 0236 00       		.byte	0
+ 960 0237 0D       		.uleb128 0xd
+ 961 0238 44495200 		.ascii	"DIR\000"
+ 962 023c 04       		.byte	0x4
+ 963 023d A2       		.byte	0xa2
+ 964 023e D1010000 		.4byte	0x1d1
+ 965 0242 0C       		.uleb128 0xc
+ 966 0243 18       		.byte	0x18
+ 967 0244 04       		.byte	0x4
+ 968 0245 A8       		.byte	0xa8
+ 969 0246 87020000 		.4byte	0x287
+ 970 024a 07       		.uleb128 0x7
+ 971 024b 6B010000 		.4byte	.LASF27
+ 972 024f 04       		.byte	0x4
+ 973 0250 A9       		.byte	0xa9
+ 974 0251 A6000000 		.4byte	0xa6
+ 975 0255 00       		.byte	0
+ 976 0256 07       		.uleb128 0x7
+ 977 0257 83030000 		.4byte	.LASF38
+ 978 025b 04       		.byte	0x4
+ 979 025c AA       		.byte	0xaa
+ 980 025d 9B000000 		.4byte	0x9b
+ 981 0261 04       		.byte	0x4
+ 982 0262 07       		.uleb128 0x7
+ 983 0263 8A020000 		.4byte	.LASF39
+ 984 0267 04       		.byte	0x4
+ 985 0268 AB       		.byte	0xab
+ 986 0269 9B000000 		.4byte	0x9b
+ 987 026d 06       		.byte	0x6
+ 988 026e 07       		.uleb128 0x7
+ 989 026f 0B060000 		.4byte	.LASF40
+ 990 0273 04       		.byte	0x4
+ 991 0274 AC       		.byte	0xac
+ 992 0275 90000000 		.4byte	0x90
+ 993 0279 08       		.byte	0x8
+ 994 027a 07       		.uleb128 0x7
+ 995 027b 4C030000 		.4byte	.LASF41
+ 996 027f 04       		.byte	0x4
+ 997 0280 AD       		.byte	0xad
+ 998 0281 87020000 		.4byte	0x287
+ 999 0285 09       		.byte	0x9
+ 1000 0286 00       		.byte	0
+ 1001 0287 09       		.uleb128 0x9
+ 1002 0288 B1000000 		.4byte	0xb1
+ 1003 028c 97020000 		.4byte	0x297
+ 1004 0290 0E       		.uleb128 0xe
+ 1005 0291 7D000000 		.4byte	0x7d
+ 1006 0295 0C       		.byte	0xc
+ 1007 0296 00       		.byte	0
+ 1008 0297 04       		.uleb128 0x4
+ 1009 0298 13060000 		.4byte	.LASF42
+ 1010 029c 04       		.byte	0x4
+ 1011 029d B2       		.byte	0xb2
+ 1012 029e 42020000 		.4byte	0x242
+ 1013 02a2 0F       		.uleb128 0xf
+ 1014 02a3 01       		.byte	0x1
+ 1015 02a4 48000000 		.4byte	0x48
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 25
+
+
+ 1016 02a8 04       		.byte	0x4
+ 1017 02a9 B8       		.byte	0xb8
+ 1018 02aa 27030000 		.4byte	0x327
+ 1019 02ae 10       		.uleb128 0x10
+ 1020 02af A5050000 		.4byte	.LASF43
+ 1021 02b3 00       		.byte	0
+ 1022 02b4 10       		.uleb128 0x10
+ 1023 02b5 1C030000 		.4byte	.LASF44
+ 1024 02b9 01       		.byte	0x1
+ 1025 02ba 10       		.uleb128 0x10
+ 1026 02bb 11030000 		.4byte	.LASF45
+ 1027 02bf 02       		.byte	0x2
+ 1028 02c0 10       		.uleb128 0x10
+ 1029 02c1 00000000 		.4byte	.LASF46
+ 1030 02c5 03       		.byte	0x3
+ 1031 02c6 10       		.uleb128 0x10
+ 1032 02c7 FA030000 		.4byte	.LASF47
+ 1033 02cb 04       		.byte	0x4
+ 1034 02cc 10       		.uleb128 0x10
+ 1035 02cd 76060000 		.4byte	.LASF48
+ 1036 02d1 05       		.byte	0x5
+ 1037 02d2 10       		.uleb128 0x10
+ 1038 02d3 E0050000 		.4byte	.LASF49
+ 1039 02d7 06       		.byte	0x6
+ 1040 02d8 10       		.uleb128 0x10
+ 1041 02d9 D1040000 		.4byte	.LASF50
+ 1042 02dd 07       		.byte	0x7
+ 1043 02de 10       		.uleb128 0x10
+ 1044 02df 16020000 		.4byte	.LASF51
+ 1045 02e3 08       		.byte	0x8
+ 1046 02e4 10       		.uleb128 0x10
+ 1047 02e5 D2000000 		.4byte	.LASF52
+ 1048 02e9 09       		.byte	0x9
+ 1049 02ea 10       		.uleb128 0x10
+ 1050 02eb 52030000 		.4byte	.LASF53
+ 1051 02ef 0A       		.byte	0xa
+ 1052 02f0 10       		.uleb128 0x10
+ 1053 02f1 BB040000 		.4byte	.LASF54
+ 1054 02f5 0B       		.byte	0xb
+ 1055 02f6 10       		.uleb128 0x10
+ 1056 02f7 21040000 		.4byte	.LASF55
+ 1057 02fb 0C       		.byte	0xc
+ 1058 02fc 10       		.uleb128 0x10
+ 1059 02fd F2010000 		.4byte	.LASF56
+ 1060 0301 0D       		.byte	0xd
+ 1061 0302 10       		.uleb128 0x10
+ 1062 0303 DB040000 		.4byte	.LASF57
+ 1063 0307 0E       		.byte	0xe
+ 1064 0308 10       		.uleb128 0x10
+ 1065 0309 D3030000 		.4byte	.LASF58
+ 1066 030d 0F       		.byte	0xf
+ 1067 030e 10       		.uleb128 0x10
+ 1068 030f F5040000 		.4byte	.LASF59
+ 1069 0313 10       		.byte	0x10
+ 1070 0314 10       		.uleb128 0x10
+ 1071 0315 03020000 		.4byte	.LASF60
+ 1072 0319 11       		.byte	0x11
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 26
+
+
+ 1073 031a 10       		.uleb128 0x10
+ 1074 031b FA000000 		.4byte	.LASF61
+ 1075 031f 12       		.byte	0x12
+ 1076 0320 10       		.uleb128 0x10
+ 1077 0321 45010000 		.4byte	.LASF62
+ 1078 0325 13       		.byte	0x13
+ 1079 0326 00       		.byte	0
+ 1080 0327 04       		.uleb128 0x4
+ 1081 0328 27060000 		.4byte	.LASF63
+ 1082 032c 04       		.byte	0x4
+ 1083 032d CD       		.byte	0xcd
+ 1084 032e A2020000 		.4byte	0x2a2
+ 1085 0332 04       		.uleb128 0x4
+ 1086 0333 05050000 		.4byte	.LASF64
+ 1087 0337 05       		.byte	0x5
+ 1088 0338 30       		.byte	0x30
+ 1089 0339 64000000 		.4byte	0x64
+ 1090 033d 0F       		.uleb128 0xf
+ 1091 033e 01       		.byte	0x1
+ 1092 033f 48000000 		.4byte	0x48
+ 1093 0343 06       		.byte	0x6
+ 1094 0344 17       		.byte	0x17
+ 1095 0345 74030000 		.4byte	0x374
+ 1096 0349 10       		.uleb128 0x10
+ 1097 034a 30040000 		.4byte	.LASF65
+ 1098 034e 00       		.byte	0
+ 1099 034f 10       		.uleb128 0x10
+ 1100 0350 B8000000 		.4byte	.LASF66
+ 1101 0354 01       		.byte	0x1
+ 1102 0355 10       		.uleb128 0x10
+ 1103 0356 05040000 		.4byte	.LASF67
+ 1104 035a 02       		.byte	0x2
+ 1105 035b 10       		.uleb128 0x10
+ 1106 035c A5040000 		.4byte	.LASF68
+ 1107 0360 03       		.byte	0x3
+ 1108 0361 10       		.uleb128 0x10
+ 1109 0362 55020000 		.4byte	.LASF69
+ 1110 0366 04       		.byte	0x4
+ 1111 0367 10       		.uleb128 0x10
+ 1112 0368 7A010000 		.4byte	.LASF70
+ 1113 036c 05       		.byte	0x5
+ 1114 036d 10       		.uleb128 0x10
+ 1115 036e 3A000000 		.4byte	.LASF71
+ 1116 0372 02       		.byte	0x2
+ 1117 0373 00       		.byte	0
+ 1118 0374 0F       		.uleb128 0xf
+ 1119 0375 01       		.byte	0x1
+ 1120 0376 48000000 		.4byte	0x48
+ 1121 037a 01       		.byte	0x1
+ 1122 037b 12       		.byte	0x12
+ 1123 037c 9F030000 		.4byte	0x39f
+ 1124 0380 10       		.uleb128 0x10
+ 1125 0381 39030000 		.4byte	.LASF72
+ 1126 0385 00       		.byte	0
+ 1127 0386 10       		.uleb128 0x10
+ 1128 0387 31000000 		.4byte	.LASF73
+ 1129 038b 01       		.byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 27
+
+
+ 1130 038c 10       		.uleb128 0x10
+ 1131 038d B1050000 		.4byte	.LASF74
+ 1132 0391 02       		.byte	0x2
+ 1133 0392 10       		.uleb128 0x10
+ 1134 0393 BE030000 		.4byte	.LASF75
+ 1135 0397 03       		.byte	0x3
+ 1136 0398 10       		.uleb128 0x10
+ 1137 0399 95000000 		.4byte	.LASF76
+ 1138 039d 04       		.byte	0x4
+ 1139 039e 00       		.byte	0
+ 1140 039f 04       		.uleb128 0x4
+ 1141 03a0 98030000 		.4byte	.LASF77
+ 1142 03a4 01       		.byte	0x1
+ 1143 03a5 18       		.byte	0x18
+ 1144 03a6 74030000 		.4byte	0x374
+ 1145 03aa 0C       		.uleb128 0xc
+ 1146 03ab 06       		.byte	0x6
+ 1147 03ac 01       		.byte	0x1
+ 1148 03ad 1A       		.byte	0x1a
+ 1149 03ae CB030000 		.4byte	0x3cb
+ 1150 03b2 08       		.uleb128 0x8
+ 1151 03b3 65787400 		.ascii	"ext\000"
+ 1152 03b7 01       		.byte	0x1
+ 1153 03b8 1C       		.byte	0x1c
+ 1154 03b9 CB030000 		.4byte	0x3cb
+ 1155 03bd 00       		.byte	0
+ 1156 03be 07       		.uleb128 0x7
+ 1157 03bf 72000000 		.4byte	.LASF78
+ 1158 03c3 01       		.byte	0x1
+ 1159 03c4 1D       		.byte	0x1d
+ 1160 03c5 9F030000 		.4byte	0x39f
+ 1161 03c9 05       		.byte	0x5
+ 1162 03ca 00       		.byte	0
+ 1163 03cb 09       		.uleb128 0x9
+ 1164 03cc 84000000 		.4byte	0x84
+ 1165 03d0 DB030000 		.4byte	0x3db
+ 1166 03d4 0E       		.uleb128 0xe
+ 1167 03d5 7D000000 		.4byte	0x7d
+ 1168 03d9 04       		.byte	0x4
+ 1169 03da 00       		.byte	0
+ 1170 03db 04       		.uleb128 0x4
+ 1171 03dc CF020000 		.4byte	.LASF79
+ 1172 03e0 01       		.byte	0x1
+ 1173 03e1 1E       		.byte	0x1e
+ 1174 03e2 AA030000 		.4byte	0x3aa
+ 1175 03e6 0F       		.uleb128 0xf
+ 1176 03e7 01       		.byte	0x1
+ 1177 03e8 48000000 		.4byte	0x48
+ 1178 03ec 01       		.byte	0x1
+ 1179 03ed 21       		.byte	0x21
+ 1180 03ee 11040000 		.4byte	0x411
+ 1181 03f2 10       		.uleb128 0x10
+ 1182 03f3 33010000 		.4byte	.LASF80
+ 1183 03f7 00       		.byte	0
+ 1184 03f8 10       		.uleb128 0x10
+ 1185 03f9 A2020000 		.4byte	.LASF81
+ 1186 03fd 01       		.byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 28
+
+
+ 1187 03fe 10       		.uleb128 0x10
+ 1188 03ff F9050000 		.4byte	.LASF82
+ 1189 0403 02       		.byte	0x2
+ 1190 0404 10       		.uleb128 0x10
+ 1191 0405 F0020000 		.4byte	.LASF83
+ 1192 0409 03       		.byte	0x3
+ 1193 040a 10       		.uleb128 0x10
+ 1194 040b DD020000 		.4byte	.LASF84
+ 1195 040f 04       		.byte	0x4
+ 1196 0410 00       		.byte	0
+ 1197 0411 04       		.uleb128 0x4
+ 1198 0412 0D000000 		.4byte	.LASF85
+ 1199 0416 01       		.byte	0x1
+ 1200 0417 27       		.byte	0x27
+ 1201 0418 E6030000 		.4byte	0x3e6
+ 1202 041c 0C       		.uleb128 0xc
+ 1203 041d 38       		.byte	0x38
+ 1204 041e 01       		.byte	0x1
+ 1205 041f 29       		.byte	0x29
+ 1206 0420 49040000 		.4byte	0x449
+ 1207 0424 08       		.uleb128 0x8
+ 1208 0425 64697200 		.ascii	"dir\000"
+ 1209 0429 01       		.byte	0x1
+ 1210 042a 2B       		.byte	0x2b
+ 1211 042b 37020000 		.4byte	0x237
+ 1212 042f 00       		.byte	0
+ 1213 0430 07       		.uleb128 0x7
+ 1214 0431 73040000 		.4byte	.LASF86
+ 1215 0435 01       		.byte	0x1
+ 1216 0436 2C       		.byte	0x2c
+ 1217 0437 97020000 		.4byte	0x297
+ 1218 043b 1C       		.byte	0x1c
+ 1219 043c 07       		.uleb128 0x7
+ 1220 043d 92010000 		.4byte	.LASF87
+ 1221 0441 01       		.byte	0x1
+ 1222 0442 2D       		.byte	0x2d
+ 1223 0443 11040000 		.4byte	0x411
+ 1224 0447 34       		.byte	0x34
+ 1225 0448 00       		.byte	0
+ 1226 0449 04       		.uleb128 0x4
+ 1227 044a C9050000 		.4byte	.LASF88
+ 1228 044e 01       		.byte	0x1
+ 1229 044f 2E       		.byte	0x2e
+ 1230 0450 1C040000 		.4byte	0x41c
+ 1231 0454 11       		.uleb128 0x11
+ 1232 0455 2F060000 		.4byte	.LASF90
+ 1233 0459 01       		.byte	0x1
+ 1234 045a C3       		.byte	0xc3
+ 1235 045b EA040000 		.4byte	0x4ea
+ 1236 045f 00000000 		.4byte	.LFB7
+ 1237 0463 54000000 		.4byte	.LFE7-.LFB7
+ 1238 0467 01       		.uleb128 0x1
+ 1239 0468 9C       		.byte	0x9c
+ 1240 0469 EA040000 		.4byte	0x4ea
+ 1241 046d 12       		.uleb128 0x12
+ 1242 046e 72657300 		.ascii	"res\000"
+ 1243 0472 01       		.byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 29
+
+
+ 1244 0473 C5       		.byte	0xc5
+ 1245 0474 27030000 		.4byte	0x327
+ 1246 0478 00000000 		.4byte	.LLST0
+ 1247 047c 12       		.uleb128 0x12
+ 1248 047d 72657400 		.ascii	"ret\000"
+ 1249 0481 01       		.byte	0x1
+ 1250 0482 C6       		.byte	0xc6
+ 1251 0483 EA040000 		.4byte	0x4ea
+ 1252 0487 4A000000 		.4byte	.LLST1
+ 1253 048b 13       		.uleb128 0x13
+ 1254 048c 0C000000 		.4byte	.LVL0
+ 1255 0490 24080000 		.4byte	0x824
+ 1256 0494 AB040000 		.4byte	0x4ab
+ 1257 0498 14       		.uleb128 0x14
+ 1258 0499 01       		.uleb128 0x1
+ 1259 049a 50       		.byte	0x50
+ 1260 049b 05       		.uleb128 0x5
+ 1261 049c 03       		.byte	0x3
+ 1262 049d 00000000 		.4byte	.LANCHOR0
+ 1263 04a1 14       		.uleb128 0x14
+ 1264 04a2 01       		.uleb128 0x1
+ 1265 04a3 51       		.byte	0x51
+ 1266 04a4 05       		.uleb128 0x5
+ 1267 04a5 03       		.byte	0x3
+ 1268 04a6 1C000000 		.4byte	.LANCHOR0+28
+ 1269 04aa 00       		.byte	0
+ 1270 04ab 13       		.uleb128 0x13
+ 1271 04ac 16000000 		.4byte	.LVL3
+ 1272 04b0 2F080000 		.4byte	0x82f
+ 1273 04b4 C2040000 		.4byte	0x4c2
+ 1274 04b8 14       		.uleb128 0x14
+ 1275 04b9 01       		.uleb128 0x1
+ 1276 04ba 50       		.byte	0x50
+ 1277 04bb 05       		.uleb128 0x5
+ 1278 04bc 03       		.byte	0x3
+ 1279 04bd 00000000 		.4byte	.LC1
+ 1280 04c1 00       		.byte	0
+ 1281 04c2 13       		.uleb128 0x13
+ 1282 04c3 2A000000 		.4byte	.LVL6
+ 1283 04c7 2F080000 		.4byte	0x82f
+ 1284 04cb D9040000 		.4byte	0x4d9
+ 1285 04cf 14       		.uleb128 0x14
+ 1286 04d0 01       		.uleb128 0x1
+ 1287 04d1 50       		.byte	0x50
+ 1288 04d2 05       		.uleb128 0x5
+ 1289 04d3 03       		.byte	0x3
+ 1290 04d4 1C000000 		.4byte	.LC3
+ 1291 04d8 00       		.byte	0
+ 1292 04d9 15       		.uleb128 0x15
+ 1293 04da 44000000 		.4byte	.LVL9
+ 1294 04de 3A080000 		.4byte	0x83a
+ 1295 04e2 14       		.uleb128 0x14
+ 1296 04e3 01       		.uleb128 0x1
+ 1297 04e4 50       		.byte	0x50
+ 1298 04e5 02       		.uleb128 0x2
+ 1299 04e6 74       		.byte	0x74
+ 1300 04e7 00       		.sleb128 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 30
+
+
+ 1301 04e8 00       		.byte	0
+ 1302 04e9 00       		.byte	0
+ 1303 04ea 03       		.uleb128 0x3
+ 1304 04eb 01       		.byte	0x1
+ 1305 04ec 02       		.byte	0x2
+ 1306 04ed 7C040000 		.4byte	.LASF89
+ 1307 04f1 11       		.uleb128 0x11
+ 1308 04f2 54060000 		.4byte	.LASF91
+ 1309 04f6 01       		.byte	0x1
+ 1310 04f7 B2       		.byte	0xb2
+ 1311 04f8 9F030000 		.4byte	0x39f
+ 1312 04fc 00000000 		.4byte	.LFB6
+ 1313 0500 3C000000 		.4byte	.LFE6-.LFB6
+ 1314 0504 01       		.uleb128 0x1
+ 1315 0505 9C       		.byte	0x9c
+ 1316 0506 4D050000 		.4byte	0x54d
+ 1317 050a 12       		.uleb128 0x12
+ 1318 050b 6900     		.ascii	"i\000"
+ 1319 050d 01       		.byte	0x1
+ 1320 050e B4       		.byte	0xb4
+ 1321 050f 32030000 		.4byte	0x332
+ 1322 0513 5D000000 		.4byte	.LLST2
+ 1323 0517 12       		.uleb128 0x12
+ 1324 0518 72657400 		.ascii	"ret\000"
+ 1325 051c 01       		.byte	0x1
+ 1326 051d B5       		.byte	0xb5
+ 1327 051e 9F030000 		.4byte	0x39f
+ 1328 0522 87000000 		.4byte	.LLST3
+ 1329 0526 15       		.uleb128 0x15
+ 1330 0527 18000000 		.4byte	.LVL14
+ 1331 052b 45080000 		.4byte	0x845
+ 1332 052f 14       		.uleb128 0x14
+ 1333 0530 01       		.uleb128 0x1
+ 1334 0531 50       		.byte	0x50
+ 1335 0532 05       		.uleb128 0x5
+ 1336 0533 03       		.byte	0x3
+ 1337 0534 25000000 		.4byte	.LANCHOR0+37
+ 1338 0538 14       		.uleb128 0x14
+ 1339 0539 01       		.uleb128 0x1
+ 1340 053a 51       		.byte	0x51
+ 1341 053b 0F       		.uleb128 0xf
+ 1342 053c 74       		.byte	0x74
+ 1343 053d 00       		.sleb128 0
+ 1344 053e 31       		.byte	0x31
+ 1345 053f 24       		.byte	0x24
+ 1346 0540 74       		.byte	0x74
+ 1347 0541 00       		.sleb128 0
+ 1348 0542 22       		.byte	0x22
+ 1349 0543 31       		.byte	0x31
+ 1350 0544 24       		.byte	0x24
+ 1351 0545 03       		.byte	0x3
+ 1352 0546 00000000 		.4byte	.LANCHOR1
+ 1353 054a 22       		.byte	0x22
+ 1354 054b 00       		.byte	0
+ 1355 054c 00       		.byte	0
+ 1356 054d 11       		.uleb128 0x11
+ 1357 054e 01030000 		.4byte	.LASF92
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 31
+
+
+ 1358 0552 01       		.byte	0x1
+ 1359 0553 E7       		.byte	0xe7
+ 1360 0554 EA040000 		.4byte	0x4ea
+ 1361 0558 00000000 		.4byte	.LFB8
+ 1362 055c 30000000 		.4byte	.LFE8-.LFB8
+ 1363 0560 01       		.uleb128 0x1
+ 1364 0561 9C       		.byte	0x9c
+ 1365 0562 CC050000 		.4byte	0x5cc
+ 1366 0566 12       		.uleb128 0x12
+ 1367 0567 72657300 		.ascii	"res\000"
+ 1368 056b 01       		.byte	0x1
+ 1369 056c E9       		.byte	0xe9
+ 1370 056d EA040000 		.4byte	0x4ea
+ 1371 0571 BD000000 		.4byte	.LLST4
+ 1372 0575 16       		.uleb128 0x16
+ 1373 0576 CC040000 		.4byte	.LASF93
+ 1374 057a 01       		.byte	0x1
+ 1375 057b EB       		.byte	0xeb
+ 1376 057c 27030000 		.4byte	0x327
+ 1377 0580 DC000000 		.4byte	.LLST5
+ 1378 0584 13       		.uleb128 0x13
+ 1379 0585 0C000000 		.4byte	.LVL21
+ 1380 0589 50080000 		.4byte	0x850
+ 1381 058d A4050000 		.4byte	0x5a4
+ 1382 0591 14       		.uleb128 0x14
+ 1383 0592 01       		.uleb128 0x1
+ 1384 0593 50       		.byte	0x50
+ 1385 0594 05       		.uleb128 0x5
+ 1386 0595 03       		.byte	0x3
+ 1387 0596 00000000 		.4byte	.LANCHOR0
+ 1388 059a 14       		.uleb128 0x14
+ 1389 059b 01       		.uleb128 0x1
+ 1390 059c 51       		.byte	0x51
+ 1391 059d 05       		.uleb128 0x5
+ 1392 059e 03       		.byte	0x3
+ 1393 059f 14000000 		.4byte	.LANCHOR1+20
+ 1394 05a3 00       		.byte	0
+ 1395 05a4 13       		.uleb128 0x13
+ 1396 05a5 16000000 		.4byte	.LVL24
+ 1397 05a9 2F080000 		.4byte	0x82f
+ 1398 05ad BB050000 		.4byte	0x5bb
+ 1399 05b1 14       		.uleb128 0x14
+ 1400 05b2 01       		.uleb128 0x1
+ 1401 05b3 50       		.byte	0x50
+ 1402 05b4 05       		.uleb128 0x5
+ 1403 05b5 03       		.byte	0x3
+ 1404 05b6 3C000000 		.4byte	.LC10
+ 1405 05ba 00       		.byte	0
+ 1406 05bb 15       		.uleb128 0x15
+ 1407 05bc 1C000000 		.4byte	.LVL25
+ 1408 05c0 3A080000 		.4byte	0x83a
+ 1409 05c4 14       		.uleb128 0x14
+ 1410 05c5 01       		.uleb128 0x1
+ 1411 05c6 50       		.byte	0x50
+ 1412 05c7 02       		.uleb128 0x2
+ 1413 05c8 74       		.byte	0x74
+ 1414 05c9 00       		.sleb128 0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 32
+
+
+ 1415 05ca 00       		.byte	0
+ 1416 05cb 00       		.byte	0
+ 1417 05cc 17       		.uleb128 0x17
+ 1418 05cd 20000000 		.4byte	.LASF94
+ 1419 05d1 01       		.byte	0x1
+ 1420 05d2 3F       		.byte	0x3f
+ 1421 05d3 00000000 		.4byte	.LFB0
+ 1422 05d7 20000000 		.4byte	.LFE0-.LFB0
+ 1423 05db 01       		.uleb128 0x1
+ 1424 05dc 9C       		.byte	0x9c
+ 1425 05dd EB050000 		.4byte	0x5eb
+ 1426 05e1 18       		.uleb128 0x18
+ 1427 05e2 10000000 		.4byte	.LVL28
+ 1428 05e6 5B080000 		.4byte	0x85b
+ 1429 05ea 00       		.byte	0
+ 1430 05eb 17       		.uleb128 0x17
+ 1431 05ec 91060000 		.4byte	.LASF95
+ 1432 05f0 01       		.byte	0x1
+ 1433 05f1 48       		.byte	0x48
+ 1434 05f2 00000000 		.4byte	.LFB1
+ 1435 05f6 1C000000 		.4byte	.LFE1-.LFB1
+ 1436 05fa 01       		.uleb128 0x1
+ 1437 05fb 9C       		.byte	0x9c
+ 1438 05fc 0A060000 		.4byte	0x60a
+ 1439 0600 18       		.uleb128 0x18
+ 1440 0601 16000000 		.4byte	.LVL29
+ 1441 0605 66080000 		.4byte	0x866
+ 1442 0609 00       		.byte	0
+ 1443 060a 19       		.uleb128 0x19
+ 1444 060b A3030000 		.4byte	.LASF120
+ 1445 060f 01       		.byte	0x1
+ 1446 0610 5D       		.byte	0x5d
+ 1447 0611 EA040000 		.4byte	0x4ea
+ 1448 0615 00000000 		.4byte	.LFB3
+ 1449 0619 14000000 		.4byte	.LFE3-.LFB3
+ 1450 061d 01       		.uleb128 0x1
+ 1451 061e 9C       		.byte	0x9c
+ 1452 061f 17       		.uleb128 0x17
+ 1453 0620 73030000 		.4byte	.LASF96
+ 1454 0624 01       		.byte	0x1
+ 1455 0625 62       		.byte	0x62
+ 1456 0626 00000000 		.4byte	.LFB4
+ 1457 062a 94000000 		.4byte	.LFE4-.LFB4
+ 1458 062e 01       		.uleb128 0x1
+ 1459 062f 9C       		.byte	0x9c
+ 1460 0630 FF060000 		.4byte	0x6ff
+ 1461 0634 16       		.uleb128 0x16
+ 1462 0635 30030000 		.4byte	.LASF97
+ 1463 0639 01       		.byte	0x1
+ 1464 063a 64       		.byte	0x64
+ 1465 063b 9F030000 		.4byte	0x39f
+ 1466 063f FA000000 		.4byte	.LLST6
+ 1467 0643 12       		.uleb128 0x12
+ 1468 0644 72657400 		.ascii	"ret\000"
+ 1469 0648 01       		.byte	0x1
+ 1470 0649 65       		.byte	0x65
+ 1471 064a EA040000 		.4byte	0x4ea
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 33
+
+
+ 1472 064e 0D010000 		.4byte	.LLST7
+ 1473 0652 18       		.uleb128 0x18
+ 1474 0653 10000000 		.4byte	.LVL31
+ 1475 0657 EB050000 		.4byte	0x5eb
+ 1476 065b 18       		.uleb128 0x18
+ 1477 065c 14000000 		.4byte	.LVL32
+ 1478 0660 54040000 		.4byte	0x454
+ 1479 0664 13       		.uleb128 0x13
+ 1480 0665 1E000000 		.4byte	.LVL35
+ 1481 0669 2F080000 		.4byte	0x82f
+ 1482 066d 7B060000 		.4byte	0x67b
+ 1483 0671 14       		.uleb128 0x14
+ 1484 0672 01       		.uleb128 0x1
+ 1485 0673 50       		.byte	0x50
+ 1486 0674 05       		.uleb128 0x5
+ 1487 0675 03       		.byte	0x3
+ 1488 0676 58000000 		.4byte	.LC16
+ 1489 067a 00       		.byte	0
+ 1490 067b 18       		.uleb128 0x18
+ 1491 067c 2C000000 		.4byte	.LVL37
+ 1492 0680 F1040000 		.4byte	0x4f1
+ 1493 0684 13       		.uleb128 0x13
+ 1494 0685 3A000000 		.4byte	.LVL39
+ 1495 0689 2F080000 		.4byte	0x82f
+ 1496 068d AA060000 		.4byte	0x6aa
+ 1497 0691 14       		.uleb128 0x14
+ 1498 0692 01       		.uleb128 0x1
+ 1499 0693 50       		.byte	0x50
+ 1500 0694 05       		.uleb128 0x5
+ 1501 0695 03       		.byte	0x3
+ 1502 0696 84000000 		.4byte	.LC18
+ 1503 069a 14       		.uleb128 0x14
+ 1504 069b 01       		.uleb128 0x1
+ 1505 069c 51       		.byte	0x51
+ 1506 069d 05       		.uleb128 0x5
+ 1507 069e 03       		.byte	0x3
+ 1508 069f 25000000 		.4byte	.LANCHOR0+37
+ 1509 06a3 14       		.uleb128 0x14
+ 1510 06a4 01       		.uleb128 0x1
+ 1511 06a5 52       		.byte	0x52
+ 1512 06a6 02       		.uleb128 0x2
+ 1513 06a7 74       		.byte	0x74
+ 1514 06a8 00       		.sleb128 0
+ 1515 06a9 00       		.byte	0
+ 1516 06aa 13       		.uleb128 0x13
+ 1517 06ab 50000000 		.4byte	.LVL40
+ 1518 06af 71080000 		.4byte	0x871
+ 1519 06b3 C1060000 		.4byte	0x6c1
+ 1520 06b7 14       		.uleb128 0x14
+ 1521 06b8 01       		.uleb128 0x1
+ 1522 06b9 50       		.byte	0x50
+ 1523 06ba 05       		.uleb128 0x5
+ 1524 06bb 03       		.byte	0x3
+ 1525 06bc 25000000 		.4byte	.LANCHOR0+37
+ 1526 06c0 00       		.byte	0
+ 1527 06c1 13       		.uleb128 0x13
+ 1528 06c2 5A000000 		.4byte	.LVL43
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 34
+
+
+ 1529 06c6 7C080000 		.4byte	0x87c
+ 1530 06ca D4060000 		.4byte	0x6d4
+ 1531 06ce 14       		.uleb128 0x14
+ 1532 06cf 01       		.uleb128 0x1
+ 1533 06d0 50       		.byte	0x50
+ 1534 06d1 01       		.uleb128 0x1
+ 1535 06d2 33       		.byte	0x33
+ 1536 06d3 00       		.byte	0
+ 1537 06d4 13       		.uleb128 0x13
+ 1538 06d5 62000000 		.4byte	.LVL44
+ 1539 06d9 87080000 		.4byte	0x887
+ 1540 06dd EB060000 		.4byte	0x6eb
+ 1541 06e1 14       		.uleb128 0x14
+ 1542 06e2 01       		.uleb128 0x1
+ 1543 06e3 50       		.byte	0x50
+ 1544 06e4 05       		.uleb128 0x5
+ 1545 06e5 03       		.byte	0x3
+ 1546 06e6 25000000 		.4byte	.LANCHOR0+37
+ 1547 06ea 00       		.byte	0
+ 1548 06eb 15       		.uleb128 0x15
+ 1549 06ec 6E000000 		.4byte	.LVL47
+ 1550 06f0 92080000 		.4byte	0x892
+ 1551 06f4 14       		.uleb128 0x14
+ 1552 06f5 01       		.uleb128 0x1
+ 1553 06f6 50       		.byte	0x50
+ 1554 06f7 05       		.uleb128 0x5
+ 1555 06f8 03       		.byte	0x3
+ 1556 06f9 25000000 		.4byte	.LANCHOR0+37
+ 1557 06fd 00       		.byte	0
+ 1558 06fe 00       		.byte	0
+ 1559 06ff 17       		.uleb128 0x17
+ 1560 0700 81060000 		.4byte	.LASF98
+ 1561 0704 01       		.byte	0x1
+ 1562 0705 51       		.byte	0x51
+ 1563 0706 00000000 		.4byte	.LFB2
+ 1564 070a 24000000 		.4byte	.LFE2-.LFB2
+ 1565 070e 01       		.uleb128 0x1
+ 1566 070f 9C       		.byte	0x9c
+ 1567 0710 27070000 		.4byte	0x727
+ 1568 0714 18       		.uleb128 0x18
+ 1569 0715 16000000 		.4byte	.LVL53
+ 1570 0719 9D080000 		.4byte	0x89d
+ 1571 071d 18       		.uleb128 0x18
+ 1572 071e 1C000000 		.4byte	.LVL54
+ 1573 0722 1F060000 		.4byte	0x61f
+ 1574 0726 00       		.byte	0
+ 1575 0727 17       		.uleb128 0x17
+ 1576 0728 5C000000 		.4byte	.LASF99
+ 1577 072c 01       		.byte	0x1
+ 1578 072d 92       		.byte	0x92
+ 1579 072e 00000000 		.4byte	.LFB5
+ 1580 0732 68000000 		.4byte	.LFE5-.LFB5
+ 1581 0736 01       		.uleb128 0x1
+ 1582 0737 9C       		.byte	0x9c
+ 1583 0738 B1070000 		.4byte	0x7b1
+ 1584 073c 18       		.uleb128 0x18
+ 1585 073d 06000000 		.4byte	.LVL55
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 35
+
+
+ 1586 0741 A8080000 		.4byte	0x8a8
+ 1587 0745 18       		.uleb128 0x18
+ 1588 0746 1E000000 		.4byte	.LVL56
+ 1589 074a 4D050000 		.4byte	0x54d
+ 1590 074e 13       		.uleb128 0x13
+ 1591 074f 28000000 		.4byte	.LVL57
+ 1592 0753 2F080000 		.4byte	0x82f
+ 1593 0757 65070000 		.4byte	0x765
+ 1594 075b 14       		.uleb128 0x14
+ 1595 075c 01       		.uleb128 0x1
+ 1596 075d 50       		.byte	0x50
+ 1597 075e 05       		.uleb128 0x5
+ 1598 075f 03       		.byte	0x3
+ 1599 0760 9C000000 		.4byte	.LC22
+ 1600 0764 00       		.byte	0
+ 1601 0765 18       		.uleb128 0x18
+ 1602 0766 36000000 		.4byte	.LVL58
+ 1603 076a B3080000 		.4byte	0x8b3
+ 1604 076e 18       		.uleb128 0x18
+ 1605 076f 3E000000 		.4byte	.LVL59
+ 1606 0773 1F060000 		.4byte	0x61f
+ 1607 0777 13       		.uleb128 0x13
+ 1608 0778 46000000 		.4byte	.LVL60
+ 1609 077c 2F080000 		.4byte	0x82f
+ 1610 0780 8E070000 		.4byte	0x78e
+ 1611 0784 14       		.uleb128 0x14
+ 1612 0785 01       		.uleb128 0x1
+ 1613 0786 50       		.byte	0x50
+ 1614 0787 05       		.uleb128 0x5
+ 1615 0788 03       		.byte	0x3
+ 1616 0789 B0000000 		.4byte	.LC24
+ 1617 078d 00       		.byte	0
+ 1618 078e 15       		.uleb128 0x15
+ 1619 078f 50000000 		.4byte	.LVL61
+ 1620 0793 2F080000 		.4byte	0x82f
+ 1621 0797 14       		.uleb128 0x14
+ 1622 0798 01       		.uleb128 0x1
+ 1623 0799 50       		.byte	0x50
+ 1624 079a 05       		.uleb128 0x5
+ 1625 079b 03       		.byte	0x3
+ 1626 079c DC000000 		.4byte	.LC28
+ 1627 07a0 14       		.uleb128 0x14
+ 1628 07a1 01       		.uleb128 0x1
+ 1629 07a2 51       		.byte	0x51
+ 1630 07a3 05       		.uleb128 0x5
+ 1631 07a4 03       		.byte	0x3
+ 1632 07a5 CC000000 		.4byte	.LC26
+ 1633 07a9 14       		.uleb128 0x14
+ 1634 07aa 01       		.uleb128 0x1
+ 1635 07ab 52       		.byte	0x52
+ 1636 07ac 02       		.uleb128 0x2
+ 1637 07ad 08       		.byte	0x8
+ 1638 07ae AC       		.byte	0xac
+ 1639 07af 00       		.byte	0
+ 1640 07b0 00       		.byte	0
+ 1641 07b1 09       		.uleb128 0x9
+ 1642 07b2 C1070000 		.4byte	0x7c1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 36
+
+
+ 1643 07b6 C1070000 		.4byte	0x7c1
+ 1644 07ba 0E       		.uleb128 0xe
+ 1645 07bb 7D000000 		.4byte	0x7d
+ 1646 07bf 02       		.byte	0x2
+ 1647 07c0 00       		.byte	0
+ 1648 07c1 05       		.uleb128 0x5
+ 1649 07c2 DB030000 		.4byte	0x3db
+ 1650 07c6 1A       		.uleb128 0x1a
+ 1651 07c7 C3050000 		.4byte	.LASF100
+ 1652 07cb 01       		.byte	0x1
+ 1653 07cc 30       		.byte	0x30
+ 1654 07cd D7070000 		.4byte	0x7d7
+ 1655 07d1 05       		.uleb128 0x5
+ 1656 07d2 03       		.byte	0x3
+ 1657 07d3 00000000 		.4byte	extDB
+ 1658 07d7 05       		.uleb128 0x5
+ 1659 07d8 B1070000 		.4byte	0x7b1
+ 1660 07dc 1B       		.uleb128 0x1b
+ 1661 07dd EF000000 		.4byte	.LASF101
+ 1662 07e1 01       		.byte	0x1
+ 1663 07e2 37       		.byte	0x37
+ 1664 07e3 E8070000 		.4byte	0x7e8
+ 1665 07e7 03       		.byte	0x3
+ 1666 07e8 05       		.uleb128 0x5
+ 1667 07e9 32030000 		.4byte	0x332
+ 1668 07ed 1A       		.uleb128 0x1a
+ 1669 07ee 2D020000 		.4byte	.LASF102
+ 1670 07f2 01       		.byte	0x1
+ 1671 07f3 3D       		.byte	0x3d
+ 1672 07f4 49040000 		.4byte	0x449
+ 1673 07f8 05       		.uleb128 0x5
+ 1674 07f9 03       		.byte	0x3
+ 1675 07fa 00000000 		.4byte	filePlayer
+ 1676 07fe 09       		.uleb128 0x9
+ 1677 07ff 8B000000 		.4byte	0x8b
+ 1678 0803 0E080000 		.4byte	0x80e
+ 1679 0807 0E       		.uleb128 0xe
+ 1680 0808 7D000000 		.4byte	0x7d
+ 1681 080c 01       		.byte	0x1
+ 1682 080d 00       		.byte	0
+ 1683 080e 1C       		.uleb128 0x1c
+ 1684 080f 65030000 		.4byte	.LASF121
+ 1685 0813 01       		.byte	0x1
+ 1686 0814 0F       		.byte	0xf
+ 1687 0815 1F080000 		.4byte	0x81f
+ 1688 0819 05       		.uleb128 0x5
+ 1689 081a 03       		.byte	0x3
+ 1690 081b 00000000 		.4byte	rootDir
+ 1691 081f 05       		.uleb128 0x5
+ 1692 0820 FE070000 		.4byte	0x7fe
+ 1693 0824 1D       		.uleb128 0x1d
+ 1694 0825 EB040000 		.4byte	.LASF103
+ 1695 0829 EB040000 		.4byte	.LASF103
+ 1696 082d 04       		.byte	0x4
+ 1697 082e DE       		.byte	0xde
+ 1698 082f 1D       		.uleb128 0x1d
+ 1699 0830 6B060000 		.4byte	.LASF104
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 37
+
+
+ 1700 0834 6B060000 		.4byte	.LASF104
+ 1701 0838 07       		.byte	0x7
+ 1702 0839 18       		.byte	0x18
+ 1703 083a 1D       		.uleb128 0x1d
+ 1704 083b 89030000 		.4byte	.LASF105
+ 1705 083f 89030000 		.4byte	.LASF105
+ 1706 0843 08       		.byte	0x8
+ 1707 0844 34       		.byte	0x34
+ 1708 0845 1D       		.uleb128 0x1d
+ 1709 0846 6B000000 		.4byte	.LASF106
+ 1710 084a 6B000000 		.4byte	.LASF106
+ 1711 084e 09       		.byte	0x9
+ 1712 084f 28       		.byte	0x28
+ 1713 0850 1D       		.uleb128 0x1d
+ 1714 0851 D6050000 		.4byte	.LASF107
+ 1715 0855 D6050000 		.4byte	.LASF107
+ 1716 0859 04       		.byte	0x4
+ 1717 085a DC       		.byte	0xdc
+ 1718 085b 1D       		.uleb128 0x1d
+ 1719 085c 45040000 		.4byte	.LASF108
+ 1720 0860 45040000 		.4byte	.LASF108
+ 1721 0864 0A       		.byte	0xa
+ 1722 0865 37       		.byte	0x37
+ 1723 0866 1D       		.uleb128 0x1d
+ 1724 0867 1B060000 		.4byte	.LASF109
+ 1725 086b 1B060000 		.4byte	.LASF109
+ 1726 086f 0A       		.byte	0xa
+ 1727 0870 41       		.byte	0x41
+ 1728 0871 1D       		.uleb128 0x1d
+ 1729 0872 5A010000 		.4byte	.LASF110
+ 1730 0876 5A010000 		.4byte	.LASF110
+ 1731 087a 0B       		.byte	0xb
+ 1732 087b 22       		.byte	0x22
+ 1733 087c 1D       		.uleb128 0x1d
+ 1734 087d 81000000 		.4byte	.LASF111
+ 1735 0881 81000000 		.4byte	.LASF111
+ 1736 0885 06       		.byte	0x6
+ 1737 0886 4A       		.byte	0x4a
+ 1738 0887 1D       		.uleb128 0x1d
+ 1739 0888 46060000 		.4byte	.LASF112
+ 1740 088c 46060000 		.4byte	.LASF112
+ 1741 0890 0B       		.byte	0xb
+ 1742 0891 19       		.byte	0x19
+ 1743 0892 1D       		.uleb128 0x1d
+ 1744 0893 63040000 		.4byte	.LASF113
+ 1745 0897 63040000 		.4byte	.LASF113
+ 1746 089b 0C       		.byte	0xc
+ 1747 089c 18       		.byte	0x18
+ 1748 089d 1D       		.uleb128 0x1d
+ 1749 089e 43020000 		.4byte	.LASF114
+ 1750 08a2 43020000 		.4byte	.LASF114
+ 1751 08a6 0A       		.byte	0xa
+ 1752 08a7 2E       		.byte	0x2e
+ 1753 08a8 1D       		.uleb128 0x1d
+ 1754 08a9 90040000 		.4byte	.LASF115
+ 1755 08ad 90040000 		.4byte	.LASF115
+ 1756 08b1 0A       		.byte	0xa
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 38
+
+
+ 1757 08b2 4A       		.byte	0x4a
+ 1758 08b3 1D       		.uleb128 0x1d
+ 1759 08b4 52040000 		.4byte	.LASF116
+ 1760 08b8 52040000 		.4byte	.LASF116
+ 1761 08bc 0A       		.byte	0xa
+ 1762 08bd 53       		.byte	0x53
+ 1763 08be 00       		.byte	0
+ 1764              		.section	.debug_abbrev,"",%progbits
+ 1765              	.Ldebug_abbrev0:
+ 1766 0000 01       		.uleb128 0x1
+ 1767 0001 11       		.uleb128 0x11
+ 1768 0002 01       		.byte	0x1
+ 1769 0003 25       		.uleb128 0x25
+ 1770 0004 0E       		.uleb128 0xe
+ 1771 0005 13       		.uleb128 0x13
+ 1772 0006 0B       		.uleb128 0xb
+ 1773 0007 03       		.uleb128 0x3
+ 1774 0008 0E       		.uleb128 0xe
+ 1775 0009 1B       		.uleb128 0x1b
+ 1776 000a 0E       		.uleb128 0xe
+ 1777 000b 55       		.uleb128 0x55
+ 1778 000c 17       		.uleb128 0x17
+ 1779 000d 11       		.uleb128 0x11
+ 1780 000e 01       		.uleb128 0x1
+ 1781 000f 10       		.uleb128 0x10
+ 1782 0010 17       		.uleb128 0x17
+ 1783 0011 00       		.byte	0
+ 1784 0012 00       		.byte	0
+ 1785 0013 02       		.uleb128 0x2
+ 1786 0014 24       		.uleb128 0x24
+ 1787 0015 00       		.byte	0
+ 1788 0016 0B       		.uleb128 0xb
+ 1789 0017 0B       		.uleb128 0xb
+ 1790 0018 3E       		.uleb128 0x3e
+ 1791 0019 0B       		.uleb128 0xb
+ 1792 001a 03       		.uleb128 0x3
+ 1793 001b 08       		.uleb128 0x8
+ 1794 001c 00       		.byte	0
+ 1795 001d 00       		.byte	0
+ 1796 001e 03       		.uleb128 0x3
+ 1797 001f 24       		.uleb128 0x24
+ 1798 0020 00       		.byte	0
+ 1799 0021 0B       		.uleb128 0xb
+ 1800 0022 0B       		.uleb128 0xb
+ 1801 0023 3E       		.uleb128 0x3e
+ 1802 0024 0B       		.uleb128 0xb
+ 1803 0025 03       		.uleb128 0x3
+ 1804 0026 0E       		.uleb128 0xe
+ 1805 0027 00       		.byte	0
+ 1806 0028 00       		.byte	0
+ 1807 0029 04       		.uleb128 0x4
+ 1808 002a 16       		.uleb128 0x16
+ 1809 002b 00       		.byte	0
+ 1810 002c 03       		.uleb128 0x3
+ 1811 002d 0E       		.uleb128 0xe
+ 1812 002e 3A       		.uleb128 0x3a
+ 1813 002f 0B       		.uleb128 0xb
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 39
+
+
+ 1814 0030 3B       		.uleb128 0x3b
+ 1815 0031 0B       		.uleb128 0xb
+ 1816 0032 49       		.uleb128 0x49
+ 1817 0033 13       		.uleb128 0x13
+ 1818 0034 00       		.byte	0
+ 1819 0035 00       		.byte	0
+ 1820 0036 05       		.uleb128 0x5
+ 1821 0037 26       		.uleb128 0x26
+ 1822 0038 00       		.byte	0
+ 1823 0039 49       		.uleb128 0x49
+ 1824 003a 13       		.uleb128 0x13
+ 1825 003b 00       		.byte	0
+ 1826 003c 00       		.byte	0
+ 1827 003d 06       		.uleb128 0x6
+ 1828 003e 13       		.uleb128 0x13
+ 1829 003f 01       		.byte	0x1
+ 1830 0040 0B       		.uleb128 0xb
+ 1831 0041 05       		.uleb128 0x5
+ 1832 0042 3A       		.uleb128 0x3a
+ 1833 0043 0B       		.uleb128 0xb
+ 1834 0044 3B       		.uleb128 0x3b
+ 1835 0045 0B       		.uleb128 0xb
+ 1836 0046 01       		.uleb128 0x1
+ 1837 0047 13       		.uleb128 0x13
+ 1838 0048 00       		.byte	0
+ 1839 0049 00       		.byte	0
+ 1840 004a 07       		.uleb128 0x7
+ 1841 004b 0D       		.uleb128 0xd
+ 1842 004c 00       		.byte	0
+ 1843 004d 03       		.uleb128 0x3
+ 1844 004e 0E       		.uleb128 0xe
+ 1845 004f 3A       		.uleb128 0x3a
+ 1846 0050 0B       		.uleb128 0xb
+ 1847 0051 3B       		.uleb128 0x3b
+ 1848 0052 0B       		.uleb128 0xb
+ 1849 0053 49       		.uleb128 0x49
+ 1850 0054 13       		.uleb128 0x13
+ 1851 0055 38       		.uleb128 0x38
+ 1852 0056 0B       		.uleb128 0xb
+ 1853 0057 00       		.byte	0
+ 1854 0058 00       		.byte	0
+ 1855 0059 08       		.uleb128 0x8
+ 1856 005a 0D       		.uleb128 0xd
+ 1857 005b 00       		.byte	0
+ 1858 005c 03       		.uleb128 0x3
+ 1859 005d 08       		.uleb128 0x8
+ 1860 005e 3A       		.uleb128 0x3a
+ 1861 005f 0B       		.uleb128 0xb
+ 1862 0060 3B       		.uleb128 0x3b
+ 1863 0061 0B       		.uleb128 0xb
+ 1864 0062 49       		.uleb128 0x49
+ 1865 0063 13       		.uleb128 0x13
+ 1866 0064 38       		.uleb128 0x38
+ 1867 0065 0B       		.uleb128 0xb
+ 1868 0066 00       		.byte	0
+ 1869 0067 00       		.byte	0
+ 1870 0068 09       		.uleb128 0x9
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 40
+
+
+ 1871 0069 01       		.uleb128 0x1
+ 1872 006a 01       		.byte	0x1
+ 1873 006b 49       		.uleb128 0x49
+ 1874 006c 13       		.uleb128 0x13
+ 1875 006d 01       		.uleb128 0x1
+ 1876 006e 13       		.uleb128 0x13
+ 1877 006f 00       		.byte	0
+ 1878 0070 00       		.byte	0
+ 1879 0071 0A       		.uleb128 0xa
+ 1880 0072 21       		.uleb128 0x21
+ 1881 0073 00       		.byte	0
+ 1882 0074 49       		.uleb128 0x49
+ 1883 0075 13       		.uleb128 0x13
+ 1884 0076 2F       		.uleb128 0x2f
+ 1885 0077 05       		.uleb128 0x5
+ 1886 0078 00       		.byte	0
+ 1887 0079 00       		.byte	0
+ 1888 007a 0B       		.uleb128 0xb
+ 1889 007b 0F       		.uleb128 0xf
+ 1890 007c 00       		.byte	0
+ 1891 007d 0B       		.uleb128 0xb
+ 1892 007e 0B       		.uleb128 0xb
+ 1893 007f 49       		.uleb128 0x49
+ 1894 0080 13       		.uleb128 0x13
+ 1895 0081 00       		.byte	0
+ 1896 0082 00       		.byte	0
+ 1897 0083 0C       		.uleb128 0xc
+ 1898 0084 13       		.uleb128 0x13
+ 1899 0085 01       		.byte	0x1
+ 1900 0086 0B       		.uleb128 0xb
+ 1901 0087 0B       		.uleb128 0xb
+ 1902 0088 3A       		.uleb128 0x3a
+ 1903 0089 0B       		.uleb128 0xb
+ 1904 008a 3B       		.uleb128 0x3b
+ 1905 008b 0B       		.uleb128 0xb
+ 1906 008c 01       		.uleb128 0x1
+ 1907 008d 13       		.uleb128 0x13
+ 1908 008e 00       		.byte	0
+ 1909 008f 00       		.byte	0
+ 1910 0090 0D       		.uleb128 0xd
+ 1911 0091 16       		.uleb128 0x16
+ 1912 0092 00       		.byte	0
+ 1913 0093 03       		.uleb128 0x3
+ 1914 0094 08       		.uleb128 0x8
+ 1915 0095 3A       		.uleb128 0x3a
+ 1916 0096 0B       		.uleb128 0xb
+ 1917 0097 3B       		.uleb128 0x3b
+ 1918 0098 0B       		.uleb128 0xb
+ 1919 0099 49       		.uleb128 0x49
+ 1920 009a 13       		.uleb128 0x13
+ 1921 009b 00       		.byte	0
+ 1922 009c 00       		.byte	0
+ 1923 009d 0E       		.uleb128 0xe
+ 1924 009e 21       		.uleb128 0x21
+ 1925 009f 00       		.byte	0
+ 1926 00a0 49       		.uleb128 0x49
+ 1927 00a1 13       		.uleb128 0x13
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 41
+
+
+ 1928 00a2 2F       		.uleb128 0x2f
+ 1929 00a3 0B       		.uleb128 0xb
+ 1930 00a4 00       		.byte	0
+ 1931 00a5 00       		.byte	0
+ 1932 00a6 0F       		.uleb128 0xf
+ 1933 00a7 04       		.uleb128 0x4
+ 1934 00a8 01       		.byte	0x1
+ 1935 00a9 0B       		.uleb128 0xb
+ 1936 00aa 0B       		.uleb128 0xb
+ 1937 00ab 49       		.uleb128 0x49
+ 1938 00ac 13       		.uleb128 0x13
+ 1939 00ad 3A       		.uleb128 0x3a
+ 1940 00ae 0B       		.uleb128 0xb
+ 1941 00af 3B       		.uleb128 0x3b
+ 1942 00b0 0B       		.uleb128 0xb
+ 1943 00b1 01       		.uleb128 0x1
+ 1944 00b2 13       		.uleb128 0x13
+ 1945 00b3 00       		.byte	0
+ 1946 00b4 00       		.byte	0
+ 1947 00b5 10       		.uleb128 0x10
+ 1948 00b6 28       		.uleb128 0x28
+ 1949 00b7 00       		.byte	0
+ 1950 00b8 03       		.uleb128 0x3
+ 1951 00b9 0E       		.uleb128 0xe
+ 1952 00ba 1C       		.uleb128 0x1c
+ 1953 00bb 0B       		.uleb128 0xb
+ 1954 00bc 00       		.byte	0
+ 1955 00bd 00       		.byte	0
+ 1956 00be 11       		.uleb128 0x11
+ 1957 00bf 2E       		.uleb128 0x2e
+ 1958 00c0 01       		.byte	0x1
+ 1959 00c1 03       		.uleb128 0x3
+ 1960 00c2 0E       		.uleb128 0xe
+ 1961 00c3 3A       		.uleb128 0x3a
+ 1962 00c4 0B       		.uleb128 0xb
+ 1963 00c5 3B       		.uleb128 0x3b
+ 1964 00c6 0B       		.uleb128 0xb
+ 1965 00c7 27       		.uleb128 0x27
+ 1966 00c8 19       		.uleb128 0x19
+ 1967 00c9 49       		.uleb128 0x49
+ 1968 00ca 13       		.uleb128 0x13
+ 1969 00cb 11       		.uleb128 0x11
+ 1970 00cc 01       		.uleb128 0x1
+ 1971 00cd 12       		.uleb128 0x12
+ 1972 00ce 06       		.uleb128 0x6
+ 1973 00cf 40       		.uleb128 0x40
+ 1974 00d0 18       		.uleb128 0x18
+ 1975 00d1 9742     		.uleb128 0x2117
+ 1976 00d3 19       		.uleb128 0x19
+ 1977 00d4 01       		.uleb128 0x1
+ 1978 00d5 13       		.uleb128 0x13
+ 1979 00d6 00       		.byte	0
+ 1980 00d7 00       		.byte	0
+ 1981 00d8 12       		.uleb128 0x12
+ 1982 00d9 34       		.uleb128 0x34
+ 1983 00da 00       		.byte	0
+ 1984 00db 03       		.uleb128 0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 42
+
+
+ 1985 00dc 08       		.uleb128 0x8
+ 1986 00dd 3A       		.uleb128 0x3a
+ 1987 00de 0B       		.uleb128 0xb
+ 1988 00df 3B       		.uleb128 0x3b
+ 1989 00e0 0B       		.uleb128 0xb
+ 1990 00e1 49       		.uleb128 0x49
+ 1991 00e2 13       		.uleb128 0x13
+ 1992 00e3 02       		.uleb128 0x2
+ 1993 00e4 17       		.uleb128 0x17
+ 1994 00e5 00       		.byte	0
+ 1995 00e6 00       		.byte	0
+ 1996 00e7 13       		.uleb128 0x13
+ 1997 00e8 898201   		.uleb128 0x4109
+ 1998 00eb 01       		.byte	0x1
+ 1999 00ec 11       		.uleb128 0x11
+ 2000 00ed 01       		.uleb128 0x1
+ 2001 00ee 31       		.uleb128 0x31
+ 2002 00ef 13       		.uleb128 0x13
+ 2003 00f0 01       		.uleb128 0x1
+ 2004 00f1 13       		.uleb128 0x13
+ 2005 00f2 00       		.byte	0
+ 2006 00f3 00       		.byte	0
+ 2007 00f4 14       		.uleb128 0x14
+ 2008 00f5 8A8201   		.uleb128 0x410a
+ 2009 00f8 00       		.byte	0
+ 2010 00f9 02       		.uleb128 0x2
+ 2011 00fa 18       		.uleb128 0x18
+ 2012 00fb 9142     		.uleb128 0x2111
+ 2013 00fd 18       		.uleb128 0x18
+ 2014 00fe 00       		.byte	0
+ 2015 00ff 00       		.byte	0
+ 2016 0100 15       		.uleb128 0x15
+ 2017 0101 898201   		.uleb128 0x4109
+ 2018 0104 01       		.byte	0x1
+ 2019 0105 11       		.uleb128 0x11
+ 2020 0106 01       		.uleb128 0x1
+ 2021 0107 31       		.uleb128 0x31
+ 2022 0108 13       		.uleb128 0x13
+ 2023 0109 00       		.byte	0
+ 2024 010a 00       		.byte	0
+ 2025 010b 16       		.uleb128 0x16
+ 2026 010c 34       		.uleb128 0x34
+ 2027 010d 00       		.byte	0
+ 2028 010e 03       		.uleb128 0x3
+ 2029 010f 0E       		.uleb128 0xe
+ 2030 0110 3A       		.uleb128 0x3a
+ 2031 0111 0B       		.uleb128 0xb
+ 2032 0112 3B       		.uleb128 0x3b
+ 2033 0113 0B       		.uleb128 0xb
+ 2034 0114 49       		.uleb128 0x49
+ 2035 0115 13       		.uleb128 0x13
+ 2036 0116 02       		.uleb128 0x2
+ 2037 0117 17       		.uleb128 0x17
+ 2038 0118 00       		.byte	0
+ 2039 0119 00       		.byte	0
+ 2040 011a 17       		.uleb128 0x17
+ 2041 011b 2E       		.uleb128 0x2e
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 43
+
+
+ 2042 011c 01       		.byte	0x1
+ 2043 011d 3F       		.uleb128 0x3f
+ 2044 011e 19       		.uleb128 0x19
+ 2045 011f 03       		.uleb128 0x3
+ 2046 0120 0E       		.uleb128 0xe
+ 2047 0121 3A       		.uleb128 0x3a
+ 2048 0122 0B       		.uleb128 0xb
+ 2049 0123 3B       		.uleb128 0x3b
+ 2050 0124 0B       		.uleb128 0xb
+ 2051 0125 27       		.uleb128 0x27
+ 2052 0126 19       		.uleb128 0x19
+ 2053 0127 11       		.uleb128 0x11
+ 2054 0128 01       		.uleb128 0x1
+ 2055 0129 12       		.uleb128 0x12
+ 2056 012a 06       		.uleb128 0x6
+ 2057 012b 40       		.uleb128 0x40
+ 2058 012c 18       		.uleb128 0x18
+ 2059 012d 9742     		.uleb128 0x2117
+ 2060 012f 19       		.uleb128 0x19
+ 2061 0130 01       		.uleb128 0x1
+ 2062 0131 13       		.uleb128 0x13
+ 2063 0132 00       		.byte	0
+ 2064 0133 00       		.byte	0
+ 2065 0134 18       		.uleb128 0x18
+ 2066 0135 898201   		.uleb128 0x4109
+ 2067 0138 00       		.byte	0
+ 2068 0139 11       		.uleb128 0x11
+ 2069 013a 01       		.uleb128 0x1
+ 2070 013b 31       		.uleb128 0x31
+ 2071 013c 13       		.uleb128 0x13
+ 2072 013d 00       		.byte	0
+ 2073 013e 00       		.byte	0
+ 2074 013f 19       		.uleb128 0x19
+ 2075 0140 2E       		.uleb128 0x2e
+ 2076 0141 00       		.byte	0
+ 2077 0142 3F       		.uleb128 0x3f
+ 2078 0143 19       		.uleb128 0x19
+ 2079 0144 03       		.uleb128 0x3
+ 2080 0145 0E       		.uleb128 0xe
+ 2081 0146 3A       		.uleb128 0x3a
+ 2082 0147 0B       		.uleb128 0xb
+ 2083 0148 3B       		.uleb128 0x3b
+ 2084 0149 0B       		.uleb128 0xb
+ 2085 014a 27       		.uleb128 0x27
+ 2086 014b 19       		.uleb128 0x19
+ 2087 014c 49       		.uleb128 0x49
+ 2088 014d 13       		.uleb128 0x13
+ 2089 014e 11       		.uleb128 0x11
+ 2090 014f 01       		.uleb128 0x1
+ 2091 0150 12       		.uleb128 0x12
+ 2092 0151 06       		.uleb128 0x6
+ 2093 0152 40       		.uleb128 0x40
+ 2094 0153 18       		.uleb128 0x18
+ 2095 0154 9742     		.uleb128 0x2117
+ 2096 0156 19       		.uleb128 0x19
+ 2097 0157 00       		.byte	0
+ 2098 0158 00       		.byte	0
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 44
+
+
+ 2099 0159 1A       		.uleb128 0x1a
+ 2100 015a 34       		.uleb128 0x34
+ 2101 015b 00       		.byte	0
+ 2102 015c 03       		.uleb128 0x3
+ 2103 015d 0E       		.uleb128 0xe
+ 2104 015e 3A       		.uleb128 0x3a
+ 2105 015f 0B       		.uleb128 0xb
+ 2106 0160 3B       		.uleb128 0x3b
+ 2107 0161 0B       		.uleb128 0xb
+ 2108 0162 49       		.uleb128 0x49
+ 2109 0163 13       		.uleb128 0x13
+ 2110 0164 02       		.uleb128 0x2
+ 2111 0165 18       		.uleb128 0x18
+ 2112 0166 00       		.byte	0
+ 2113 0167 00       		.byte	0
+ 2114 0168 1B       		.uleb128 0x1b
+ 2115 0169 34       		.uleb128 0x34
+ 2116 016a 00       		.byte	0
+ 2117 016b 03       		.uleb128 0x3
+ 2118 016c 0E       		.uleb128 0xe
+ 2119 016d 3A       		.uleb128 0x3a
+ 2120 016e 0B       		.uleb128 0xb
+ 2121 016f 3B       		.uleb128 0x3b
+ 2122 0170 0B       		.uleb128 0xb
+ 2123 0171 49       		.uleb128 0x49
+ 2124 0172 13       		.uleb128 0x13
+ 2125 0173 1C       		.uleb128 0x1c
+ 2126 0174 0B       		.uleb128 0xb
+ 2127 0175 00       		.byte	0
+ 2128 0176 00       		.byte	0
+ 2129 0177 1C       		.uleb128 0x1c
+ 2130 0178 34       		.uleb128 0x34
+ 2131 0179 00       		.byte	0
+ 2132 017a 03       		.uleb128 0x3
+ 2133 017b 0E       		.uleb128 0xe
+ 2134 017c 3A       		.uleb128 0x3a
+ 2135 017d 0B       		.uleb128 0xb
+ 2136 017e 3B       		.uleb128 0x3b
+ 2137 017f 0B       		.uleb128 0xb
+ 2138 0180 49       		.uleb128 0x49
+ 2139 0181 13       		.uleb128 0x13
+ 2140 0182 3F       		.uleb128 0x3f
+ 2141 0183 19       		.uleb128 0x19
+ 2142 0184 02       		.uleb128 0x2
+ 2143 0185 18       		.uleb128 0x18
+ 2144 0186 00       		.byte	0
+ 2145 0187 00       		.byte	0
+ 2146 0188 1D       		.uleb128 0x1d
+ 2147 0189 2E       		.uleb128 0x2e
+ 2148 018a 00       		.byte	0
+ 2149 018b 3F       		.uleb128 0x3f
+ 2150 018c 19       		.uleb128 0x19
+ 2151 018d 3C       		.uleb128 0x3c
+ 2152 018e 19       		.uleb128 0x19
+ 2153 018f 6E       		.uleb128 0x6e
+ 2154 0190 0E       		.uleb128 0xe
+ 2155 0191 03       		.uleb128 0x3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 45
+
+
+ 2156 0192 0E       		.uleb128 0xe
+ 2157 0193 3A       		.uleb128 0x3a
+ 2158 0194 0B       		.uleb128 0xb
+ 2159 0195 3B       		.uleb128 0x3b
+ 2160 0196 0B       		.uleb128 0xb
+ 2161 0197 00       		.byte	0
+ 2162 0198 00       		.byte	0
+ 2163 0199 00       		.byte	0
+ 2164              		.section	.debug_loc,"",%progbits
+ 2165              	.Ldebug_loc0:
+ 2166              	.LLST0:
+ 2167 0000 0E000000 		.4byte	.LVL1
+ 2168 0004 12000000 		.4byte	.LVL2
+ 2169 0008 0100     		.2byte	0x1
+ 2170 000a 50       		.byte	0x50
+ 2171 000b 12000000 		.4byte	.LVL2
+ 2172 000f 1A000000 		.4byte	.LVL4
+ 2173 0013 0100     		.2byte	0x1
+ 2174 0015 54       		.byte	0x54
+ 2175 0016 1A000000 		.4byte	.LVL4
+ 2176 001a 26000000 		.4byte	.LVL5
+ 2177 001e 0100     		.2byte	0x1
+ 2178 0020 50       		.byte	0x50
+ 2179 0021 26000000 		.4byte	.LVL5
+ 2180 0025 2E000000 		.4byte	.LVL7
+ 2181 0029 0100     		.2byte	0x1
+ 2182 002b 54       		.byte	0x54
+ 2183 002c 2E000000 		.4byte	.LVL7
+ 2184 0030 3A000000 		.4byte	.LVL8
+ 2185 0034 0100     		.2byte	0x1
+ 2186 0036 50       		.byte	0x50
+ 2187 0037 3A000000 		.4byte	.LVL8
+ 2188 003b 46000000 		.4byte	.LVL10
+ 2189 003f 0100     		.2byte	0x1
+ 2190 0041 54       		.byte	0x54
+ 2191 0042 00000000 		.4byte	0
+ 2192 0046 00000000 		.4byte	0
+ 2193              	.LLST1:
+ 2194 004a 3A000000 		.4byte	.LVL8
+ 2195 004e 46000000 		.4byte	.LVL11
+ 2196 0052 0100     		.2byte	0x1
+ 2197 0054 55       		.byte	0x55
+ 2198 0055 00000000 		.4byte	0
+ 2199 0059 00000000 		.4byte	0
+ 2200              	.LLST2:
+ 2201 005d 02000000 		.4byte	.LVL12
+ 2202 0061 06000000 		.4byte	.LVL13
+ 2203 0065 0200     		.2byte	0x2
+ 2204 0067 30       		.byte	0x30
+ 2205 0068 9F       		.byte	0x9f
+ 2206 0069 06000000 		.4byte	.LVL13
+ 2207 006d 20000000 		.4byte	.LVL15
+ 2208 0071 0100     		.2byte	0x1
+ 2209 0073 54       		.byte	0x54
+ 2210 0074 2A000000 		.4byte	.LVL17
+ 2211 0078 32000000 		.4byte	.LVL19
+ 2212 007c 0100     		.2byte	0x1
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 46
+
+
+ 2213 007e 54       		.byte	0x54
+ 2214 007f 00000000 		.4byte	0
+ 2215 0083 00000000 		.4byte	0
+ 2216              	.LLST3:
+ 2217 0087 02000000 		.4byte	.LVL12
+ 2218 008b 28000000 		.4byte	.LVL16
+ 2219 008f 0200     		.2byte	0x2
+ 2220 0091 30       		.byte	0x30
+ 2221 0092 9F       		.byte	0x9f
+ 2222 0093 28000000 		.4byte	.LVL16
+ 2223 0097 2A000000 		.4byte	.LVL17
+ 2224 009b 0100     		.2byte	0x1
+ 2225 009d 50       		.byte	0x50
+ 2226 009e 2A000000 		.4byte	.LVL17
+ 2227 00a2 32000000 		.4byte	.LVL19
+ 2228 00a6 0200     		.2byte	0x2
+ 2229 00a8 30       		.byte	0x30
+ 2230 00a9 9F       		.byte	0x9f
+ 2231 00aa 32000000 		.4byte	.LVL19
+ 2232 00ae 3C000000 		.4byte	.LFE6
+ 2233 00b2 0100     		.2byte	0x1
+ 2234 00b4 50       		.byte	0x50
+ 2235 00b5 00000000 		.4byte	0
+ 2236 00b9 00000000 		.4byte	0
+ 2237              	.LLST4:
+ 2238 00bd 02000000 		.4byte	.LVL20
+ 2239 00c1 22000000 		.4byte	.LVL27
+ 2240 00c5 0200     		.2byte	0x2
+ 2241 00c7 30       		.byte	0x30
+ 2242 00c8 9F       		.byte	0x9f
+ 2243 00c9 22000000 		.4byte	.LVL27
+ 2244 00cd 30000000 		.4byte	.LFE8
+ 2245 00d1 0100     		.2byte	0x1
+ 2246 00d3 50       		.byte	0x50
+ 2247 00d4 00000000 		.4byte	0
+ 2248 00d8 00000000 		.4byte	0
+ 2249              	.LLST5:
+ 2250 00dc 0E000000 		.4byte	.LVL22
+ 2251 00e0 12000000 		.4byte	.LVL23
+ 2252 00e4 0100     		.2byte	0x1
+ 2253 00e6 50       		.byte	0x50
+ 2254 00e7 20000000 		.4byte	.LVL26
+ 2255 00eb 22000000 		.4byte	.LVL27
+ 2256 00ef 0100     		.2byte	0x1
+ 2257 00f1 50       		.byte	0x50
+ 2258 00f2 00000000 		.4byte	0
+ 2259 00f6 00000000 		.4byte	0
+ 2260              	.LLST6:
+ 2261 00fa 30000000 		.4byte	.LVL38
+ 2262 00fe 39000000 		.4byte	.LVL39-1
+ 2263 0102 0100     		.2byte	0x1
+ 2264 0104 52       		.byte	0x52
+ 2265 0105 00000000 		.4byte	0
+ 2266 0109 00000000 		.4byte	0
+ 2267              	.LLST7:
+ 2268 010d 02000000 		.4byte	.LVL30
+ 2269 0111 10000000 		.4byte	.LVL31
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 47
+
+
+ 2270 0115 0200     		.2byte	0x2
+ 2271 0117 30       		.byte	0x30
+ 2272 0118 9F       		.byte	0x9f
+ 2273 0119 16000000 		.4byte	.LVL33
+ 2274 011d 1A000000 		.4byte	.LVL34
+ 2275 0121 0100     		.2byte	0x1
+ 2276 0123 50       		.byte	0x50
+ 2277 0124 1A000000 		.4byte	.LVL34
+ 2278 0128 28000000 		.4byte	.LVL36
+ 2279 012c 0100     		.2byte	0x1
+ 2280 012e 54       		.byte	0x54
+ 2281 012f 28000000 		.4byte	.LVL36
+ 2282 0133 2B000000 		.4byte	.LVL37-1
+ 2283 0137 0100     		.2byte	0x1
+ 2284 0139 50       		.byte	0x50
+ 2285 013a 2B000000 		.4byte	.LVL37-1
+ 2286 013e 30000000 		.4byte	.LVL38
+ 2287 0142 0100     		.2byte	0x1
+ 2288 0144 54       		.byte	0x54
+ 2289 0145 52000000 		.4byte	.LVL41
+ 2290 0149 54000000 		.4byte	.LVL42
+ 2291 014d 0100     		.2byte	0x1
+ 2292 014f 50       		.byte	0x50
+ 2293 0150 64000000 		.4byte	.LVL45
+ 2294 0154 66000000 		.4byte	.LVL46
+ 2295 0158 0100     		.2byte	0x1
+ 2296 015a 50       		.byte	0x50
+ 2297 015b 70000000 		.4byte	.LVL48
+ 2298 015f 72000000 		.4byte	.LVL49
+ 2299 0163 0100     		.2byte	0x1
+ 2300 0165 50       		.byte	0x50
+ 2301 0166 74000000 		.4byte	.LVL50
+ 2302 016a 84000000 		.4byte	.LVL52
+ 2303 016e 0100     		.2byte	0x1
+ 2304 0170 54       		.byte	0x54
+ 2305 0171 00000000 		.4byte	0
+ 2306 0175 00000000 		.4byte	0
+ 2307              		.section	.debug_aranges,"",%progbits
+ 2308 0000 5C000000 		.4byte	0x5c
+ 2309 0004 0200     		.2byte	0x2
+ 2310 0006 00000000 		.4byte	.Ldebug_info0
+ 2311 000a 04       		.byte	0x4
+ 2312 000b 00       		.byte	0
+ 2313 000c 0000     		.2byte	0
+ 2314 000e 0000     		.2byte	0
+ 2315 0010 00000000 		.4byte	.LFB7
+ 2316 0014 54000000 		.4byte	.LFE7-.LFB7
+ 2317 0018 00000000 		.4byte	.LFB6
+ 2318 001c 3C000000 		.4byte	.LFE6-.LFB6
+ 2319 0020 00000000 		.4byte	.LFB8
+ 2320 0024 30000000 		.4byte	.LFE8-.LFB8
+ 2321 0028 00000000 		.4byte	.LFB0
+ 2322 002c 20000000 		.4byte	.LFE0-.LFB0
+ 2323 0030 00000000 		.4byte	.LFB1
+ 2324 0034 1C000000 		.4byte	.LFE1-.LFB1
+ 2325 0038 00000000 		.4byte	.LFB3
+ 2326 003c 14000000 		.4byte	.LFE3-.LFB3
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 48
+
+
+ 2327 0040 00000000 		.4byte	.LFB4
+ 2328 0044 94000000 		.4byte	.LFE4-.LFB4
+ 2329 0048 00000000 		.4byte	.LFB2
+ 2330 004c 24000000 		.4byte	.LFE2-.LFB2
+ 2331 0050 00000000 		.4byte	.LFB5
+ 2332 0054 68000000 		.4byte	.LFE5-.LFB5
+ 2333 0058 00000000 		.4byte	0
+ 2334 005c 00000000 		.4byte	0
+ 2335              		.section	.debug_ranges,"",%progbits
+ 2336              	.Ldebug_ranges0:
+ 2337 0000 00000000 		.4byte	.LFB7
+ 2338 0004 54000000 		.4byte	.LFE7
+ 2339 0008 00000000 		.4byte	.LFB6
+ 2340 000c 3C000000 		.4byte	.LFE6
+ 2341 0010 00000000 		.4byte	.LFB8
+ 2342 0014 30000000 		.4byte	.LFE8
+ 2343 0018 00000000 		.4byte	.LFB0
+ 2344 001c 20000000 		.4byte	.LFE0
+ 2345 0020 00000000 		.4byte	.LFB1
+ 2346 0024 1C000000 		.4byte	.LFE1
+ 2347 0028 00000000 		.4byte	.LFB3
+ 2348 002c 14000000 		.4byte	.LFE3
+ 2349 0030 00000000 		.4byte	.LFB4
+ 2350 0034 94000000 		.4byte	.LFE4
+ 2351 0038 00000000 		.4byte	.LFB2
+ 2352 003c 24000000 		.4byte	.LFE2
+ 2353 0040 00000000 		.4byte	.LFB5
+ 2354 0044 68000000 		.4byte	.LFE5
+ 2355 0048 00000000 		.4byte	0
+ 2356 004c 00000000 		.4byte	0
+ 2357              		.section	.debug_line,"",%progbits
+ 2358              	.Ldebug_line0:
+ 2359 0000 F5020000 		.section	.debug_str,"MS",%progbits,1
+ 2359      0200FE01 
+ 2359      00000201 
+ 2359      FB0E0D00 
+ 2359      01010101 
+ 2360              	.LASF46:
+ 2361 0000 46525F4E 		.ascii	"FR_NOT_READY\000"
+ 2361      4F545F52 
+ 2361      45414459 
+ 2361      00
+ 2362              	.LASF85:
+ 2363 000d 66696C65 		.ascii	"filePlayer_State_t\000"
+ 2363      506C6179 
+ 2363      65725F53 
+ 2363      74617465 
+ 2363      5F7400
+ 2364              	.LASF94:
+ 2365 0020 66696C65 		.ascii	"filePlayer_Pause\000"
+ 2365      506C6179 
+ 2365      65725F50 
+ 2365      61757365 
+ 2365      00
+ 2366              	.LASF73:
+ 2367 0031 46494C45 		.ascii	"FILE_PCM\000"
+ 2367      5F50434D 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 49
+
+
+ 2367      00
+ 2368              	.LASF71:
+ 2369 003a 41554449 		.ascii	"AUDIO_SAMPLE_RATE_DEFAULT\000"
+ 2369      4F5F5341 
+ 2369      4D504C45 
+ 2369      5F524154 
+ 2369      455F4445 
+ 2370              	.LASF17:
+ 2371 0054 66735F74 		.ascii	"fs_type\000"
+ 2371      79706500 
+ 2372              	.LASF99:
+ 2373 005c 66696C65 		.ascii	"filePlayer_Run\000"
+ 2373      506C6179 
+ 2373      65725F52 
+ 2373      756E00
+ 2374              	.LASF106:
+ 2375 006b 73747273 		.ascii	"strstr\000"
+ 2375      747200
+ 2376              	.LASF78:
+ 2377 0072 74797065 		.ascii	"type\000"
+ 2377      00
+ 2378              	.LASF22:
+ 2379 0077 6E5F726F 		.ascii	"n_rootdir\000"
+ 2379      6F746469 
+ 2379      7200
+ 2380              	.LASF111:
+ 2381 0081 61756469 		.ascii	"audio_SetSampleRate\000"
+ 2381      6F5F5365 
+ 2381      7453616D 
+ 2381      706C6552 
+ 2381      61746500 
+ 2382              	.LASF76:
+ 2383 0095 46494C45 		.ascii	"FILE_AMOUNT\000"
+ 2383      5F414D4F 
+ 2383      554E5400 
+ 2384              	.LASF9:
+ 2385 00a1 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2385      206C6F6E 
+ 2385      6720756E 
+ 2385      7369676E 
+ 2385      65642069 
+ 2386              	.LASF66:
+ 2387 00b8 41554449 		.ascii	"AUDIO_SAMPLE_RATE_8K\000"
+ 2387      4F5F5341 
+ 2387      4D504C45 
+ 2387      5F524154 
+ 2387      455F384B 
+ 2388              	.LASF37:
+ 2389 00cd 73656374 		.ascii	"sect\000"
+ 2389      00
+ 2390              	.LASF52:
+ 2391 00d2 46525F49 		.ascii	"FR_INVALID_OBJECT\000"
+ 2391      4E56414C 
+ 2391      49445F4F 
+ 2391      424A4543 
+ 2391      5400
+ 2392              	.LASF23:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 50
+
+
+ 2393 00e4 6C617374 		.ascii	"last_clust\000"
+ 2393      5F636C75 
+ 2393      737400
+ 2394              	.LASF101:
+ 2395 00ef 65787444 		.ascii	"extDB_size\000"
+ 2395      425F7369 
+ 2395      7A6500
+ 2396              	.LASF61:
+ 2397 00fa 46525F54 		.ascii	"FR_TOO_MANY_OPEN_FILES\000"
+ 2397      4F4F5F4D 
+ 2397      414E595F 
+ 2397      4F50454E 
+ 2397      5F46494C 
+ 2398              	.LASF30:
+ 2399 0111 64697262 		.ascii	"dirbase\000"
+ 2399      61736500 
+ 2400              	.LASF1:
+ 2401 0119 6C6F6E67 		.ascii	"long long int\000"
+ 2401      206C6F6E 
+ 2401      6720696E 
+ 2401      7400
+ 2402              	.LASF3:
+ 2403 0127 7369676E 		.ascii	"signed char\000"
+ 2403      65642063 
+ 2403      68617200 
+ 2404              	.LASF80:
+ 2405 0133 46494C45 		.ascii	"FILE_PLAYER_START\000"
+ 2405      5F504C41 
+ 2405      5945525F 
+ 2405      53544152 
+ 2405      5400
+ 2406              	.LASF62:
+ 2407 0145 46525F49 		.ascii	"FR_INVALID_PARAMETER\000"
+ 2407      4E56414C 
+ 2407      49445F50 
+ 2407      4152414D 
+ 2407      45544552 
+ 2408              	.LASF110:
+ 2409 015a 70636D50 		.ascii	"pcmPlayerPlayWav\000"
+ 2409      6C617965 
+ 2409      72506C61 
+ 2409      79576176 
+ 2409      00
+ 2410              	.LASF27:
+ 2411 016b 6673697A 		.ascii	"fsize\000"
+ 2411      6500
+ 2412              	.LASF26:
+ 2413 0171 6E5F6661 		.ascii	"n_fatent\000"
+ 2413      74656E74 
+ 2413      00
+ 2414              	.LASF70:
+ 2415 017a 41554449 		.ascii	"AUDIO_SAMPLE_RATE_COUNT\000"
+ 2415      4F5F5341 
+ 2415      4D504C45 
+ 2415      5F524154 
+ 2415      455F434F 
+ 2416              	.LASF87:
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 51
+
+
+ 2417 0192 73746174 		.ascii	"state\000"
+ 2417      6500
+ 2418              	.LASF7:
+ 2419 0198 6C6F6E67 		.ascii	"long int\000"
+ 2419      20696E74 
+ 2419      00
+ 2420              	.LASF119:
+ 2421 01a1 433A5C55 		.ascii	"C:\\Users\\dmytro.fedorchenko\\Documents\\PSoC Crea"
+ 2421      73657273 
+ 2421      5C646D79 
+ 2421      74726F2E 
+ 2421      6665646F 
+ 2422 01d0 746F725C 		.ascii	"tor\\PWM01\\midiPlayer.cydsn\000"
+ 2422      50574D30 
+ 2422      315C6D69 
+ 2422      6469506C 
+ 2422      61796572 
+ 2423              	.LASF19:
+ 2424 01eb 6E5F6661 		.ascii	"n_fats\000"
+ 2424      747300
+ 2425              	.LASF56:
+ 2426 01f2 46525F4E 		.ascii	"FR_NO_FILESYSTEM\000"
+ 2426      4F5F4649 
+ 2426      4C455359 
+ 2426      5354454D 
+ 2426      00
+ 2427              	.LASF60:
+ 2428 0203 46525F4E 		.ascii	"FR_NOT_ENOUGH_CORE\000"
+ 2428      4F545F45 
+ 2428      4E4F5547 
+ 2428      485F434F 
+ 2428      524500
+ 2429              	.LASF51:
+ 2430 0216 46525F45 		.ascii	"FR_EXIST\000"
+ 2430      58495354 
+ 2430      00
+ 2431              	.LASF29:
+ 2432 021f 66617462 		.ascii	"fatbase\000"
+ 2432      61736500 
+ 2433              	.LASF15:
+ 2434 0227 44574F52 		.ascii	"DWORD\000"
+ 2434      4400
+ 2435              	.LASF102:
+ 2436 022d 66696C65 		.ascii	"filePlayer\000"
+ 2436      506C6179 
+ 2436      657200
+ 2437              	.LASF12:
+ 2438 0238 5F5F7569 		.ascii	"__uint32_t\000"
+ 2438      6E743332 
+ 2438      5F7400
+ 2439              	.LASF114:
+ 2440 0243 706C6179 		.ascii	"player_Play\000"
+ 2440      65725F50 
+ 2440      6C617900 
+ 2441              	.LASF18:
+ 2442 024f 6373697A 		.ascii	"csize\000"
+ 2442      6500
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 52
+
+
+ 2443              	.LASF69:
+ 2444 0255 41554449 		.ascii	"AUDIO_SAMPLE_RATE_64K\000"
+ 2444      4F5F5341 
+ 2444      4D504C45 
+ 2444      5F524154 
+ 2444      455F3634 
+ 2445              	.LASF13:
+ 2446 026b 42595445 		.ascii	"BYTE\000"
+ 2446      00
+ 2447              	.LASF0:
+ 2448 0270 756E7369 		.ascii	"unsigned int\000"
+ 2448      676E6564 
+ 2448      20696E74 
+ 2448      00
+ 2449              	.LASF118:
+ 2450 027d 66696C65 		.ascii	"filePlayer.c\000"
+ 2450      506C6179 
+ 2450      65722E63 
+ 2450      00
+ 2451              	.LASF39:
+ 2452 028a 6674696D 		.ascii	"ftime\000"
+ 2452      6500
+ 2453              	.LASF8:
+ 2454 0290 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2454      20756E73 
+ 2454      69676E65 
+ 2454      6420696E 
+ 2454      7400
+ 2455              	.LASF81:
+ 2456 02a2 46494C45 		.ascii	"FILE_PLAYER_PLAY\000"
+ 2456      5F504C41 
+ 2456      5945525F 
+ 2456      504C4159 
+ 2456      00
+ 2457              	.LASF6:
+ 2458 02b3 73686F72 		.ascii	"short unsigned int\000"
+ 2458      7420756E 
+ 2458      7369676E 
+ 2458      65642069 
+ 2458      6E7400
+ 2459              	.LASF31:
+ 2460 02c6 64617461 		.ascii	"database\000"
+ 2460      62617365 
+ 2460      00
+ 2461              	.LASF79:
+ 2462 02cf 66696C65 		.ascii	"fileExstRow_t\000"
+ 2462      45787374 
+ 2462      526F775F 
+ 2462      7400
+ 2463              	.LASF84:
+ 2464 02dd 46494C45 		.ascii	"FILE_PLAYER_NO_DIR\000"
+ 2464      5F504C41 
+ 2464      5945525F 
+ 2464      4E4F5F44 
+ 2464      495200
+ 2465              	.LASF83:
+ 2466 02f0 46494C45 		.ascii	"FILE_PLAYER_STOP\000"
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 53
+
+
+ 2466      5F504C41 
+ 2466      5945525F 
+ 2466      53544F50 
+ 2466      00
+ 2467              	.LASF92:
+ 2468 0301 66696C65 		.ascii	"filePlayer_Init\000"
+ 2468      506C6179 
+ 2468      65725F49 
+ 2468      6E697400 
+ 2469              	.LASF45:
+ 2470 0311 46525F49 		.ascii	"FR_INT_ERR\000"
+ 2470      4E545F45 
+ 2470      525200
+ 2471              	.LASF44:
+ 2472 031c 46525F44 		.ascii	"FR_DISK_ERR\000"
+ 2472      49534B5F 
+ 2472      45525200 
+ 2473              	.LASF32:
+ 2474 0328 77696E73 		.ascii	"winsect\000"
+ 2474      65637400 
+ 2475              	.LASF97:
+ 2476 0330 66696C65 		.ascii	"fileType\000"
+ 2476      54797065 
+ 2476      00
+ 2477              	.LASF72:
+ 2478 0339 46494C45 		.ascii	"FILE_NOT_SUPPORTED\000"
+ 2478      5F4E4F54 
+ 2478      5F535550 
+ 2478      504F5254 
+ 2478      454400
+ 2479              	.LASF41:
+ 2480 034c 666E616D 		.ascii	"fname\000"
+ 2480      6500
+ 2481              	.LASF53:
+ 2482 0352 46525F57 		.ascii	"FR_WRITE_PROTECTED\000"
+ 2482      52495445 
+ 2482      5F50524F 
+ 2482      54454354 
+ 2482      454400
+ 2483              	.LASF121:
+ 2484 0365 726F6F74 		.ascii	"rootDir\000"
+ 2484      44697200 
+ 2485              	.LASF33:
+ 2486 036d 46415446 		.ascii	"FATFS\000"
+ 2486      5300
+ 2487              	.LASF96:
+ 2488 0373 66696C65 		.ascii	"filePlayer_Next\000"
+ 2488      506C6179 
+ 2488      65725F4E 
+ 2488      65787400 
+ 2489              	.LASF38:
+ 2490 0383 66646174 		.ascii	"fdate\000"
+ 2490      6500
+ 2491              	.LASF105:
+ 2492 0389 63617264 		.ascii	"cardErrorPrint\000"
+ 2492      4572726F 
+ 2492      72507269 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 54
+
+
+ 2492      6E7400
+ 2493              	.LASF77:
+ 2494 0398 66696C65 		.ascii	"fileType_t\000"
+ 2494      54797065 
+ 2494      5F7400
+ 2495              	.LASF120:
+ 2496 03a3 66696C65 		.ascii	"filePlayer_isPlay\000"
+ 2496      506C6179 
+ 2496      65725F69 
+ 2496      73506C61 
+ 2496      7900
+ 2497              	.LASF10:
+ 2498 03b5 73697A65 		.ascii	"sizetype\000"
+ 2498      74797065 
+ 2498      00
+ 2499              	.LASF75:
+ 2500 03be 46494C45 		.ascii	"FILE_WAV\000"
+ 2500      5F574156 
+ 2500      00
+ 2501              	.LASF2:
+ 2502 03c7 6C6F6E67 		.ascii	"long double\000"
+ 2502      20646F75 
+ 2502      626C6500 
+ 2503              	.LASF58:
+ 2504 03d3 46525F54 		.ascii	"FR_TIMEOUT\000"
+ 2504      494D454F 
+ 2504      555400
+ 2505              	.LASF14:
+ 2506 03de 574F5244 		.ascii	"WORD\000"
+ 2506      00
+ 2507              	.LASF25:
+ 2508 03e3 63646972 		.ascii	"cdir\000"
+ 2508      00
+ 2509              	.LASF35:
+ 2510 03e8 73636C75 		.ascii	"sclust\000"
+ 2510      737400
+ 2511              	.LASF24:
+ 2512 03ef 66726565 		.ascii	"free_clust\000"
+ 2512      5F636C75 
+ 2512      737400
+ 2513              	.LASF47:
+ 2514 03fa 46525F4E 		.ascii	"FR_NO_FILE\000"
+ 2514      4F5F4649 
+ 2514      4C4500
+ 2515              	.LASF67:
+ 2516 0405 41554449 		.ascii	"AUDIO_SAMPLE_RATE_16K\000"
+ 2516      4F5F5341 
+ 2516      4D504C45 
+ 2516      5F524154 
+ 2516      455F3136 
+ 2517              	.LASF16:
+ 2518 041b 54434841 		.ascii	"TCHAR\000"
+ 2518      5200
+ 2519              	.LASF55:
+ 2520 0421 46525F4E 		.ascii	"FR_NOT_ENABLED\000"
+ 2520      4F545F45 
+ 2520      4E41424C 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 55
+
+
+ 2520      454400
+ 2521              	.LASF65:
+ 2522 0430 41554449 		.ascii	"AUDIO_SAMPLE_RATE_4K\000"
+ 2522      4F5F5341 
+ 2522      4D504C45 
+ 2522      5F524154 
+ 2522      455F344B 
+ 2523              	.LASF108:
+ 2524 0445 706C6179 		.ascii	"player_Pause\000"
+ 2524      65725F50 
+ 2524      61757365 
+ 2524      00
+ 2525              	.LASF116:
+ 2526 0452 706C6179 		.ascii	"player_IsPlaying\000"
+ 2526      65725F49 
+ 2526      73506C61 
+ 2526      79696E67 
+ 2526      00
+ 2527              	.LASF113:
+ 2528 0463 6D696469 		.ascii	"midiPlayer_Play\000"
+ 2528      506C6179 
+ 2528      65725F50 
+ 2528      6C617900 
+ 2529              	.LASF86:
+ 2530 0473 666E6F5F 		.ascii	"fno_temp\000"
+ 2530      74656D70 
+ 2530      00
+ 2531              	.LASF89:
+ 2532 047c 5F426F6F 		.ascii	"_Bool\000"
+ 2532      6C00
+ 2533              	.LASF4:
+ 2534 0482 756E7369 		.ascii	"unsigned char\000"
+ 2534      676E6564 
+ 2534      20636861 
+ 2534      7200
+ 2535              	.LASF115:
+ 2536 0490 706C6179 		.ascii	"player_Run\000"
+ 2536      65725F52 
+ 2536      756E00
+ 2537              	.LASF5:
+ 2538 049b 73686F72 		.ascii	"short int\000"
+ 2538      7420696E 
+ 2538      7400
+ 2539              	.LASF68:
+ 2540 04a5 41554449 		.ascii	"AUDIO_SAMPLE_RATE_32K\000"
+ 2540      4F5F5341 
+ 2540      4D504C45 
+ 2540      5F524154 
+ 2540      455F3332 
+ 2541              	.LASF54:
+ 2542 04bb 46525F49 		.ascii	"FR_INVALID_DRIVE\000"
+ 2542      4E56414C 
+ 2542      49445F44 
+ 2542      52495645 
+ 2542      00
+ 2543              	.LASF93:
+ 2544 04cc 72657346 		.ascii	"resF\000"
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 56
+
+
+ 2544      00
+ 2545              	.LASF50:
+ 2546 04d1 46525F44 		.ascii	"FR_DENIED\000"
+ 2546      454E4945 
+ 2546      4400
+ 2547              	.LASF57:
+ 2548 04db 46525F4D 		.ascii	"FR_MKFS_ABORTED\000"
+ 2548      4B46535F 
+ 2548      41424F52 
+ 2548      54454400 
+ 2549              	.LASF103:
+ 2550 04eb 665F7265 		.ascii	"f_readdir\000"
+ 2550      61646469 
+ 2550      7200
+ 2551              	.LASF59:
+ 2552 04f5 46525F4C 		.ascii	"FR_LOCKED\000"
+ 2552      4F434B45 
+ 2552      4400
+ 2553              	.LASF20:
+ 2554 04ff 77666C61 		.ascii	"wflag\000"
+ 2554      6700
+ 2555              	.LASF64:
+ 2556 0505 75696E74 		.ascii	"uint32_t\000"
+ 2556      33325F74 
+ 2556      00
+ 2557              	.LASF117:
+ 2558 050e 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 2558      43313120 
+ 2558      352E342E 
+ 2558      31203230 
+ 2558      31363036 
+ 2559 0541 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0plus -mthumb -"
+ 2559      20726576 
+ 2559      6973696F 
+ 2559      6E203233 
+ 2559      37373135 
+ 2560 0574 67202D4F 		.ascii	"g -Og -ffunction-sections -ffat-lto-objects\000"
+ 2560      67202D66 
+ 2560      66756E63 
+ 2560      74696F6E 
+ 2560      2D736563 
+ 2561              	.LASF11:
+ 2562 05a0 63686172 		.ascii	"char\000"
+ 2562      00
+ 2563              	.LASF43:
+ 2564 05a5 46525F4F 		.ascii	"FR_OK\000"
+ 2564      4B00
+ 2565              	.LASF34:
+ 2566 05ab 696E6465 		.ascii	"index\000"
+ 2566      7800
+ 2567              	.LASF74:
+ 2568 05b1 46494C45 		.ascii	"FILE_MIDI\000"
+ 2568      5F4D4944 
+ 2568      4900
+ 2569              	.LASF28:
+ 2570 05bb 766F6C62 		.ascii	"volbase\000"
+ 2570      61736500 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 57
+
+
+ 2571              	.LASF100:
+ 2572 05c3 65787444 		.ascii	"extDB\000"
+ 2572      4200
+ 2573              	.LASF88:
+ 2574 05c9 66696C65 		.ascii	"filePlayer_t\000"
+ 2574      506C6179 
+ 2574      65725F74 
+ 2574      00
+ 2575              	.LASF107:
+ 2576 05d6 665F6F70 		.ascii	"f_opendir\000"
+ 2576      656E6469 
+ 2576      7200
+ 2577              	.LASF49:
+ 2578 05e0 46525F49 		.ascii	"FR_INVALID_NAME\000"
+ 2578      4E56414C 
+ 2578      49445F4E 
+ 2578      414D4500 
+ 2579              	.LASF21:
+ 2580 05f0 6673695F 		.ascii	"fsi_flag\000"
+ 2580      666C6167 
+ 2580      00
+ 2581              	.LASF82:
+ 2582 05f9 46494C45 		.ascii	"FILE_PLAYER_PAUSE\000"
+ 2582      5F504C41 
+ 2582      5945525F 
+ 2582      50415553 
+ 2582      4500
+ 2583              	.LASF40:
+ 2584 060b 66617474 		.ascii	"fattrib\000"
+ 2584      72696200 
+ 2585              	.LASF42:
+ 2586 0613 46494C49 		.ascii	"FILINFO\000"
+ 2586      4E464F00 
+ 2587              	.LASF109:
+ 2588 061b 706C6179 		.ascii	"player_Stop\000"
+ 2588      65725F53 
+ 2588      746F7000 
+ 2589              	.LASF63:
+ 2590 0627 46524553 		.ascii	"FRESULT\000"
+ 2590      554C5400 
+ 2591              	.LASF90:
+ 2592 062f 66696C65 		.ascii	"filePlayer_GetNextFile\000"
+ 2592      506C6179 
+ 2592      65725F47 
+ 2592      65744E65 
+ 2592      78744669 
+ 2593              	.LASF112:
+ 2594 0646 70636D50 		.ascii	"pcmPlayerPlay\000"
+ 2594      6C617965 
+ 2594      72506C61 
+ 2594      7900
+ 2595              	.LASF91:
+ 2596 0654 66696C65 		.ascii	"filePlayer_GetFileType\000"
+ 2596      506C6179 
+ 2596      65725F47 
+ 2596      65744669 
+ 2596      6C655479 
+ARM GAS  C:\Users\DMYTRO~1.FED\AppData\Local\Temp\ccwnL3dO.s 			page 58
+
+
+ 2597              	.LASF104:
+ 2598 066b 75617274 		.ascii	"uartPrintf\000"
+ 2598      5072696E 
+ 2598      746600
+ 2599              	.LASF48:
+ 2600 0676 46525F4E 		.ascii	"FR_NO_PATH\000"
+ 2600      4F5F5041 
+ 2600      544800
+ 2601              	.LASF98:
+ 2602 0681 66696C65 		.ascii	"filePlayer_Play\000"
+ 2602      506C6179 
+ 2602      65725F50 
+ 2602      6C617900 
+ 2603              	.LASF95:
+ 2604 0691 66696C65 		.ascii	"filePlayer_Stop\000"
+ 2604      506C6179 
+ 2604      65725F53 
+ 2604      746F7000 
+ 2605              	.LASF36:
+ 2606 06a1 636C7573 		.ascii	"clust\000"
+ 2606      7400
+ 2607              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
