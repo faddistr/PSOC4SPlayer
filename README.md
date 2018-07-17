@@ -48,4 +48,5 @@ Functions to measure time intervals are located in sysTickTimer (standart ARM`s 
 Bussiness logic and debug console handling are located in main.c
 
 Thanks Cypress Semiconductor Ukraine for the development kit
+[video](https://drive.google.com/file/d/1AFBACRh2ApOItkp5jCkcnmtwX1QXsioC/view)
 ![foto](/images/foto.jpg)
