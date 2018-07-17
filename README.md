@@ -46,3 +46,5 @@ It determins duration of the button press. And provides event information to bus
 Functions to measure time intervals are located in sysTickTimer (standart ARM`s SysTick is used).
 
 Bussiness logic and debug console handling are located in main.c
+
+Thanks Cypress Semiconductor Ukraine for the development kit
